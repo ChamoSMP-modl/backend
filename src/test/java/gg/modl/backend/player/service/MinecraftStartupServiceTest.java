@@ -1,25 +1,21 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
-import gg.modl.backend.database.mongo.repository.ServerInstanceSnapshotMongoRepository;
 import gg.modl.backend.database.mongo.repository.ServerActivityRepository;
+import gg.modl.backend.database.mongo.repository.ServerInstanceSnapshotMongoRepository;
 import gg.modl.backend.infrastructure.config.ModlProperties;
-import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.backend.player.dto.request.StartupRequest;
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
+import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.proto.modl.v1.Topic;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class MinecraftStartupServiceTest {
 
@@ -51,15 +47,15 @@ class MinecraftStartupServiceTest {
         assertEquals("wss://api.modl.gg/v1/realtime/ws", response.get("realtimeUrl"));
         assertEquals(1, response.get("realtimeProtocolVersion"));
         assertIterableEquals(
-            List.of(
-                Topic.TOPIC_MINECRAFT_PERMISSIONS.name(),
-                Topic.TOPIC_MINECRAFT_PUNISHMENT_TYPES.name(),
-                Topic.TOPIC_MINECRAFT_PUNISHMENTS.name(),
-                Topic.TOPIC_MINECRAFT_PLAYER_NOTIFICATIONS.name(),
-                Topic.TOPIC_MINECRAFT_STAFF_2FA.name(),
-                Topic.TOPIC_MINECRAFT_MIGRATION_TASKS.name()
-            ),
-            (List<?>) response.get("realtimeTopics")
+                List.of(
+                        Topic.TOPIC_MINECRAFT_PERMISSIONS.name(),
+                        Topic.TOPIC_MINECRAFT_PUNISHMENT_TYPES.name(),
+                        Topic.TOPIC_MINECRAFT_PUNISHMENTS.name(),
+                        Topic.TOPIC_MINECRAFT_PLAYER_NOTIFICATIONS.name(),
+                        Topic.TOPIC_MINECRAFT_STAFF_2FA.name(),
+                        Topic.TOPIC_MINECRAFT_MIGRATION_TASKS.name()
+                ),
+                (List<?>) response.get("realtimeTopics")
         );
     }
 
@@ -93,7 +89,7 @@ class MinecraftStartupServiceTest {
     }
 
     private Server server() {
-        Server server = new Server("Demo", "demo", "demo_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Demo", "demo", "demo_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
         return server;
     }

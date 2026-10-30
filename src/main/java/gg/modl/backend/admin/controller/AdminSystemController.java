@@ -10,18 +10,13 @@ import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.proto.modl.v1.UpdatePromptRequest;
 import gg.modl.proto.modl.v1.UpdateRateLimitsRequest;
 import gg.modl.proto.modl.v1.UpdateSystemConfigRequest;
-import java.util.Date;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping(RESTMappingV1.ADMIN_SYSTEM)
@@ -55,7 +50,7 @@ public class AdminSystemController {
         AdminMaintenanceStatus data = globalSystemService.toggleMaintenance(domainRequest);
         log.info("Maintenance mode {} by admin", enabled ? "enabled" : "disabled");
         return ResponseEntity.ok(AdminSystemProtoMapper.toMaintenanceResponse(
-            data, "Maintenance mode " + (enabled ? "enabled" : "disabled")));
+                data, "Maintenance mode " + (enabled ? "enabled" : "disabled")));
     }
 
     @GetMapping("/rate-limits")
@@ -66,7 +61,7 @@ public class AdminSystemController {
     @PutMapping("/rate-limits")
     public ResponseEntity<?> updateRateLimits(@RequestBody UpdateRateLimitsRequest request) {
         SystemConfig.PerformanceConfig performanceConfig = globalSystemService.updateRateLimits(
-            AdminSystemProtoMapper.fromUpdateRateLimits(request));
+                AdminSystemProtoMapper.fromUpdateRateLimits(request));
         log.info("Rate limits updated by admin");
         return ResponseEntity.ok(AdminSystemProtoMapper.toRateLimitsUpdateResponse(performanceConfig, "Rate limits updated successfully"));
     }
@@ -84,13 +79,6 @@ public class AdminSystemController {
         return ResponseEntity.ok(AdminSystemProtoMapper.toPromptResponse(updated, "System prompt updated successfully"));
     }
 
-    @PostMapping("/prompts/reset")
-    public ResponseEntity<?> resetPrompt() {
-        SystemPrompt reset = globalSystemService.resetPrompt();
-        log.info("System prompt reset to default");
-        return ResponseEntity.ok(AdminSystemProtoMapper.toPromptResponse(reset, "System prompt reset to default"));
-    }
-
     @PostMapping("/services/{service}/restart")
     public ResponseEntity<?> restartService(@PathVariable String service) {
         List<String> allowedServices = List.of("api", "worker", "scheduler", "cache", "database");
@@ -101,6 +89,6 @@ public class AdminSystemController {
         log.info("Service restart requested for: {} by admin", service);
 
         return ResponseEntity.ok(AdminSystemProtoMapper.toServiceRestartResponse(
-            service, "restarting", new Date(), "Service " + service + " restart initiated"));
+                service, "restarting", new Date(), "Service " + service + " restart initiated"));
     }
 }

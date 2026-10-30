@@ -6,15 +6,16 @@ import gg.modl.backend.database.mongo.repository.StorageFileMongoRepository;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.config.StorageExecutorConfig;
 import gg.modl.backend.storage.data.StorageFileDocument;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -28,18 +29,18 @@ public class TempUploadReclamationService {
     private final Cache<String, Boolean> recentlyReclaimed;
 
     public TempUploadReclamationService(
-        S3StorageService s3StorageService,
-        StorageFileMongoRepository storageFileRepository,
-        @Value("${modl.storage.temp-upload.orphan-ttl:PT6H}") Duration orphanTtl,
-        @Value("${modl.storage.temp-upload.reclaim-interval:PT12H}") Duration reclaimInterval
+            S3StorageService s3StorageService,
+            StorageFileMongoRepository storageFileRepository,
+            @Value("${modl.storage.temp-upload.orphan-ttl:PT6H}") Duration orphanTtl,
+            @Value("${modl.storage.temp-upload.reclaim-interval:PT12H}") Duration reclaimInterval
     ) {
         this.s3StorageService = s3StorageService;
         this.storageFileRepository = storageFileRepository;
         this.orphanTtl = orphanTtl;
         this.recentlyReclaimed = Caffeine.newBuilder()
-            .expireAfterWrite(reclaimInterval)
-            .maximumSize(MAX_TRACKED_SERVERS)
-            .build();
+                .expireAfterWrite(reclaimInterval)
+                .maximumSize(MAX_TRACKED_SERVERS)
+                .build();
     }
 
     @Async(StorageExecutorConfig.STORAGE_TASK_EXECUTOR)
@@ -65,19 +66,19 @@ public class TempUploadReclamationService {
 
         for (String prefix : TempUploadKeys.prefixes(server)) {
             List<String> staleKeys = s3StorageService.listObjectInfosByPrefix(prefix).stream()
-                .filter(object -> object.lastModified().isBefore(cutoff))
-                .map(S3StorageService.S3ObjectInfo::key)
-                .toList();
+                    .filter(object -> object.lastModified().isBefore(cutoff))
+                    .map(S3StorageService.S3ObjectInfo::key)
+                    .toList();
 
             for (int start = 0; start < staleKeys.size(); start += LOOKUP_CHUNK_SIZE) {
                 List<String> chunk = staleKeys.subList(start, Math.min(start + LOOKUP_CHUNK_SIZE, staleKeys.size()));
                 Set<String> confirmedKeys = storageFileRepository.findByKeys(server, chunk).stream()
-                    .map(StorageFileDocument::getKey)
-                    .collect(Collectors.toSet());
+                        .map(StorageFileDocument::getKey)
+                        .collect(Collectors.toSet());
 
                 List<String> unconfirmedOrphans = chunk.stream()
-                    .filter(key -> !confirmedKeys.contains(key))
-                    .toList();
+                        .filter(key -> !confirmedKeys.contains(key))
+                        .toList();
                 if (!unconfirmedOrphans.isEmpty()) {
                     reclaimed += s3StorageService.bulkDelete(unconfirmedOrphans);
                 }

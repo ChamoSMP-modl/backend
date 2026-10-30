@@ -1,24 +1,23 @@
 package gg.modl.backend.storage.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.limits.ServerLimitPolicy;
 import gg.modl.backend.limits.ServerLimits;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.storage.dto.response.PresignUploadResponse;
 import gg.modl.backend.storage.dto.response.UploadResponse;
-import java.time.Instant;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UploadOrchestrationServiceTest {
@@ -46,12 +45,12 @@ class UploadOrchestrationServiceTest {
     @BeforeEach
     void setUp() {
         uploadOrchestrationService = new UploadOrchestrationService(
-            validationService,
-            quotaService,
-            s3StorageService,
-            storageMetadataService,
-            serverLimitPolicy,
-            reclamationService
+                validationService,
+                quotaService,
+                s3StorageService,
+                storageMetadataService,
+                serverLimitPolicy,
+                reclamationService
         );
     }
 
@@ -61,13 +60,13 @@ class UploadOrchestrationServiceTest {
 
     private UploadOrchestrationService.UploadPresignRequest presignRequest() {
         return new UploadOrchestrationService.UploadPresignRequest(
-            "evidence",
-            "file.png",
-            "image/png",
-            42L,
-            "PUN-1",
-            true,
-            false
+                "evidence",
+                "file.png",
+                "image/png",
+                42L,
+                "PUN-1",
+                true,
+                false
         );
     }
 
@@ -76,15 +75,15 @@ class UploadOrchestrationServiceTest {
         Server server = server();
         ServerLimits limits = ServerLimits.builder().maxUploadBytes(Long.MAX_VALUE).maxStorageBytes(Long.MAX_VALUE).build();
         PresignUploadResponse presigned = new PresignUploadResponse(
-            "https://uploads.example/replay", "db/evidence/PUN-1/file.png",
-            Instant.parse("2026-05-15T12:00:00Z"), "PUT", Map.of("Content-Type", "image/png"));
+                "https://uploads.example/replay", "db/evidence/PUN-1/file.png",
+                Instant.parse("2026-05-15T12:00:00Z"), "PUT", Map.of("Content-Type", "image/png"));
 
         when(validationService.validateMetadata("file.png", "image/png", 42L, "evidence", true))
-            .thenReturn(new MediaValidationService.ValidationResult(true, null));
+                .thenReturn(new MediaValidationService.ValidationResult(true, null));
         when(serverLimitPolicy.resolve(server)).thenReturn(limits);
         when(quotaService.canUpload(server, 42L)).thenReturn(true);
         when(s3StorageService.createPresignedUploadUrl(server, "evidence", "file.png", "image/png", 42L, "PUN-1"))
-            .thenReturn(presigned);
+                .thenReturn(presigned);
 
         UploadOrchestrationService.PresignOutcome outcome = uploadOrchestrationService.presign(server, presignRequest());
 
@@ -96,7 +95,7 @@ class UploadOrchestrationServiceTest {
     void presignRejectsWhenMetadataValidationFails() {
         Server server = server();
         when(validationService.validateMetadata("file.png", "image/png", 42L, "evidence", true))
-            .thenReturn(new MediaValidationService.ValidationResult(false, "File type not allowed"));
+                .thenReturn(new MediaValidationService.ValidationResult(false, "File type not allowed"));
 
         UploadOrchestrationService.PresignOutcome outcome = uploadOrchestrationService.presign(server, presignRequest());
 
@@ -110,7 +109,7 @@ class UploadOrchestrationServiceTest {
         Server server = server();
         ServerLimits limits = ServerLimits.builder().maxUploadBytes(Long.MAX_VALUE).maxStorageBytes(Long.MAX_VALUE).build();
         when(validationService.validateMetadata("file.png", "image/png", 42L, "evidence", true))
-            .thenReturn(new MediaValidationService.ValidationResult(true, null));
+                .thenReturn(new MediaValidationService.ValidationResult(true, null));
         when(serverLimitPolicy.resolve(server)).thenReturn(limits);
         when(quotaService.canUpload(server, 42L)).thenReturn(false);
 
@@ -128,7 +127,7 @@ class UploadOrchestrationServiceTest {
 
         when(s3StorageService.getUploadDetails(key)).thenReturn(details);
         when(quotaService.confirmAndRecordFile(server, key, 42L, "image/png"))
-            .thenReturn(StorageQuotaService.ConfirmResult.SUCCESS);
+                .thenReturn(StorageQuotaService.ConfirmResult.SUCCESS);
 
         UploadOrchestrationService.ConfirmOutcome outcome = uploadOrchestrationService.confirm(server, key, false);
 
@@ -157,7 +156,7 @@ class UploadOrchestrationServiceTest {
 
         when(s3StorageService.getUploadDetails(key)).thenReturn(details);
         when(quotaService.confirmAndRecordFile(server, key, 42L, "image/png"))
-            .thenReturn(StorageQuotaService.ConfirmResult.QUOTA_EXCEEDED);
+                .thenReturn(StorageQuotaService.ConfirmResult.QUOTA_EXCEEDED);
 
         UploadOrchestrationService.ConfirmOutcome outcome = uploadOrchestrationService.confirm(server, key, false);
 

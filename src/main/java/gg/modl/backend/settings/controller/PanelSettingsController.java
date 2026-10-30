@@ -2,9 +2,9 @@ package gg.modl.backend.settings.controller;
 
 import gg.modl.backend.infrastructure.authorization.RequiresPanelPermission;
 import gg.modl.backend.infrastructure.exception.ValidationException;
-import gg.modl.backend.infrastructure.validation.BeanValidationRunner;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
+import gg.modl.backend.infrastructure.validation.BeanValidationRunner;
 import gg.modl.backend.role.service.PermissionService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.AIModerationSettings;
@@ -17,43 +17,13 @@ import gg.modl.backend.settings.data.TicketLabelSettings;
 import gg.modl.backend.settings.data.WebhookSettings;
 import gg.modl.backend.settings.dto.request.PatchReplayRetentionSettingsRequest;
 import gg.modl.backend.settings.dto.request.UpdateQuickResponsesRequest;
-import gg.modl.backend.settings.service.AIModerationSettingsService;
-import gg.modl.backend.settings.service.GeneralSettingsService;
-import gg.modl.backend.settings.service.IconUploadService;
-import gg.modl.backend.settings.service.OffenderThresholdSettingsService;
-import gg.modl.backend.settings.service.QuickResponseSettingsService;
-import gg.modl.backend.settings.service.ReplayRetentionSettingsService;
-import gg.modl.backend.settings.service.TicketFormSettingsService;
-import gg.modl.backend.settings.service.TicketLabelSettingsService;
-import gg.modl.backend.settings.service.VersionedSettings;
-import gg.modl.backend.settings.service.WebhookSettingsService;
-import gg.modl.proto.modl.v1.GeneralSettingsEnvelope;
-import gg.modl.proto.modl.v1.OffenderThresholdSettingsEnvelope;
-import gg.modl.proto.modl.v1.PatchGeneralSettingsRequest;
-import gg.modl.proto.modl.v1.PatchQuickResponsesRequest;
-import gg.modl.proto.modl.v1.PatchStatusThresholdSettingsRequest;
-import gg.modl.proto.modl.v1.PatchTicketFormSettingsRequest;
-import gg.modl.proto.modl.v1.PatchTicketLabelSettingsRequest;
-import gg.modl.proto.modl.v1.QuickResponseSettingsEnvelope;
-import gg.modl.proto.modl.v1.ReplayRetentionSettingsEnvelope;
-import gg.modl.proto.modl.v1.TicketForm;
-import gg.modl.proto.modl.v1.TicketFormSettingsEnvelope;
-import gg.modl.proto.modl.v1.TicketLabelSettingsEnvelope;
-import gg.modl.proto.modl.v1.UpdateAIModerationSettingsRequest;
-import gg.modl.proto.modl.v1.UpdateWebhookSettingsRequest;
-import gg.modl.proto.modl.v1.WebhookTestResponse;
+import gg.modl.backend.settings.service.*;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
@@ -81,14 +51,14 @@ public class PanelSettingsController {
 
     @PatchMapping("/general")
     public GeneralSettingsEnvelope patchGeneralSettings(
-        @RequestBody PatchGeneralSettingsRequest body,
-        HttpServletRequest request
+            @RequestBody PatchGeneralSettingsRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         VersionedSettings<GeneralSettings> updated = generalSettingsService.patchGeneralSettings(
-            server,
-            body.getExpectedVersion(),
-            PanelSettingsProtoMapper.fromPatchGeneralSettingsRequest(body)
+                server,
+                body.getExpectedVersion(),
+                PanelSettingsProtoMapper.fromPatchGeneralSettingsRequest(body)
         );
         settingsInvalidationPublisher.invalidateSettings(server);
         return PanelSettingsProtoMapper.toGeneralSettingsEnvelope(updated);
@@ -98,19 +68,19 @@ public class PanelSettingsController {
     public TicketLabelSettingsEnvelope getTicketLabelSettings(HttpServletRequest request) {
         Server server = RequestUtil.getRequestServer(request);
         return PanelSettingsProtoMapper.toTicketLabelSettingsEnvelope(
-            ticketLabelSettingsService.getTicketLabelSettingsState(server));
+                ticketLabelSettingsService.getTicketLabelSettingsState(server));
     }
 
     @PatchMapping("/ticket-labels")
     public TicketLabelSettingsEnvelope patchTicketLabelSettings(
-        @RequestBody PatchTicketLabelSettingsRequest body,
-        HttpServletRequest request
+            @RequestBody PatchTicketLabelSettingsRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         VersionedSettings<TicketLabelSettings> updated = ticketLabelSettingsService.patchTicketLabelSettings(
-            server,
-            body.getExpectedVersion(),
-            PanelSettingsProtoMapper.fromPatchTicketLabelSettingsRequest(body)
+                server,
+                body.getExpectedVersion(),
+                PanelSettingsProtoMapper.fromPatchTicketLabelSettingsRequest(body)
         );
         settingsInvalidationPublisher.invalidateSettings(server);
         return PanelSettingsProtoMapper.toTicketLabelSettingsEnvelope(updated);
@@ -121,20 +91,20 @@ public class PanelSettingsController {
     public OffenderThresholdSettingsEnvelope getStatusThresholds(HttpServletRequest request) {
         Server server = RequestUtil.getRequestServer(request);
         return PanelSettingsProtoMapper.toOffenderThresholdSettingsEnvelope(
-            offenderThresholdSettingsService.getThresholdSettingsState(server));
+                offenderThresholdSettingsService.getThresholdSettingsState(server));
     }
 
     @PatchMapping("/status-thresholds")
     @RequiresPanelPermission(view = PermissionService.ADMIN_SETTINGS_VIEW_PUNISHMENTS, modify = PermissionService.ADMIN_SETTINGS_MODIFY_PUNISHMENTS)
     public OffenderThresholdSettingsEnvelope patchStatusThresholds(
-        @RequestBody PatchStatusThresholdSettingsRequest body,
-        HttpServletRequest request
+            @RequestBody PatchStatusThresholdSettingsRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         VersionedSettings<OffenderThresholdSettings> updated = offenderThresholdSettingsService.patchThresholdSettings(
-            server,
-            body.getExpectedVersion(),
-            PanelSettingsProtoMapper.fromOffenderThresholdSettings(body.getSettings())
+                server,
+                body.getExpectedVersion(),
+                PanelSettingsProtoMapper.fromOffenderThresholdSettings(body.getSettings())
         );
         settingsInvalidationPublisher.invalidateSettings(server);
         return PanelSettingsProtoMapper.toOffenderThresholdSettingsEnvelope(updated);
@@ -144,20 +114,20 @@ public class PanelSettingsController {
     public ReplayRetentionSettingsEnvelope getReplayRetentionSettings(HttpServletRequest request) {
         Server server = RequestUtil.getRequestServer(request);
         return PanelSettingsProtoMapper.toReplayRetentionSettingsEnvelope(
-            replayRetentionSettingsService.getReplayRetentionSettingsState(server));
+                replayRetentionSettingsService.getReplayRetentionSettingsState(server));
     }
 
     @PatchMapping("/replay-retention")
     public ReplayRetentionSettingsEnvelope patchReplayRetentionSettings(
-        @RequestBody @Valid PatchReplayRetentionSettingsRequest body,
-        HttpServletRequest request
+            @RequestBody @Valid PatchReplayRetentionSettingsRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         VersionedSettings<ReplayRetentionSettings> updated = replayRetentionSettingsService.patchReplayRetentionSettings(
-            server,
-            body.expectedVersion(),
-            body.enabled(),
-            body.days()
+                server,
+                body.expectedVersion(),
+                body.enabled(),
+                body.days()
         );
         settingsInvalidationPublisher.invalidateSettings(server);
         return PanelSettingsProtoMapper.toReplayRetentionSettingsEnvelope(updated);
@@ -174,8 +144,8 @@ public class PanelSettingsController {
     @PatchMapping("/ai-moderation")
     @RequiresPanelPermission(view = PermissionService.ADMIN_SETTINGS_VIEW_PUNISHMENTS, modify = PermissionService.ADMIN_SETTINGS_MODIFY_PUNISHMENTS)
     public gg.modl.proto.modl.v1.AIModerationSettings updateAIModerationSettings(
-        @RequestBody UpdateAIModerationSettingsRequest requestBody,
-        HttpServletRequest request
+            @RequestBody UpdateAIModerationSettingsRequest requestBody,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         AIModerationSettings settings = PanelSettingsProtoMapper.fromUpdateAIModerationSettingsRequest(requestBody);
@@ -194,8 +164,8 @@ public class PanelSettingsController {
 
     @PatchMapping("/webhooks")
     public gg.modl.proto.modl.v1.WebhookSettings updateWebhookSettings(
-        @RequestBody UpdateWebhookSettingsRequest requestBody,
-        HttpServletRequest request
+            @RequestBody UpdateWebhookSettingsRequest requestBody,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         WebhookSettings settings = PanelSettingsProtoMapper.fromUpdateWebhookSettingsRequest(requestBody);
@@ -219,19 +189,19 @@ public class PanelSettingsController {
     public TicketFormSettingsEnvelope getTicketFormSettings(HttpServletRequest request) {
         Server server = RequestUtil.getRequestServer(request);
         return PanelSettingsProtoMapper.toTicketFormSettingsEnvelope(
-            ticketFormSettingsService.getTicketFormSettingsState(server));
+                ticketFormSettingsService.getTicketFormSettingsState(server));
     }
 
     @PatchMapping("/ticket-forms")
     public TicketFormSettingsEnvelope patchTicketFormSettings(
-        @RequestBody PatchTicketFormSettingsRequest body,
-        HttpServletRequest request
+            @RequestBody PatchTicketFormSettingsRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         VersionedSettings<TicketFormSettings> updated = ticketFormSettingsService.patchTicketFormSettings(
-            server,
-            body.getExpectedVersion(),
-            PanelSettingsProtoMapper.fromTicketFormSettings(body.getSettings())
+                server,
+                body.getExpectedVersion(),
+                PanelSettingsProtoMapper.fromTicketFormSettings(body.getSettings())
         );
         settingsInvalidationPublisher.invalidateSettings(server);
         return PanelSettingsProtoMapper.toTicketFormSettingsEnvelope(updated);
@@ -239,8 +209,8 @@ public class PanelSettingsController {
 
     @GetMapping("/ticket-forms/{type}")
     public ResponseEntity<TicketForm> getTicketForm(
-        @PathVariable String type,
-        HttpServletRequest request
+            @PathVariable String type,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         TicketFormSettings.TicketForm form = ticketFormSettingsService.getFormByType(server, type);
@@ -256,22 +226,22 @@ public class PanelSettingsController {
     public QuickResponseSettingsEnvelope getQuickResponses(HttpServletRequest request) {
         Server server = RequestUtil.getRequestServer(request);
         return PanelSettingsProtoMapper.toQuickResponseSettingsEnvelope(
-            quickResponseSettingsService.getQuickResponseSettingsState(server));
+                quickResponseSettingsService.getQuickResponseSettingsState(server));
     }
 
     @PatchMapping("/quick-responses")
     public QuickResponseSettingsEnvelope patchQuickResponses(
-        @RequestBody PatchQuickResponsesRequest body,
-        HttpServletRequest request
+            @RequestBody PatchQuickResponsesRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         UpdateQuickResponsesRequest quickResponses = new UpdateQuickResponsesRequest(
-            PanelSettingsProtoMapper.fromPatchQuickResponsesRequest(body));
+                PanelSettingsProtoMapper.fromPatchQuickResponsesRequest(body));
         validationRunner.validate(quickResponses);
         VersionedSettings<QuickResponseSettings> updated = quickResponseSettingsService.patchQuickResponseSettings(
-            server,
-            body.getExpectedVersion(),
-            quickResponses
+                server,
+                body.getExpectedVersion(),
+                quickResponses
         );
         settingsInvalidationPublisher.invalidateSettings(server);
         return PanelSettingsProtoMapper.toQuickResponseSettingsEnvelope(updated);
@@ -279,9 +249,9 @@ public class PanelSettingsController {
 
     @PostMapping("/upload-icon")
     public ResponseEntity<?> uploadIcon(
-        @RequestParam("icon") MultipartFile file,
-        @RequestParam("iconType") String iconType,
-        HttpServletRequest request
+            @RequestParam("icon") MultipartFile file,
+            @RequestParam("iconType") String iconType,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         ResponseEntity<?> response = iconUploadService.uploadIcon(server, file, iconType);

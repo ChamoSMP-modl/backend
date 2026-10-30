@@ -1,10 +1,5 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
@@ -21,9 +16,15 @@ import gg.modl.backend.settings.service.WebhookSettingsService;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.service.StaffLookupCache;
 import gg.modl.backend.ticket.service.TicketService;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class PunishmentPermissionAuthorityTest {
 
@@ -42,7 +43,7 @@ class PunishmentPermissionAuthorityTest {
 
     @BeforeEach
     void setUp() {
-        server = new Server("server", "domain", "db", ADMIN_EMAIL, true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", ADMIN_EMAIL, true, ServerPlan.PREMIUM);
         server.setId("server-id");
 
         permissionService = mock(PermissionService.class);
@@ -55,20 +56,20 @@ class PunishmentPermissionAuthorityTest {
         when(punishmentTypeService.getPunishmentTypeByOrdinal(server, BAN_ORDINAL)).thenReturn(Optional.of(banType));
 
         lifecycleService = new PunishmentLifecycleService(
-            mock(PlayerMongoRepository.class),
-            mock(PunishmentMongoRepository.class),
-            mock(TicketService.class),
-            mock(PlayerStatusCalculator.class),
-            punishmentTypeService,
-            mock(OffenderThresholdSettingsService.class),
-            mock(PunishmentDurationCalculator.class),
-            mock(IssuerNameResolver.class),
-            mock(PunishmentQueryService.class),
-            permissionService,
-            new RoleAuthorization(permissionService, staffRepository, staffLookupCache),
-            mock(WebhookSettingsService.class),
-            mock(PunishmentRealtimePublisher.class),
-            mock(LogService.class)
+                mock(PlayerMongoRepository.class),
+                mock(PunishmentMongoRepository.class),
+                mock(TicketService.class),
+                mock(PlayerStatusCalculator.class),
+                punishmentTypeService,
+                mock(OffenderThresholdSettingsService.class),
+                mock(PunishmentDurationCalculator.class),
+                mock(IssuerNameResolver.class),
+                mock(PunishmentQueryService.class),
+                permissionService,
+                new RoleAuthorization(permissionService, staffRepository, staffLookupCache),
+                mock(WebhookSettingsService.class),
+                mock(PunishmentRealtimePublisher.class),
+                mock(LogService.class)
         );
     }
 
@@ -81,10 +82,10 @@ class PunishmentPermissionAuthorityTest {
     void staleSuperAdminRoleOnANonAdminEmailGrantsNothing() {
         givenStaff(STALE_SUPER_ADMIN_EMAIL, RoleAuthorization.SUPER_ADMIN_ROLE_ID);
         when(permissionService.hasPermission(server, RoleAuthorization.SUPER_ADMIN_ROLE_ID, BAN_APPLY_PERMISSION))
-            .thenReturn(true);
+                .thenReturn(true);
 
         assertThrows(ForbiddenException.class,
-            () -> lifecycleService.validatePunishmentPermission(server, STALE_SUPER_ADMIN_EMAIL, BAN_ORDINAL));
+                () -> lifecycleService.validatePunishmentPermission(server, STALE_SUPER_ADMIN_EMAIL, BAN_ORDINAL));
     }
 
     @Test
@@ -106,7 +107,7 @@ class PunishmentPermissionAuthorityTest {
         when(permissionService.hasPermission(server, MODERATOR_ROLE_ID, BAN_APPLY_PERMISSION)).thenReturn(false);
 
         assertThrows(ForbiddenException.class,
-            () -> lifecycleService.validatePunishmentPermission(server, MODERATOR_EMAIL, BAN_ORDINAL));
+                () -> lifecycleService.validatePunishmentPermission(server, MODERATOR_EMAIL, BAN_ORDINAL));
     }
 
     @Test
@@ -114,14 +115,14 @@ class PunishmentPermissionAuthorityTest {
         when(staffLookupCache.findByEmail(server, "ghost@example.com")).thenReturn(Optional.empty());
 
         assertThrows(ForbiddenException.class,
-            () -> lifecycleService.validatePunishmentPermission(server, "ghost@example.com", BAN_ORDINAL));
+                () -> lifecycleService.validatePunishmentPermission(server, "ghost@example.com", BAN_ORDINAL));
     }
 
     @Test
     void anUnauthenticatedCallerIsRejected() {
         assertThrows(ForbiddenException.class,
-            () -> lifecycleService.validatePunishmentPermission(server, null, BAN_ORDINAL));
+                () -> lifecycleService.validatePunishmentPermission(server, null, BAN_ORDINAL));
         assertThrows(ForbiddenException.class,
-            () -> lifecycleService.validatePunishmentPermission(server, "  ", BAN_ORDINAL));
+                () -> lifecycleService.validatePunishmentPermission(server, "  ", BAN_ORDINAL));
     }
 }

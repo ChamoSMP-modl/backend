@@ -9,14 +9,10 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.service.S3StorageService;
 import gg.modl.backend.storage.service.StorageMetadataService;
 import gg.modl.backend.ticket.data.Ticket;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -97,27 +93,27 @@ public class PlayerReplayListingService {
 
     private PlayerReplayResponse toPlayerReplayResponse(ReplayDocument replay, PlayerReplayResponse.MatchSource matchSource) {
         String replayUrl = ReplayDocument.STATUS_COMPLETE.equals(replay.getStatus()) && replay.getStorageKey() != null
-                           ? s3StorageService.getCdnUrl(replay.getStorageKey())
-                           : null;
+                ? s3StorageService.getCdnUrl(replay.getStorageKey())
+                : null;
         return new PlayerReplayResponse(
-            replay.getId(),
-            replay.getTargetUuid(),
-            replay.getTargetName(),
-            replay.getMcVersion(),
-            replay.getFileSize(),
-            replay.getCreatedAt(),
-            replay.getStatus(),
-            replayUrl,
-            matchSource
+                replay.getId(),
+                replay.getTargetUuid(),
+                replay.getTargetName(),
+                replay.getMcVersion(),
+                replay.getFileSize(),
+                replay.getCreatedAt(),
+                replay.getStatus(),
+                replayUrl,
+                matchSource
         );
     }
 
     private boolean hasReplayReference(Map<String, PlayerReplayResponse> responses, String replayUrl, String replayId) {
         return responses.values()
-            .stream()
-            .anyMatch(response ->
-                replayUrl.equals(response.replayUrl())
-                || (replayId != null && replayId.equals(response.replayId()))
-            );
+                .stream()
+                .anyMatch(response ->
+                        replayUrl.equals(response.replayUrl())
+                                || (replayId != null && replayId.equals(response.replayId()))
+                );
     }
 }

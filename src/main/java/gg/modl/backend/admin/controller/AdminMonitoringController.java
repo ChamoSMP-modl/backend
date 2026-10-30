@@ -11,18 +11,12 @@ import gg.modl.proto.modl.v1.ResolveLogRequest;
 import gg.modl.proto.modl.v1.TogglePm2Request;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @RestController
 @RequestMapping(RESTMappingV1.ADMIN_MONITORING)
@@ -38,31 +32,31 @@ public class AdminMonitoringController {
 
     @GetMapping("/logs")
     public ResponseEntity<?> getLogs(
-        @RequestParam(defaultValue = "1") @Min(RequestValidationLimits.PAGINATION_PAGE_MIN) int page,
-        @RequestParam(defaultValue = "50") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
-        @RequestParam(required = false) String level,
-        @RequestParam(required = false) String source,
-        @RequestParam(required = false) String serverId,
-        @RequestParam(required = false) String category,
-        @RequestParam(required = false) String resolved,
-        @RequestParam(required = false) String search,
-        @RequestParam(required = false) String startDate,
-        @RequestParam(required = false) String endDate,
-        @RequestParam(defaultValue = "timestamp") String sort,
-        @RequestParam(defaultValue = "desc") String order) {
+            @RequestParam(defaultValue = "1") @Min(RequestValidationLimits.PAGINATION_PAGE_MIN) int page,
+            @RequestParam(defaultValue = "50") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String serverId,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String resolved,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(defaultValue = "timestamp") String sort,
+            @RequestParam(defaultValue = "desc") String order) {
         return ResponseEntity.ok(AdminMonitoringProtoMapper.toLogsResponse(adminMonitoringService.getLogs(
-            page,
-            limit,
-            level,
-            source,
-            serverId,
-            category,
-            resolved,
-            search,
-            startDate,
-            endDate,
-            sort,
-            order
+                page,
+                limit,
+                level,
+                source,
+                serverId,
+                category,
+                resolved,
+                search,
+                startDate,
+                endDate,
+                sort,
+                order
         )));
     }
 
@@ -70,7 +64,7 @@ public class AdminMonitoringController {
     public ResponseEntity<?> createLog(@RequestBody CreateSystemLogRequest request) {
         SystemLog saved = adminMonitoringService.createLog(AdminMonitoringProtoMapper.fromCreateLog(request));
         return ResponseEntity.status(201).body(
-            AdminMonitoringProtoMapper.toSystemLogMutationResponse(saved, "Log entry created successfully"));
+                AdminMonitoringProtoMapper.toSystemLogMutationResponse(saved, "Log entry created successfully"));
     }
 
     @GetMapping("/sources")
@@ -97,24 +91,24 @@ public class AdminMonitoringController {
     public ResponseEntity<?> deleteLogs(@RequestBody DeleteLogsRequest request) {
         long deletedCount = adminMonitoringService.deleteLogs(request.getLogIdsList());
         return ResponseEntity.ok(AdminMonitoringProtoMapper.toDeleteLogsResponse(
-            deletedCount, "Successfully deleted " + deletedCount + " log(s)"));
+                deletedCount, "Successfully deleted " + deletedCount + " log(s)"));
     }
 
     @GetMapping("/logs/export")
     public ResponseEntity<?> exportLogs(
-        @RequestParam(required = false) String level,
-        @RequestParam(required = false) String source,
-        @RequestParam(required = false) String category,
-        @RequestParam(required = false) String resolved,
-        @RequestParam(required = false) String search,
-        @RequestParam(required = false) String startDate,
-        @RequestParam(required = false) String endDate) {
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String resolved,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         String csv = adminMonitoringService.exportLogs(level, source, category, resolved, search, startDate, endDate);
 
         return ResponseEntity.ok()
-            .header("Content-Type", "text/csv")
-            .header("Content-Disposition", "attachment; filename=\"system-logs-" + new Date().toInstant().toString().split("T")[0] + ".csv\"")
-            .body(csv);
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=\"system-logs-" + new Date().toInstant().toString().split("T")[0] + ".csv\"")
+                .body(csv);
     }
 
     @PostMapping("/logs/clear-all")
@@ -137,6 +131,6 @@ public class AdminMonitoringController {
     public ResponseEntity<?> togglePm2(@RequestBody TogglePm2Request request) {
         boolean enabled = request.hasEnabledValue() ? request.getEnabledValue() : request.getEnabled();
         return ResponseEntity.ok(AdminMonitoringProtoMapper.toPm2ToggleResponse(
-            enabled, "PM2 log streaming " + (enabled ? "enabled" : "disabled")));
+                enabled, "PM2 log streaming " + (enabled ? "enabled" : "disabled")));
     }
 }

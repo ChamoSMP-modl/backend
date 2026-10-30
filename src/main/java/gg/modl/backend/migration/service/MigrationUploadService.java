@@ -4,12 +4,13 @@ import gg.modl.backend.infrastructure.exception.ValidationException;
 import gg.modl.backend.migration.dto.UpdateProgressRequest;
 import gg.modl.backend.migration.service.MigrationService.FileSizeError;
 import gg.modl.backend.server.data.Server;
-import java.nio.file.Path;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Path;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,14 +38,14 @@ public class MigrationUploadService {
         Path filePath = migrationService.saveUploadedFile(file);
         try {
             migrationService.updateProgress(server, new UpdateProgressRequest(
-                "uploading_json",
-                "Migration file uploaded successfully. Starting data processing...",
-                0, 0, null
+                    "uploading_json",
+                    "Migration file uploaded successfully. Starting data processing...",
+                    0, 0, null
             ));
             migrationProcessor.processFileAsync(server, filePath);
         } catch (TaskRejectedException e) {
             migrationService.discardUpload(server, filePath,
-                "Migration processing is busy. Please try again shortly.");
+                    "Migration processing is busy. Please try again shortly.");
             return new UploadResult.ProcessingBusy();
         } catch (RuntimeException e) {
             migrationService.discardUpload(server, filePath, "Migration failed to start.");
@@ -55,12 +56,16 @@ public class MigrationUploadService {
     }
 
     public sealed interface UploadResult {
-        record Success(long fileSize) implements UploadResult {}
+        record Success(long fileSize) implements UploadResult {
+        }
 
-        record FileTooLarge(FileSizeError error) implements UploadResult {}
+        record FileTooLarge(FileSizeError error) implements UploadResult {
+        }
 
-        record ProcessingBusy() implements UploadResult {}
+        record ProcessingBusy() implements UploadResult {
+        }
 
-        record StartFailed() implements UploadResult {}
+        record StartFailed() implements UploadResult {
+        }
     }
 }

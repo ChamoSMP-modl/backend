@@ -1,22 +1,19 @@
 package gg.modl.backend.infrastructure.scheduling;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.SchedulerLeaseRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 class SchedulerLeaseServiceTest {
     private static final Instant NOW = Instant.parse("2026-05-15T12:00:00Z");
@@ -49,7 +46,7 @@ class SchedulerLeaseServiceTest {
     @Test
     void tryAcquireReturnsFalseWhenRepositoryThrows() {
         when(repository.tryAcquire(eq(LEASE), eq(NOW), eq(NOW.plus(TTL)), anyString()))
-            .thenThrow(new RuntimeException("mongo unavailable"));
+                .thenThrow(new RuntimeException("mongo unavailable"));
 
         assertFalse(service.tryAcquire(LEASE, TTL));
     }

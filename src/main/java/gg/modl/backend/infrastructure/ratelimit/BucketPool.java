@@ -4,10 +4,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import org.springframework.stereotype.Component;
+
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.stereotype.Component;
 
 @Component
 public class BucketPool {
@@ -18,17 +19,17 @@ public class BucketPool {
 
     public Bucket resolveBucket(String namespace, String key, int capacity, Duration refillDuration) {
         return namespaces
-            .computeIfAbsent(namespace, ignored -> Caffeine.newBuilder()
-                .maximumSize(MAX_BUCKETS_PER_NAMESPACE)
-                .<String, Bucket>build())
-            .get(key, ignored -> createBucket(capacity, refillDuration));
+                .computeIfAbsent(namespace, ignored -> Caffeine.newBuilder()
+                        .maximumSize(MAX_BUCKETS_PER_NAMESPACE)
+                        .<String, Bucket>build())
+                .get(key, ignored -> createBucket(capacity, refillDuration));
     }
 
     private Bucket createBucket(int capacity, Duration refillDuration) {
         Bandwidth limit = Bandwidth.builder()
-            .capacity(capacity)
-            .refillGreedy(capacity, refillDuration)
-            .build();
+                .capacity(capacity)
+                .refillGreedy(capacity, refillDuration)
+                .build();
         return Bucket.builder().addLimit(limit).build();
     }
 }

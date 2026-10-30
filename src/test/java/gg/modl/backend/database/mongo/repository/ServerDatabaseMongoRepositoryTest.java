@@ -1,12 +1,5 @@
 package gg.modl.backend.database.mongo.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.server.data.Server;
@@ -14,6 +7,9 @@ import gg.modl.backend.server.data.ServerPlan;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 class ServerDatabaseMongoRepositoryTest {
     @Test
@@ -120,6 +116,6 @@ class ServerDatabaseMongoRepositoryTest {
     }
 
     private Server server(String databaseName) {
-        return new Server("Demo", "demo", databaseName, "admin@example.com", false, ServerPlan.FREE);
+        return new Server("Demo", "demo", databaseName, "admin@example.com", false, ServerPlan.PREMIUM);
     }
 }

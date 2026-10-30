@@ -1,18 +1,17 @@
 package gg.modl.backend.staff.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.staff.data.Staff;
-import java.util.Date;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Date;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class SuperAdminStaffSynthesizerTest {
 
@@ -23,7 +22,7 @@ class SuperAdminStaffSynthesizerTest {
 
     @BeforeEach
     void setUp() {
-        server = new Server("Server", "server", "server_db", ADMIN_EMAIL, true, ServerPlan.FREE);
+        server = new Server("Server", "server", "server_db", ADMIN_EMAIL, true, ServerPlan.PREMIUM);
         server.setId("server-id");
         server.setCreatedAt(SERVER_CREATED_AT);
     }

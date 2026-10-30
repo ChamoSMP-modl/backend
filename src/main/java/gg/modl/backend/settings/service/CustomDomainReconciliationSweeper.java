@@ -7,15 +7,12 @@ import gg.modl.backend.infrastructure.exception.ExternalServiceException;
 import gg.modl.backend.server.data.CustomDomainStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.config.CustomDomainReconciliationProperties;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -84,12 +81,12 @@ public class CustomDomainReconciliationSweeper {
             String resolvedCloudflareId = cfResult == null ? cloudflareId : cfResult.id();
 
             if (target == server.getCustomDomainStatus()
-                && Objects.equals(resolution.error(), server.getCustomDomainError())) {
+                    && Objects.equals(resolution.error(), server.getCustomDomainError())) {
                 return false;
             }
 
             boolean updated = stateWriter.reconcileStatus(
-                server.getId(), domain, target, resolvedCloudflareId, resolution.error());
+                    server.getId(), domain, target, resolvedCloudflareId, resolution.error());
             if (updated) {
                 log.info("Custom domain {} reconciled {} -> {}", domain, server.getCustomDomainStatus(), target);
             }
@@ -99,8 +96,8 @@ public class CustomDomainReconciliationSweeper {
 
     private CloudflareClient.CustomHostnameResult lookupHostname(String cloudflareId, String domain) {
         CloudflareClient.CustomHostnameResult cfResult = cloudflareId != null && !cloudflareId.isEmpty()
-                                                         ? cloudflareClient.getCustomHostname(cloudflareId)
-                                                         : null;
+                ? cloudflareClient.getCustomHostname(cloudflareId)
+                : null;
         return cfResult != null ? cfResult : cloudflareClient.findCustomHostnameByName(domain);
     }
 

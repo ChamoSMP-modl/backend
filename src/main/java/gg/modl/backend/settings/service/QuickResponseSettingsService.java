@@ -4,10 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.QuickResponseSettings;
 import gg.modl.backend.settings.dto.request.UpdateQuickResponsesRequest;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.springframework.stereotype.Service;
 
 @Service
 public class QuickResponseSettingsService {
@@ -19,7 +20,7 @@ public class QuickResponseSettingsService {
     public QuickResponseSettingsService(SettingsDocumentService settingsDocumentService, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.support = VersionedSettingsSupport.of(
-            settingsDocumentService, SETTINGS_TYPE_QUICK_RESPONSES, this::mapToQuickResponseSettings);
+                settingsDocumentService, SETTINGS_TYPE_QUICK_RESPONSES, this::mapToQuickResponseSettings);
     }
 
     public QuickResponseSettings getQuickResponseSettings(Server server) {
@@ -52,9 +53,9 @@ public class QuickResponseSettingsService {
     }
 
     public VersionedSettings<QuickResponseSettings> patchQuickResponseSettings(
-        Server server,
-        long expectedVersion,
-        UpdateQuickResponsesRequest quickResponses
+            Server server,
+            long expectedVersion,
+            UpdateQuickResponsesRequest quickResponses
     ) {
         QuickResponseSettings currentSettings = support.get(server);
         if (quickResponses != null && quickResponses.categories() != null) {

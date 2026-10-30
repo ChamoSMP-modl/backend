@@ -1,20 +1,10 @@
 package gg.modl.backend.database.mongo.repository;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.server.data.ProvisioningStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +12,15 @@ import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.UpdateDefinition;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 class ServerRegistrationCleanupRepositoryTest {
     @Test
@@ -54,11 +53,11 @@ class ServerRegistrationCleanupRepositoryTest {
         Server claimed = server();
         when(tenantMongoAccess.global()).thenReturn(template);
         when(template.findAndModify(
-            org.mockito.ArgumentMatchers.any(Query.class),
-            org.mockito.ArgumentMatchers.any(UpdateDefinition.class),
-            org.mockito.ArgumentMatchers.any(FindAndModifyOptions.class),
-            eq(Server.class),
-            eq(CollectionName.MODL_SERVERS)
+                org.mockito.ArgumentMatchers.any(Query.class),
+                org.mockito.ArgumentMatchers.any(UpdateDefinition.class),
+                org.mockito.ArgumentMatchers.any(FindAndModifyOptions.class),
+                eq(Server.class),
+                eq(CollectionName.MODL_SERVERS)
         )).thenReturn(claimed);
         ServerRegistrationCleanupRepository repository = new ServerRegistrationCleanupRepository(tenantMongoAccess);
         Date cutoff = Date.from(Instant.parse("2026-05-01T00:00:00Z"));
@@ -69,11 +68,11 @@ class ServerRegistrationCleanupRepositoryTest {
         ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
         ArgumentCaptor<UpdateDefinition> updateCaptor = ArgumentCaptor.forClass(UpdateDefinition.class);
         verify(template).findAndModify(
-            queryCaptor.capture(),
-            updateCaptor.capture(),
-            org.mockito.ArgumentMatchers.any(FindAndModifyOptions.class),
-            eq(Server.class),
-            eq(CollectionName.MODL_SERVERS)
+                queryCaptor.capture(),
+                updateCaptor.capture(),
+                org.mockito.ArgumentMatchers.any(FindAndModifyOptions.class),
+                eq(Server.class),
+                eq(CollectionName.MODL_SERVERS)
         );
         String queryText = queryCaptor.getValue().getQueryObject().toString();
         assertThat(queryText).contains("_id=server-id");
@@ -89,7 +88,7 @@ class ServerRegistrationCleanupRepositoryTest {
         MongoTemplate template = mock(MongoTemplate.class);
         when(tenantMongoAccess.global()).thenReturn(template);
         when(template.remove(org.mockito.ArgumentMatchers.any(Query.class), eq(Server.class), eq(CollectionName.MODL_SERVERS)))
-            .thenReturn(com.mongodb.client.result.DeleteResult.acknowledged(1));
+                .thenReturn(com.mongodb.client.result.DeleteResult.acknowledged(1));
         ServerRegistrationCleanupRepository repository = new ServerRegistrationCleanupRepository(tenantMongoAccess);
         Date cutoff = Date.from(Instant.parse("2026-05-01T00:00:00Z"));
 
@@ -105,7 +104,7 @@ class ServerRegistrationCleanupRepositoryTest {
     }
 
     private Server server() {
-        Server server = new Server("Demo", "demo", "server_demo", "admin@example.com", false, ServerPlan.FREE);
+        Server server = new Server("Demo", "demo", "server_demo", "admin@example.com", false, ServerPlan.PREMIUM);
         server.setId("server-id");
         server.setProvisioningStatus(ProvisioningStatus.PENDING);
         server.setEmailVerificationToken("token");

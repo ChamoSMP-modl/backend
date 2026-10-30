@@ -1,8 +1,9 @@
 package gg.modl.backend.database.mongo;
 
-import java.util.List;
 import org.bson.Document;
 import org.bson.types.Decimal128;
+
+import java.util.List;
 
 public final class MongoAggregationResults {
     private static final String FACET_COUNT_FIELD = "n";

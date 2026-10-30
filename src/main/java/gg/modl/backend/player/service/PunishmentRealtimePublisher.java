@@ -11,12 +11,13 @@ import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.proto.modl.v1.PanelResource;
 import gg.modl.proto.modl.v1.SyncModifiedPunishment;
 import gg.modl.proto.modl.v1.SyncPendingPunishment;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -120,11 +121,11 @@ public class PunishmentRealtimePublisher {
         List<PunishmentType> types = punishmentTypeService.getPunishmentTypes(server);
         Map<String, String> resolvedIssuers = issuerNameResolver.resolveForPunishments(server, List.of(punishment));
         SimplePunishmentView simplePunishment =
-            PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers);
+                PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers);
         return new SyncPunishmentEntry(
-            player.getMinecraftUuid().toString(),
-            PlayerDataUtils.extractLatestUsername(player.getUsernames()),
-            simplePunishment
+                player.getMinecraftUuid().toString(),
+                PlayerDataUtils.extractLatestUsername(player.getUsernames()),
+                simplePunishment
         );
     }
 
@@ -132,11 +133,11 @@ public class PunishmentRealtimePublisher {
         List<PunishmentType> types = punishmentTypeService.getPunishmentTypes(server);
         Map<String, String> resolvedIssuers = issuerNameResolver.resolveForPunishments(server, List.of(change.punishment()));
         SimplePunishmentView simplePunishment =
-            PunishmentMapper.toSimplePunishment(change.punishment(), types, statusCalculator, resolvedIssuers);
+                PunishmentMapper.toSimplePunishment(change.punishment(), types, statusCalculator, resolvedIssuers);
         return new SyncPunishmentEntry(
-            change.minecraftUuid(),
-            change.username(),
-            simplePunishment
+                change.minecraftUuid(),
+                change.username(),
+                simplePunishment
         );
     }
 

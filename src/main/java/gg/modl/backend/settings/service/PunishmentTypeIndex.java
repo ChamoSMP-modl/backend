@@ -1,12 +1,14 @@
 package gg.modl.backend.settings.service;
 
 import gg.modl.backend.settings.data.PunishmentType;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class PunishmentTypeIndex {
-    private PunishmentTypeIndex() {}
+    private PunishmentTypeIndex() {
+    }
 
     public static Map<Integer, PunishmentType> byOrdinal(List<PunishmentType> types) {
         Map<Integer, PunishmentType> map = new HashMap<>(types.size() * 2);

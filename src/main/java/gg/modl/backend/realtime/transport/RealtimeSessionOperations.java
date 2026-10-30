@@ -4,12 +4,13 @@ import gg.modl.backend.realtime.lifecycle.RealtimeConnectionCleanup;
 import gg.modl.backend.realtime.metrics.RealtimeMetrics;
 import gg.modl.backend.realtime.state.RealtimeConnectionRegistry;
 import gg.modl.backend.realtime.state.RealtimeConnectionState;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
@@ -17,8 +18,6 @@ public class RealtimeSessionOperations {
     private final RealtimeConnectionRegistry connectionRegistry;
     private final RealtimeConnectionCleanup connectionCleanup;
     private final RealtimeMetrics metrics;
-
-    private enum SendOutcome { SENT, CLOSED, FAILED }
 
     private SendOutcome attemptSend(WebSocketSession session, RealtimeConnectionState state, BinaryMessage message) {
         WebSocketSession outboundSession = connectionRegistry.getSession(session).orElse(session);
@@ -84,4 +83,6 @@ public class RealtimeSessionOperations {
             return false;
         }
     }
+
+    private enum SendOutcome {SENT, CLOSED, FAILED}
 }

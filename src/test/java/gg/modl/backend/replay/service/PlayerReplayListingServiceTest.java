@@ -1,12 +1,5 @@
 package gg.modl.backend.replay.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.ReplayMongoRepository;
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
 import gg.modl.backend.replay.data.ReplayDocument;
@@ -16,14 +9,20 @@ import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.storage.service.S3StorageService;
 import gg.modl.backend.storage.service.StorageMetadataService;
 import gg.modl.backend.ticket.data.Ticket;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PlayerReplayListingServiceTest {
@@ -46,12 +45,12 @@ class PlayerReplayListingServiceTest {
     @BeforeEach
     void setUp() {
         listingService = new PlayerReplayListingService(
-            replayRepository,
-            s3StorageService,
-            storageMetadataService,
-            ticketRepository
+                replayRepository,
+                s3StorageService,
+                storageMetadataService,
+                ticketRepository
         );
-        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     }
 
     @Test
@@ -70,39 +69,39 @@ class PlayerReplayListingServiceTest {
         directReplay.setStorageKey("db/replays/replay-1.modlreplay");
 
         Ticket duplicateUrlTicket = Ticket.builder()
-            .id("ticket-1")
-            .creatorUuid(normalizedPlayerUuid)
-            .creatorName("Player")
-            .created(new Date(2000L))
-            .replayUrl("https://cdn.example/db/replays/replay-1.modlreplay")
-            .build();
+                .id("ticket-1")
+                .creatorUuid(normalizedPlayerUuid)
+                .creatorName("Player")
+                .created(new Date(2000L))
+                .replayUrl("https://cdn.example/db/replays/replay-1.modlreplay")
+                .build();
         Ticket duplicateRawIdTicket = Ticket.builder()
-            .id("ticket-raw-duplicate")
-            .creatorUuid(normalizedPlayerUuid)
-            .creatorName("Player")
-            .created(new Date(2500L))
-            .replayUrl("replay-1")
-            .build();
+                .id("ticket-raw-duplicate")
+                .creatorUuid(normalizedPlayerUuid)
+                .creatorName("Player")
+                .created(new Date(2500L))
+                .replayUrl("replay-1")
+                .build();
         Ticket duplicateQueryIdTicket = Ticket.builder()
-            .id("ticket-query-duplicate")
-            .creatorUuid(normalizedPlayerUuid)
-            .creatorName("Player")
-            .created(new Date(2750L))
-            .replayUrl("https://replays.example/?id=replay-1")
-            .build();
+                .id("ticket-query-duplicate")
+                .creatorUuid(normalizedPlayerUuid)
+                .creatorName("Player")
+                .created(new Date(2750L))
+                .replayUrl("https://replays.example/?id=replay-1")
+                .build();
         Ticket fallbackTicket = Ticket.builder()
-            .id("ticket-2")
-            .reportedPlayerUuid(normalizedPlayerUuid)
-            .reportedPlayer("Player")
-            .created(new Date(3000L))
-            .replayUrl("replay-2")
-            .build();
+                .id("ticket-2")
+                .reportedPlayerUuid(normalizedPlayerUuid)
+                .reportedPlayer("Player")
+                .created(new Date(3000L))
+                .replayUrl("replay-2")
+                .build();
 
         when(replayRepository.findByTargetUuid(server, normalizedPlayerUuid, 100)).thenReturn(List.of(directReplay));
         when(s3StorageService.getCdnUrl("db/replays/replay-1.modlreplay"))
-            .thenReturn("https://cdn.example/db/replays/replay-1.modlreplay");
+                .thenReturn("https://cdn.example/db/replays/replay-1.modlreplay");
         when(ticketRepository.findPlayerTicketsWithReplayUrl(server, normalizedPlayerUuid, 100))
-            .thenReturn(List.of(duplicateUrlTicket, duplicateRawIdTicket, duplicateQueryIdTicket, fallbackTicket));
+                .thenReturn(List.of(duplicateUrlTicket, duplicateRawIdTicket, duplicateQueryIdTicket, fallbackTicket));
 
         List<PlayerReplayResponse> replays = listingService.listPlayerReplays(server, requestedPlayerUuid);
 
@@ -151,12 +150,12 @@ class PlayerReplayListingServiceTest {
         String playerUuid = "3f8c9c5a-6b6e-4f2c-9b7f-1a2b3c4d5e6f";
         ReplayDocument orphaned = completeReplay("replay-1", playerUuid, "db/replays/replay-1.modlreplay");
         Ticket ticket = Ticket.builder()
-            .id("ticket-1")
-            .creatorUuid(playerUuid)
-            .creatorName("Player")
-            .created(new Date(2000L))
-            .replayUrl("https://replays.example/?id=replay-1")
-            .build();
+                .id("ticket-1")
+                .creatorUuid(playerUuid)
+                .creatorName("Player")
+                .created(new Date(2000L))
+                .replayUrl("https://replays.example/?id=replay-1")
+                .build();
 
         when(storageMetadataService.isMetadataAuthoritative(server)).thenReturn(true);
         when(replayRepository.findByTargetUuid(server, playerUuid, 100)).thenReturn(List.of(orphaned));

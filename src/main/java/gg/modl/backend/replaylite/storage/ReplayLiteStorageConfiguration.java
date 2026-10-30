@@ -22,7 +22,7 @@ public class ReplayLiteStorageConfiguration {
 
     private boolean hasCredentials() {
         return keyId != null && !keyId.isBlank()
-            && applicationKey != null && !applicationKey.isBlank()
-            && endpoint != null && !endpoint.isBlank();
+                && applicationKey != null && !applicationKey.isBlank()
+                && endpoint != null && !endpoint.isBlank();
     }
 }

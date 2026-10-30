@@ -2,12 +2,12 @@ package gg.modl.backend.staff.service;
 
 import gg.modl.backend.auth.WebAuthnService;
 import gg.modl.backend.auth.session.SessionService;
+import gg.modl.backend.database.mongo.repository.InvitationMongoRepository;
+import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.email.EmailAddressUtil;
 import gg.modl.backend.infrastructure.exception.ConflictException;
 import gg.modl.backend.infrastructure.exception.ForbiddenException;
 import gg.modl.backend.infrastructure.exception.ValidationException;
-import gg.modl.backend.database.mongo.repository.InvitationMongoRepository;
-import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.role.data.StaffRole;
 import gg.modl.backend.role.service.PermissionService;
 import gg.modl.backend.role.service.RoleAuthorization;
@@ -19,15 +19,10 @@ import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.dto.request.CreateStaffRequest;
 import gg.modl.backend.staff.dto.request.UpdateStaffRequest;
 import gg.modl.backend.staff.dto.response.StaffResponse;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +36,13 @@ public class StaffService {
     private final SessionService sessionService;
     private final GeneralSettingsService generalSettingsService;
     private final StaffLookupCache staffLookupCache;
+
+    private static String fallbackRoleName(Map<String, String> roleNamesById, String roleId) {
+        if (roleId == null) {
+            return "";
+        }
+        return roleNamesById.getOrDefault(roleId, roleId);
+    }
 
     public List<StaffResponse> getAllStaff(Server server) {
         List<Staff> staffMembers = staffRepository.findAll(server);
@@ -66,19 +68,19 @@ public class StaffService {
 
         if (!superAdminFound && adminEmail != null) {
             result.add(0, StaffResponseFactory.of(SuperAdminStaffSynthesizer.synthesizeFor(server, adminEmail), "Active",
-                fallbackRoleName(roleNamesById, RoleAuthorization.SUPER_ADMIN_ROLE_ID)));
+                    fallbackRoleName(roleNamesById, RoleAuthorization.SUPER_ADMIN_ROLE_ID)));
         }
 
         for (Invitation invitation : pendingInvitations) {
             result.add(new StaffResponse(
-                invitation.getId(),
-                invitation.getEmail(),
-                null,
-                fallbackRoleName(roleNamesById, invitation.getRoleId()),
-                "Pending Invitation",
-                null,
-                null,
-                invitation.getCreatedAt()
+                    invitation.getId(),
+                    invitation.getEmail(),
+                    null,
+                    fallbackRoleName(roleNamesById, invitation.getRoleId()),
+                    "Pending Invitation",
+                    null,
+                    null,
+                    invitation.getCreatedAt()
             ));
         }
 
@@ -96,13 +98,6 @@ public class StaffService {
 
     private StaffResponse toStaffResponse(Server server, Staff staff, String status) {
         return StaffResponseFactory.of(staff, status, permissionService.assignedRoleName(server, staff));
-    }
-
-    private static String fallbackRoleName(Map<String, String> roleNamesById, String roleId) {
-        if (roleId == null) {
-            return "";
-        }
-        return roleNamesById.getOrDefault(roleId, roleId);
     }
 
     public Optional<StaffResponse> getStaffByUsername(Server server, String username) {
@@ -127,13 +122,13 @@ public class StaffService {
         StaffRole grantedRole = roleAuthorization.assertGrantableRole(server, performer, requestedRole);
 
         Staff staff = Staff.builder()
-            .email(email)
-            .username(request.username())
-            .roleId(grantedRole.getId())
-            .language(generalSettingsService.getGeneralSettings(server).getDefaultLanguage())
-            .createdAt(new Date())
-            .updatedAt(new Date())
-            .build();
+                .email(email)
+                .username(request.username())
+                .roleId(grantedRole.getId())
+                .language(generalSettingsService.getGeneralSettings(server).getDefaultLanguage())
+                .createdAt(new Date())
+                .updatedAt(new Date())
+                .build();
 
         staffRepository.saveEntity(server, staff);
         staffLookupCache.evict(server, staff.getEmail());
@@ -206,11 +201,11 @@ public class StaffService {
             return;
         }
         staffRepository.findByEmailIgnoreCase(server, email)
-            .filter(staff -> RoleAuthorization.SUPER_ADMIN_ROLE_ID.equals(staff.getRoleId()))
-            .ifPresent(staff -> {
-                staffRepository.deleteById(server, staff.getId());
-                serverTimestampService.updateStaffPermissionsTimestamp(server);
-            });
+                .filter(staff -> RoleAuthorization.SUPER_ADMIN_ROLE_ID.equals(staff.getRoleId()))
+                .ifPresent(staff -> {
+                    staffRepository.deleteById(server, staff.getId());
+                    serverTimestampService.updateStaffPermissionsTimestamp(server);
+                });
         staffLookupCache.evict(server, email);
         webAuthnService.deleteCredentialsForEmail(server, email);
         sessionService.invalidateAllSessionsForEmail(server, email);

@@ -1,11 +1,6 @@
 package gg.modl.backend.ticket.util;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 public final class TicketAssigneeUtil {
     public static final int MAX_ASSIGNEES = 20;

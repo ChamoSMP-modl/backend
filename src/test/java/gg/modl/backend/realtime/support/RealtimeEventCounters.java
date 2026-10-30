@@ -11,11 +11,11 @@ public final class RealtimeEventCounters {
 
     public static double realtimeEventCount(MeterRegistry registry, String event, String... extraTags) {
         return registry.find(EVENTS_COUNTER)
-            .tag("event", event)
-            .tags(extraTags)
-            .counters()
-            .stream()
-            .mapToDouble(Counter::count)
-            .sum();
+                .tag("event", event)
+                .tags(extraTags)
+                .counters()
+                .stream()
+                .mapToDouble(Counter::count)
+                .sum();
     }
 }

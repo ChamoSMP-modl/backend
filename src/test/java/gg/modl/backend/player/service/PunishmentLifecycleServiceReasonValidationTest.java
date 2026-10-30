@@ -1,13 +1,5 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
 import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
@@ -22,11 +14,18 @@ import gg.modl.backend.settings.service.OffenderThresholdSettingsService;
 import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.settings.service.WebhookSettingsService;
 import gg.modl.backend.ticket.service.TicketService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class PunishmentLifecycleServiceReasonValidationTest {
 
@@ -41,20 +40,20 @@ class PunishmentLifecycleServiceReasonValidationTest {
         server = mock(Server.class);
         playerRepository = mock(PlayerMongoRepository.class);
         lifecycleService = new PunishmentLifecycleService(
-            playerRepository,
-            mock(PunishmentMongoRepository.class),
-            mock(TicketService.class),
-            mock(PlayerStatusCalculator.class),
-            mock(PunishmentTypeService.class),
-            mock(OffenderThresholdSettingsService.class),
-            mock(PunishmentDurationCalculator.class),
-            mock(IssuerNameResolver.class),
-            mock(PunishmentQueryService.class),
-            mock(PermissionService.class),
-            mock(RoleAuthorization.class),
-            mock(WebhookSettingsService.class),
-            mock(PunishmentRealtimePublisher.class),
-            mock(LogService.class)
+                playerRepository,
+                mock(PunishmentMongoRepository.class),
+                mock(TicketService.class),
+                mock(PlayerStatusCalculator.class),
+                mock(PunishmentTypeService.class),
+                mock(OffenderThresholdSettingsService.class),
+                mock(PunishmentDurationCalculator.class),
+                mock(IssuerNameResolver.class),
+                mock(PunishmentQueryService.class),
+                mock(PermissionService.class),
+                mock(RoleAuthorization.class),
+                mock(WebhookSettingsService.class),
+                mock(PunishmentRealtimePublisher.class),
+                mock(LogService.class)
         );
     }
 
@@ -63,10 +62,10 @@ class PunishmentLifecycleServiceReasonValidationTest {
         CreatePunishmentRequest request = requestWithReason(overlongReason(), null);
 
         ValidationException exception = assertThrows(ValidationException.class,
-            () -> lifecycleService.createPunishment(server, UUID.randomUUID(), request));
+                () -> lifecycleService.createPunishment(server, UUID.randomUUID(), request));
 
         assertEquals("reason must be at most "
-            + RequestValidationLimits.PLAYER_PUNISHMENT_REASON_MAX_LENGTH + " characters", exception.getMessage());
+                + RequestValidationLimits.PLAYER_PUNISHMENT_REASON_MAX_LENGTH + " characters", exception.getMessage());
         verifyNoInteractions(playerRepository);
     }
 
@@ -75,7 +74,7 @@ class PunishmentLifecycleServiceReasonValidationTest {
         CreatePunishmentRequest request = requestWithReason(null, Map.of("reason", overlongReason()));
 
         assertThrows(ValidationException.class,
-            () -> lifecycleService.createPunishment(server, UUID.randomUUID(), request));
+                () -> lifecycleService.createPunishment(server, UUID.randomUUID(), request));
 
         verifyNoInteractions(playerRepository);
     }
@@ -87,7 +86,7 @@ class PunishmentLifecycleServiceReasonValidationTest {
         CreatePunishmentRequest request = requestWithReason(reasonAtLimit, null);
 
         assertThrows(ResourceNotFoundException.class,
-            () -> lifecycleService.createPunishment(server, UUID.randomUUID(), request));
+                () -> lifecycleService.createPunishment(server, UUID.randomUUID(), request));
     }
 
     private String overlongReason() {
@@ -96,6 +95,6 @@ class PunishmentLifecycleServiceReasonValidationTest {
 
     private CreatePunishmentRequest requestWithReason(String reason, Map<String, Object> data) {
         return new CreatePunishmentRequest(
-            "Staff", null, BAN_ORDINAL, null, null, null, null, null, data, reason, null);
+                "Staff", null, BAN_ORDINAL, null, null, null, null, null, data, reason, null);
     }
 }

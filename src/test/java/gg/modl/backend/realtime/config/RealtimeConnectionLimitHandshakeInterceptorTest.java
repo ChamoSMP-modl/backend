@@ -1,19 +1,10 @@
 package gg.modl.backend.realtime.config;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
 import gg.modl.backend.realtime.metrics.RealtimeMetrics;
 import gg.modl.backend.realtime.rate.RealtimeUnauthenticatedConnectionLimiter;
 import gg.modl.backend.realtime.transport.RealtimeSessionAttributes;
 import gg.modl.backend.realtime.transport.RealtimeUnauthenticatedSlot;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpResponse;
@@ -22,6 +13,14 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.socket.WebSocketHandler;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class RealtimeConnectionLimitHandshakeInterceptorTest {
 
@@ -102,8 +101,8 @@ class RealtimeConnectionLimitHandshakeInterceptorTest {
 
     private RealtimeConnectionLimitHandshakeInterceptor interceptor(RealtimeProperties properties) {
         return new RealtimeConnectionLimitHandshakeInterceptor(
-            new RealtimeUnauthenticatedConnectionLimiter(properties),
-            new RealtimeMetrics(new SimpleMeterRegistry()));
+                new RealtimeUnauthenticatedConnectionLimiter(properties),
+                new RealtimeMetrics(new SimpleMeterRegistry()));
     }
 
     private ServletServerHttpRequest request(String remoteAddr) {

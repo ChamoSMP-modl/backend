@@ -1,25 +1,14 @@
 package gg.modl.backend.settings.service;
 
+import org.springframework.stereotype.Component;
+
 import java.util.Arrays;
 import java.util.concurrent.locks.ReentrantLock;
-import org.springframework.stereotype.Component;
 
 @Component
 public class CustomDomainLockRegistry {
     private static final int STRIPES = 64;
     private final ReentrantLock[] locks = createLocks();
-
-    public LockHold acquire(String... keys) {
-        int[] stripeIndices = Arrays.stream(keys)
-            .mapToInt(key -> Math.floorMod(key.hashCode(), STRIPES))
-            .distinct()
-            .sorted()
-            .toArray();
-        for (int stripeIndex : stripeIndices) {
-            locks[stripeIndex].lock();
-        }
-        return new LockHold(stripeIndices);
-    }
 
     private static ReentrantLock[] createLocks() {
         ReentrantLock[] created = new ReentrantLock[STRIPES];
@@ -27,6 +16,18 @@ public class CustomDomainLockRegistry {
             created[i] = new ReentrantLock();
         }
         return created;
+    }
+
+    public LockHold acquire(String... keys) {
+        int[] stripeIndices = Arrays.stream(keys)
+                .mapToInt(key -> Math.floorMod(key.hashCode(), STRIPES))
+                .distinct()
+                .sorted()
+                .toArray();
+        for (int stripeIndex : stripeIndices) {
+            locks[stripeIndex].lock();
+        }
+        return new LockHold(stripeIndices);
     }
 
     public final class LockHold implements AutoCloseable {

@@ -1,26 +1,24 @@
 package gg.modl.backend.database;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.ServerFields;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.mongodb.core.MongoTemplate;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class CustomDomainOverrideDedupeMigrationTest {
     private MongoCollection<Document> collection;
@@ -84,16 +82,16 @@ class CustomDomainOverrideDedupeMigrationTest {
         List<String> ids = new ArrayList<>();
         for (Bson filter : filterCaptor.getAllValues()) {
             ids.add(filter.toBsonDocument(Document.class, MongoClientSettings.getDefaultCodecRegistry())
-                .getString("_id").getValue());
+                    .getString("_id").getValue());
         }
         return ids;
     }
 
     private Document serverDoc(String id, String domain, String status, Date lastChecked) {
         return new Document("_id", id)
-            .append(ServerFields.CUSTOM_DOMAIN_OVERRIDE, domain)
-            .append(ServerFields.CUSTOM_DOMAIN_STATUS, status)
-            .append(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED, lastChecked);
+                .append(ServerFields.CUSTOM_DOMAIN_OVERRIDE, domain)
+                .append(ServerFields.CUSTOM_DOMAIN_STATUS, status)
+                .append(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED, lastChecked);
     }
 
     private Date date(int daysAgoInverse) {

@@ -1,12 +1,13 @@
 package gg.modl.backend.log.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.toTimestamp;
-
 import gg.modl.backend.log.dto.response.SystemLogResponse;
 import gg.modl.proto.modl.v1.PanelLogResponse;
 import gg.modl.proto.modl.v1.PanelLogsResponse;
+
 import java.util.List;
+
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.toTimestamp;
 
 final class LogProtoMapper {
 
@@ -21,11 +22,11 @@ final class LogProtoMapper {
 
     private static PanelLogResponse toPanelLogResponse(SystemLogResponse log) {
         return PanelLogResponse.newBuilder()
-            .setId(stringValue(log.id()))
-            .setDescription(stringValue(log.description()))
-            .setLevel(stringValue(log.level()))
-            .setSource(stringValue(log.source()))
-            .setCreated(toTimestamp(log.created()))
-            .build();
+                .setId(stringValue(log.id()))
+                .setDescription(stringValue(log.description()))
+                .setLevel(stringValue(log.level()))
+                .setSource(stringValue(log.source()))
+                .setCreated(toTimestamp(log.created()))
+                .build();
     }
 }

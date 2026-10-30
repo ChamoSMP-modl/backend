@@ -1,17 +1,16 @@
 package gg.modl.backend.punishment.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
 import gg.modl.backend.player.dto.response.AppealInfoView;
 import gg.modl.proto.modl.v1.PublicPunishmentAppealInfoResponse;
+import org.junit.jupiter.api.Test;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class PublicPunishmentProtoMapperTest {
 
@@ -25,8 +24,8 @@ class PublicPunishmentProtoMapperTest {
         field.put("order", 0);
 
         AppealInfoView appealInfo = new AppealInfoView(
-            "p-1", null, null, null, false, false, null, null,
-            Map.of("fields", List.of(field), "sections", List.of()));
+                "p-1", null, null, null, false, false, null, null,
+                Map.of("fields", List.of(field), "sections", List.of()));
 
         PublicPunishmentAppealInfoResponse response = PublicPunishmentProtoMapper.toAppealInfo(appealInfo);
 
@@ -41,7 +40,7 @@ class PublicPunishmentProtoMapperTest {
     @Test
     void absentAppealFormLeavesFieldUnset() {
         AppealInfoView appealInfo = new AppealInfoView(
-            "p-1", null, null, null, false, false, null, null, null);
+                "p-1", null, null, null, false, false, null, null, null);
 
         PublicPunishmentAppealInfoResponse response = PublicPunishmentProtoMapper.toAppealInfo(appealInfo);
 

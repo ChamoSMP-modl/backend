@@ -8,31 +8,32 @@ import gg.modl.backend.infrastructure.onetimecode.OneTimeCodeFieldNames;
 import gg.modl.backend.infrastructure.onetimecode.OneTimeCodeQueries;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.ticket.data.TicketVerification;
-import java.util.Date;
-import java.util.Optional;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.Optional;
+
 @Repository
 public class TicketVerificationMongoRepository extends AbstractServerMongoRepository<TicketVerification> {
     private static final OneTimeCodeFieldNames FIELDS = new OneTimeCodeFieldNames(
-        TicketVerificationFields.CODE_HASH, TicketVerificationFields.EXPIRES_AT, TicketVerificationFields.FAILED_ATTEMPTS);
+            TicketVerificationFields.CODE_HASH, TicketVerificationFields.EXPIRES_AT, TicketVerificationFields.FAILED_ATTEMPTS);
 
     public TicketVerificationMongoRepository(TenantMongoAccess tenantMongoAccess) {
         super(TicketVerification.class, CollectionName.TICKET_VERIFICATIONS, tenantMongoAccess);
     }
 
+    private static Criteria codeIdentity(String ticketId) {
+        return new Criteria().andOperator(
+                Criteria.where(TicketVerificationFields.TICKET_ID).is(ticketId),
+                Criteria.where(TicketVerificationFields.TOKEN).exists(false)
+        );
+    }
+
     public void replaceCodeVerification(Server server, TicketVerification verification) {
         remove(server, Query.query(codeIdentity(verification.getTicketId())));
         saveEntity(server, verification);
-    }
-
-    private static Criteria codeIdentity(String ticketId) {
-        return new Criteria().andOperator(
-            Criteria.where(TicketVerificationFields.TICKET_ID).is(ticketId),
-            Criteria.where(TicketVerificationFields.TOKEN).exists(false)
-        );
     }
 
     public Optional<TicketVerification> consumeMatchingCode(Server server, String ticketId, String codeHash, Date now) {
@@ -47,9 +48,9 @@ public class TicketVerificationMongoRepository extends AbstractServerMongoReposi
 
     public boolean existsActiveToken(Server server, String ticketId, String token, Date now) {
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(TicketVerificationFields.TICKET_ID).is(ticketId),
-            Criteria.where(TicketVerificationFields.TOKEN).is(token),
-            Criteria.where(TicketVerificationFields.EXPIRES_AT).gte(now)
+                Criteria.where(TicketVerificationFields.TICKET_ID).is(ticketId),
+                Criteria.where(TicketVerificationFields.TOKEN).is(token),
+                Criteria.where(TicketVerificationFields.EXPIRES_AT).gte(now)
         ));
         return exists(server, query);
     }

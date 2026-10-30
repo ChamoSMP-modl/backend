@@ -8,18 +8,15 @@ import gg.modl.proto.modl.v1.ApiError;
 import gg.modl.proto.modl.v1.FieldViolation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -30,6 +27,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 @RestControllerAdvice
 @Slf4j
 @RequiredArgsConstructor
@@ -37,16 +38,24 @@ public class GlobalExceptionHandler {
     private static final String INVALID_DATA_MESSAGE = "Invalid data provided.";
     private final ProtobufErrorResponseWriter protobufErrorResponseWriter;
 
+    private static String fieldErrorMessage(MethodArgumentNotValidException ex) {
+        String details = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + " " + error.getDefaultMessage())
+                .sorted()
+                .collect(Collectors.joining("; "));
+        return details.isEmpty() ? INVALID_DATA_MESSAGE : "Invalid data provided: " + details + ".";
+    }
+
     @ExceptionHandler(SettingsConflictException.class)
     public ResponseEntity<?> handleSettingsConflict(SettingsConflictException ex, HttpServletRequest request) {
         if (protobufErrorResponseWriter.shouldWriteProtobuf(request)) {
             return protobufError(ex.getStatus(), "CONFLICT", ex.getMessage());
         }
         return ResponseEntity.status(ex.getStatus()).body(Map.of(
-            "status", ex.getStatus().value(),
-            "error", ex.getMessage(),
-            "message", ex.getMessage(),
-            "currentVersion", ex.getCurrentVersion()
+                "status", ex.getStatus().value(),
+                "error", ex.getMessage(),
+                "message", ex.getMessage(),
+                "currentVersion", ex.getCurrentVersion()
         ));
     }
 
@@ -69,8 +78,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<?> handleMissingParam(
-        MissingServletRequestParameterException ex,
-        HttpServletRequest request
+            MissingServletRequestParameterException ex,
+            HttpServletRequest request
     ) {
         return respond(request, HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", "Missing required parameter: " + ex.getParameterName());
     }
@@ -90,18 +99,10 @@ public class GlobalExceptionHandler {
         return respond(request, HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", fieldErrorMessage(ex));
     }
 
-    private static String fieldErrorMessage(MethodArgumentNotValidException ex) {
-        String details = ex.getBindingResult().getFieldErrors().stream()
-            .map(error -> error.getField() + " " + error.getDefaultMessage())
-            .sorted()
-            .collect(Collectors.joining("; "));
-        return details.isEmpty() ? INVALID_DATA_MESSAGE : "Invalid data provided: " + details + ".";
-    }
-
     @ExceptionHandler(HandlerMethodValidationException.class)
     public ResponseEntity<?> handleHandlerMethodValidation(
-        HandlerMethodValidationException ex,
-        HttpServletRequest request
+            HandlerMethodValidationException ex,
+            HttpServletRequest request
     ) {
         return respond(request, HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", INVALID_DATA_MESSAGE);
     }
@@ -123,8 +124,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<?> handleMethodNotSupported(
-        HttpRequestMethodNotSupportedException ex,
-        HttpServletRequest request
+            HttpRequestMethodNotSupportedException ex,
+            HttpServletRequest request
     ) {
         return respond(request, HttpStatus.METHOD_NOT_ALLOWED, "METHOD_NOT_ALLOWED", "HTTP method not supported: " + ex.getMethod());
     }
@@ -146,15 +147,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleProtoValidation(ProtoValidationException ex, HttpServletRequest request) {
         if (protobufErrorResponseWriter.shouldWriteProtobuf(request)) {
             ApiError.Builder error = ApiError.newBuilder()
-                .setStatusCode(400)
-                .setCode("INVALID_ARGUMENT")
-                .setMessage(ex.getMessage());
+                    .setStatusCode(400)
+                    .setCode("INVALID_ARGUMENT")
+                    .setMessage(ex.getMessage());
             ex.getViolations().stream()
-                .map(violation -> FieldViolation.newBuilder()
-                    .setField(Objects.toString(violation.getFieldPath(), ""))
-                    .setMessage(violation.getMessage())
-                    .build())
-                .forEach(error::addFieldViolations);
+                    .map(violation -> FieldViolation.newBuilder()
+                            .setField(Objects.toString(violation.getFieldPath(), ""))
+                            .setMessage(violation.getMessage())
+                            .build())
+                    .forEach(error::addFieldViolations);
             return protobufError(HttpStatus.BAD_REQUEST, error.build());
         }
         return ResponseEntity.badRequest().body(new ErrorResponseDTO(400, INVALID_DATA_MESSAGE));
@@ -190,15 +191,15 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ApiError> protobufError(HttpStatus status, String code, String message) {
         return protobufError(status, ApiError.newBuilder()
-            .setStatusCode(status.value())
-            .setCode(code)
-            .setMessage(message)
-            .build());
+                .setStatusCode(status.value())
+                .setCode(code)
+                .setMessage(message)
+                .build());
     }
 
     private ResponseEntity<ApiError> protobufError(HttpStatus status, ApiError error) {
         return ResponseEntity.status(status)
-            .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-            .body(error);
+                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                .body(error);
     }
 }

@@ -1,10 +1,10 @@
 package gg.modl.backend.player.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.setOptionalString;
-
 import gg.modl.backend.player.dto.response.PunishmentPreviewView;
 import gg.modl.backend.player.dto.response.PunishmentSeverityPreviewView;
 import gg.modl.proto.modl.v1.PunishmentPreviewResponse;
+
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.setOptionalString;
 
 public final class PunishmentPreviewProtoMapper {
     private PunishmentPreviewProtoMapper() {
@@ -12,15 +12,15 @@ public final class PunishmentPreviewProtoMapper {
 
     public static PunishmentPreviewResponse toProto(PunishmentPreviewView preview) {
         PunishmentPreviewResponse.Builder builder = PunishmentPreviewResponse.newBuilder()
-            .setStatus(preview.getStatus())
-            .setSuccess(preview.isSuccess())
-            .setSingleSeverityPunishment(preview.isSingleSeverityPunishment())
-            .setPermanentUntilUsernameChange(preview.isPermanentUntilUsernameChange())
-            .setPermanentUntilSkinChange(preview.isPermanentUntilSkinChange())
-            .setCanBeAltBlocking(preview.isCanBeAltBlocking())
-            .setCanBeStatWiping(preview.isCanBeStatWiping())
-            .setSocialPoints(preview.getSocialPoints())
-            .setGameplayPoints(preview.getGameplayPoints());
+                .setStatus(preview.getStatus())
+                .setSuccess(preview.isSuccess())
+                .setSingleSeverityPunishment(preview.isSingleSeverityPunishment())
+                .setPermanentUntilUsernameChange(preview.isPermanentUntilUsernameChange())
+                .setPermanentUntilSkinChange(preview.isPermanentUntilSkinChange())
+                .setCanBeAltBlocking(preview.isCanBeAltBlocking())
+                .setCanBeStatWiping(preview.isCanBeStatWiping())
+                .setSocialPoints(preview.getSocialPoints())
+                .setGameplayPoints(preview.getGameplayPoints());
 
         setOptionalString(builder::setMessage, preview.getMessage());
         setOptionalString(builder::setSocialStatus, preview.getSocialStatus());
@@ -46,12 +46,12 @@ public final class PunishmentPreviewProtoMapper {
 
     private static PunishmentPreviewResponse.SeverityPreview toProto(PunishmentSeverityPreviewView preview) {
         PunishmentPreviewResponse.SeverityPreview.Builder builder =
-            PunishmentPreviewResponse.SeverityPreview.newBuilder()
-                .setPermanent(preview.isPermanent())
-                .setPoints(preview.getPoints())
-                .setDurationMs(preview.getDurationMs())
-                .setNewSocialPoints(preview.getNewSocialPoints())
-                .setNewGameplayPoints(preview.getNewGameplayPoints());
+                PunishmentPreviewResponse.SeverityPreview.newBuilder()
+                        .setPermanent(preview.isPermanent())
+                        .setPoints(preview.getPoints())
+                        .setDurationMs(preview.getDurationMs())
+                        .setNewSocialPoints(preview.getNewSocialPoints())
+                        .setNewGameplayPoints(preview.getNewGameplayPoints());
 
         setOptionalString(builder::setSeverity, preview.getSeverity());
         setOptionalString(builder::setDurationFormatted, preview.getDurationFormatted());

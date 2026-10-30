@@ -14,8 +14,8 @@ public enum PlayerAccessPolicy implements PanelAccessPolicy {
     public boolean permitsWithRole(PanelAccessRequest request, PanelPrincipalPermissions permissions) {
         if (request.isReadOnly()) {
             return permissions.has(PermissionService.PUNISHMENT_VIEW)
-                || permissions.has(PermissionService.PUNISHMENT_MODIFY)
-                || permissions.hasAnyWithPrefix(PermissionService.PUNISHMENT_APPLY_PREFIX);
+                    || permissions.has(PermissionService.PUNISHMENT_MODIFY)
+                    || permissions.hasAnyWithPrefix(PermissionService.PUNISHMENT_APPLY_PREFIX);
         }
         return permissions.has(PermissionService.PUNISHMENT_MODIFY);
     }

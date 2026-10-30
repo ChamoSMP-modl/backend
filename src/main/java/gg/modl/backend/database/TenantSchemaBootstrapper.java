@@ -3,13 +3,6 @@ package gg.modl.backend.database;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.ServerFields;
 import gg.modl.backend.infrastructure.scheduling.SchedulerLeaseService;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -18,6 +11,14 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -58,10 +59,10 @@ public class TenantSchemaBootstrapper {
         Query query = new Query();
         query.fields().include(ServerFields.ID).include(ServerFields.DATABASE_NAME);
         return tenantMongoAccess.global()
-            .find(query, BootstrapTarget.class, CollectionName.MODL_SERVERS)
-            .stream()
-            .filter(target -> target.databaseName() != null && !target.databaseName().isBlank())
-            .toList();
+                .find(query, BootstrapTarget.class, CollectionName.MODL_SERVERS)
+                .stream()
+                .filter(target -> target.databaseName() != null && !target.databaseName().isBlank())
+                .toList();
     }
 
     private void dispatchTenantBootstrap(List<BootstrapTarget> targets) {
@@ -72,8 +73,8 @@ public class TenantSchemaBootstrapper {
         AtomicInteger failed = new AtomicInteger();
 
         CompletableFuture<?>[] tasks = targets.stream()
-            .map(target -> CompletableFuture.runAsync(() -> bootstrapTenant(target, succeeded, failed), executor))
-            .toArray(CompletableFuture[]::new);
+                .map(target -> CompletableFuture.runAsync(() -> bootstrapTenant(target, succeeded, failed), executor))
+                .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(tasks).whenComplete((ignored, throwable) -> {
             log.info("Tenant schema bootstrap complete succeeded={} failed={}", succeeded.get(), failed.get());
@@ -84,7 +85,7 @@ public class TenantSchemaBootstrapper {
     private void bootstrapTenant(BootstrapTarget target, AtomicInteger succeeded, AtomicInteger failed) {
         try {
             log.debug("Bootstrapping schema for server id={} database={}",
-                target.id(), target.databaseName());
+                    target.id(), target.databaseName());
             MongoTemplate template = tenantMongoAccess.forDatabase(target.databaseName());
             tenantMigrationService.applyMigrationsForTenant(template);
             mongoIndexReconciler.createTenantIndexes(template);
@@ -92,7 +93,7 @@ public class TenantSchemaBootstrapper {
         } catch (Exception e) {
             failed.incrementAndGet();
             log.warn("Failed to bootstrap schema for server id={} database={}",
-                target.id(), target.databaseName(), e);
+                    target.id(), target.databaseName(), e);
         }
     }
 

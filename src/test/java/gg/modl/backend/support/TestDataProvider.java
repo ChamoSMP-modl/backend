@@ -1,13 +1,14 @@
 package gg.modl.backend.support;
 
-import static com.mongodb.client.model.Filters.*;
-
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.Updates;
+import org.bson.Document;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.bson.Document;
+
+import static com.mongodb.client.model.Filters.*;
 
 public final class TestDataProvider {
 
@@ -24,7 +25,8 @@ public final class TestDataProvider {
     private static List<StaffInfo> staffMembers;
     private static List<RoleInfo> rolesList;
 
-    private TestDataProvider() {}
+    private TestDataProvider() {
+    }
 
     public static List<PlayerInfo> getPlayers() {
         initialize();
@@ -260,11 +262,15 @@ public final class TestDataProvider {
 
     // ── Record types ──
 
-    public record PlayerInfo(String uuid, String username) {}
+    public record PlayerInfo(String uuid, String username) {
+    }
 
-    public record PunishmentTypeInfo(int ordinal, String name, String category) {}
+    public record PunishmentTypeInfo(int ordinal, String name, String category) {
+    }
 
-    public record StaffInfo(String id, String username, String role) {}
+    public record StaffInfo(String id, String username, String role) {
+    }
 
-    public record RoleInfo(String id, String name) {}
+    public record RoleInfo(String id, String name) {
+    }
 }

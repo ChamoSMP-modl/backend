@@ -3,12 +3,13 @@ package gg.modl.backend.realtime.state;
 import gg.modl.backend.realtime.auth.RealtimeClientKind;
 import gg.modl.backend.realtime.auth.RealtimePrincipal;
 import gg.modl.proto.modl.v1.Topic;
+import org.jetbrains.annotations.Nullable;
+
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import org.jetbrains.annotations.Nullable;
 
 public class RealtimeConnectionState {
     private final String connectionId = UUID.randomUUID().toString();
@@ -111,7 +112,9 @@ public class RealtimeConnectionState {
         lastHeartbeat = Instant.now();
     }
 
-    /** Sequence for the next unsolicited server -> client heartbeat on this connection. */
+    /**
+     * Sequence for the next unsolicited server -> client heartbeat on this connection.
+     */
     public long nextOutboundHeartbeatSequence() {
         return outboundHeartbeatSequence.incrementAndGet();
     }

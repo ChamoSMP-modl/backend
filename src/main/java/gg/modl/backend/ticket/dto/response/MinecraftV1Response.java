@@ -3,15 +3,15 @@ package gg.modl.backend.ticket.dto.response;
 import java.util.List;
 
 public sealed interface MinecraftV1Response permits
-    MinecraftV1Response.TicketCreated,
-    MinecraftV1Response.TicketList,
-    MinecraftV1Response.PlayerTicketList,
-    MinecraftV1Response.TicketLookupList,
-    MinecraftV1Response.TicketDetail,
-    MinecraftV1Response.TicketClaim,
-    MinecraftV1Response.ReportList,
-    MinecraftV1Response.ReportOperation,
-    MinecraftV1Response.NotFound {
+        MinecraftV1Response.TicketCreated,
+        MinecraftV1Response.TicketList,
+        MinecraftV1Response.PlayerTicketList,
+        MinecraftV1Response.TicketLookupList,
+        MinecraftV1Response.TicketDetail,
+        MinecraftV1Response.TicketClaim,
+        MinecraftV1Response.ReportList,
+        MinecraftV1Response.ReportOperation,
+        MinecraftV1Response.NotFound {
 
     int status();
 
@@ -31,7 +31,7 @@ public sealed interface MinecraftV1Response permits
     }
 
     record TicketClaim(int status, boolean success, String message, String ticketId, String subject)
-        implements MinecraftV1Response {
+            implements MinecraftV1Response {
     }
 
     record ReportList(int status, List<MinecraftReportView> reports) implements MinecraftV1Response {

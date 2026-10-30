@@ -10,30 +10,21 @@ import gg.modl.backend.migration.dto.UpdateProgressRequest;
 import gg.modl.backend.migration.validation.MigrationValidator;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.server.data.Server;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MigrationProcessor {
-    private final PlayerMongoRepository playerRepository;
-    private final MigrationService migrationService;
-    private final MigrationValidator validator;
-    private final ObjectMapper objectMapper;
-    private final MigrationRecordMapper recordMapper;
-
     private static final int BATCH_SIZE = 500;
     private static final int PROGRESS_UPDATE_INTERVAL = 1000;
     private static final int MAX_JSON_NESTING_DEPTH = 100;
@@ -42,6 +33,23 @@ public class MigrationProcessor {
     private static final String PLAYERS_FIELD = "players";
     private static final String METADATA_FIELD = "metadata";
     private static final String PLAYER_COUNT_FIELD = "playerCount";
+    private final PlayerMongoRepository playerRepository;
+    private final MigrationService migrationService;
+    private final MigrationValidator validator;
+    private final ObjectMapper objectMapper;
+    private final MigrationRecordMapper recordMapper;
+
+    private static String processingMessage(int processed, Integer total) {
+        if (total == null) {
+            return "Processing player records... (" + processed + ")";
+        }
+        return "Processing player records... (" + processed + "/" + total + ")";
+    }
+
+    private static String boundFailureMessage(String prefix, String detail) {
+        return MigrationMessages.truncate(prefix + (detail == null ? "unknown error" : detail),
+                MAX_FAILURE_MESSAGE_LENGTH);
+    }
 
     @Async("migrationTaskExecutor")
     public void processFileAsync(Server server, Path filePath) {
@@ -57,16 +65,16 @@ public class MigrationProcessor {
 
         try {
             migrationService.updateProgress(server, new UpdateProgressRequest(
-                "processing_data",
-                "Reading and validating migration file...",
-                0, 0, null
+                    "processing_data",
+                    "Reading and validating migration file...",
+                    0, 0, null
             ));
 
             ObjectMapper constrainedMapper = objectMapper.copy();
             constrainedMapper.getFactory().setStreamReadConstraints(StreamReadConstraints.builder()
-                .maxNestingDepth(MAX_JSON_NESTING_DEPTH)
-                .maxStringLength(MAX_JSON_STRING_LENGTH)
-                .build());
+                    .maxNestingDepth(MAX_JSON_NESTING_DEPTH)
+                    .maxStringLength(MAX_JSON_STRING_LENGTH)
+                    .build());
 
             if (streamMigrationFile(server, filePath, constrainedMapper, counters)) {
                 return;
@@ -74,9 +82,9 @@ public class MigrationProcessor {
 
             try {
                 migrationService.updateProgress(server, new UpdateProgressRequest(
-                    "completed",
-                    "Migration completed successfully",
-                    counters.processed(), counters.skipped(), counters.total()
+                        "completed",
+                        "Migration completed successfully",
+                        counters.processed(), counters.skipped(), counters.total()
                 ));
             } catch (Exception e) {
                 log.error("Failed to persist terminal migration state (completed)", e);
@@ -99,7 +107,7 @@ public class MigrationProcessor {
     private void failMigration(Server server, String message, ProgressCounters counters) {
         try {
             migrationService.updateProgress(server, new UpdateProgressRequest(
-                "failed", message, counters.processed(), counters.skipped(), null
+                    "failed", message, counters.processed(), counters.skipped(), null
             ));
         } catch (Exception e) {
             log.error("Failed to persist terminal migration state (failed)", e);
@@ -121,7 +129,7 @@ public class MigrationProcessor {
 
                 if (PLAYERS_FIELD.equals(field)) {
                     MigrationValidator.ValidationResult header = validator.validateHeader(
-                        true, parser.currentToken() == JsonToken.START_ARRAY, counters.total());
+                            true, parser.currentToken() == JsonToken.START_ARRAY, counters.total());
                     if (!header.valid()) {
                         throw new MigrationDataException(header.error());
                     }
@@ -139,7 +147,7 @@ public class MigrationProcessor {
 
             if (!playersStreamed) {
                 throw new MigrationDataException(
-                    validator.validateHeader(false, false, counters.total()).error());
+                        validator.validateHeader(false, false, counters.total()).error());
             }
 
             return false;
@@ -188,7 +196,7 @@ public class MigrationProcessor {
 
         if (!migrationService.isActiveMigrationPresent(server)) {
             log.info("Migration cancelled or no longer active; stopping processing after {} records",
-                counters.processed());
+                    counters.processed());
             return true;
         }
         return false;
@@ -196,9 +204,9 @@ public class MigrationProcessor {
 
     private void announceProcessingProgress(Server server, ProgressCounters counters) {
         migrationService.updateProgress(server, new UpdateProgressRequest(
-            "processing_data",
-            processingMessage(counters.processed(), counters.total()),
-            counters.processed(), counters.skipped(), counters.total()
+                "processing_data",
+                processingMessage(counters.processed(), counters.total()),
+                counters.processed(), counters.skipped(), counters.total()
         ));
     }
 
@@ -219,18 +227,6 @@ public class MigrationProcessor {
             }
         }
         return playerCount;
-    }
-
-    private static String processingMessage(int processed, Integer total) {
-        if (total == null) {
-            return "Processing player records... (" + processed + ")";
-        }
-        return "Processing player records... (" + processed + "/" + total + ")";
-    }
-
-    private static String boundFailureMessage(String prefix, String detail) {
-        return MigrationMessages.truncate(prefix + (detail == null ? "unknown error" : detail),
-            MAX_FAILURE_MESSAGE_LENGTH);
     }
 
     private BatchResult processBatch(Server server, List<Map<?, ?>> batch) {
@@ -262,7 +258,7 @@ public class MigrationProcessor {
         }
 
         List<Player> existingPlayers = playerRepository.findByMinecraftUuids(server,
-            uuids.stream().map(UUID::fromString).toList());
+                uuids.stream().map(UUID::fromString).toList());
         Map<String, Player> existingMap = new HashMap<>();
         for (Player p : existingPlayers) {
             existingMap.put(p.getMinecraftUuid().toString(), p);
@@ -305,7 +301,8 @@ public class MigrationProcessor {
         return new BatchResult(processed, skipped);
     }
 
-    private record BatchResult(int processed, int skipped) {}
+    private record BatchResult(int processed, int skipped) {
+    }
 
     private static final class ProgressCounters {
         private int processed;

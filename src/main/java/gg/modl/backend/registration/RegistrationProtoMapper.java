@@ -2,14 +2,7 @@ package gg.modl.backend.registration;
 
 import gg.modl.backend.server.data.ProvisioningStatus;
 import gg.modl.backend.server.data.Server;
-import gg.modl.proto.modl.v1.AutoLoginResponse;
-import gg.modl.proto.modl.v1.CliRegistrationResponse;
-import gg.modl.proto.modl.v1.CliSetupStatusResponse;
-import gg.modl.proto.modl.v1.EmailVerificationResponse;
-import gg.modl.proto.modl.v1.PublicRegistrationResponse;
-import gg.modl.proto.modl.v1.RegistrationApiKeyResponse;
-import gg.modl.proto.modl.v1.ServerSummary;
-import gg.modl.proto.modl.v1.SetupStatusResponse;
+import gg.modl.proto.modl.v1.*;
 
 import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.setOptionalString;
 import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
@@ -21,15 +14,15 @@ final class RegistrationProtoMapper {
 
     static ServerSummary toServerSummary(Server server) {
         return ServerSummary.newBuilder()
-            .setId(stringValue(server.getId()))
-            .setName(stringValue(server.getServerName()))
-            .build();
+                .setId(stringValue(server.getId()))
+                .setName(stringValue(server.getServerName()))
+                .build();
     }
 
     static PublicRegistrationResponse toRegistrationResponse(boolean success, String message, Server server) {
         PublicRegistrationResponse.Builder builder = PublicRegistrationResponse.newBuilder()
-            .setSuccess(success)
-            .setMessage(stringValue(message));
+                .setSuccess(success)
+                .setMessage(stringValue(message));
         if (server != null) {
             builder.setServer(toServerSummary(server));
         }
@@ -39,8 +32,8 @@ final class RegistrationProtoMapper {
     static EmailVerificationResponse toEmailVerificationResponse(boolean success, String message, String subdomain,
                                                                  String autoLoginToken) {
         EmailVerificationResponse.Builder builder = EmailVerificationResponse.newBuilder()
-            .setSuccess(success)
-            .setMessage(stringValue(message));
+                .setSuccess(success)
+                .setMessage(stringValue(message));
         setOptionalString(builder::setSubdomain, subdomain);
         setOptionalString(builder::setAutoLoginToken, autoLoginToken);
         return builder.build();
@@ -63,8 +56,8 @@ final class RegistrationProtoMapper {
 
     static AutoLoginResponse toAutoLoginResponse(boolean success, String message, String redirectUrl) {
         AutoLoginResponse.Builder builder = AutoLoginResponse.newBuilder()
-            .setSuccess(success)
-            .setMessage(stringValue(message));
+                .setSuccess(success)
+                .setMessage(stringValue(message));
         setOptionalString(builder::setRedirectUrl, redirectUrl);
         return builder.build();
     }
@@ -72,8 +65,8 @@ final class RegistrationProtoMapper {
     static CliRegistrationResponse toCliRegistrationResponse(boolean success, String message, Server server,
                                                              String setupToken) {
         CliRegistrationResponse.Builder builder = CliRegistrationResponse.newBuilder()
-            .setSuccess(success)
-            .setMessage(stringValue(message));
+                .setSuccess(success)
+                .setMessage(stringValue(message));
         if (server != null) {
             builder.setServer(toServerSummary(server));
         }
@@ -85,7 +78,7 @@ final class RegistrationProtoMapper {
                                                            ProvisioningStatus provisioningStatus, String apiKey,
                                                            String message) {
         CliSetupStatusResponse.Builder builder = CliSetupStatusResponse.newBuilder()
-            .setSuccess(success);
+                .setSuccess(success);
         if (emailVerified != null) {
             builder.setEmailVerified(emailVerified);
         }
@@ -99,7 +92,7 @@ final class RegistrationProtoMapper {
 
     static RegistrationApiKeyResponse toApiKeyResponse(boolean success, String apiKey, String panelUrl, String message) {
         RegistrationApiKeyResponse.Builder builder = RegistrationApiKeyResponse.newBuilder()
-            .setSuccess(success);
+                .setSuccess(success);
         setOptionalString(builder::setApiKey, apiKey);
         setOptionalString(builder::setPanelUrl, panelUrl);
         setOptionalString(builder::setMessage, message);

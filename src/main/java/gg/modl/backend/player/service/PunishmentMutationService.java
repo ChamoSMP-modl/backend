@@ -3,12 +3,10 @@ package gg.modl.backend.player.service;
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
 import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
+import gg.modl.backend.infrastructure.util.IdGenerator;
+import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.player.data.Player;
-import gg.modl.backend.player.data.punishment.Punishment;
-import gg.modl.backend.player.data.punishment.PunishmentModification;
-import gg.modl.backend.player.data.punishment.PunishmentModificationType;
-import gg.modl.backend.player.data.punishment.PunishmentNote;
-import gg.modl.backend.player.data.punishment.PunishmentToggleOption;
+import gg.modl.backend.player.data.punishment.*;
 import gg.modl.backend.player.dto.request.AddModificationRequest;
 import gg.modl.backend.player.dto.request.ModifyPunishmentTicketsRequest;
 import gg.modl.backend.player.service.PunishmentQueryService.PunishmentContext;
@@ -18,16 +16,11 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.ticket.data.AppealWorkflowStatus;
 import gg.modl.backend.ticket.service.AppealWorkflowTransitionService;
 import gg.modl.backend.ticket.service.TicketService;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import gg.modl.backend.infrastructure.util.IdGenerator;
-import gg.modl.backend.infrastructure.util.UuidUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -44,22 +37,22 @@ public class PunishmentMutationService {
 
     public Player addModification(Server server, UUID playerUuid, String punishmentId, AddModificationRequest request) {
         Player player = playerRepository.findByMinecraftUuid(server, playerUuid.toString())
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
 
         Date now = new Date();
         String modIssuerName = PunishmentMapper.storedName(request.issuerId(), request.issuerName());
         String modIssuerId = request.issuerId();
 
         PunishmentModification modification = new PunishmentModification(
-            IdGenerator.generateShortId(),
-            request.type(),
-            now,
-            modIssuerName,
-            modIssuerId,
-            request.reason() != null ? request.reason() : "",
-            request.effectiveDuration(),
-            request.appealTicketId(),
-            null
+                IdGenerator.generateShortId(),
+                request.type(),
+                now,
+                modIssuerName,
+                modIssuerId,
+                request.reason() != null ? request.reason() : "",
+                request.effectiveDuration(),
+                request.appealTicketId(),
+                null
         );
 
         Punishment punishment = PunishmentQueryService.findPunishment(player, punishmentId);
@@ -106,26 +99,26 @@ public class PunishmentMutationService {
         Long effective = (newDuration == null) ? -1L : newDuration;
 
         PunishmentModification modification = new PunishmentModification(
-            IdGenerator.generateShortId(),
-            PunishmentModificationType.MANUAL_DURATION_CHANGE.name(),
-            now,
-            resolvedIssuerName,
-            issuerId,
-            "Duration changed",
-            effective,
-            null,
-            null
+                IdGenerator.generateShortId(),
+                PunishmentModificationType.MANUAL_DURATION_CHANGE.name(),
+                now,
+                resolvedIssuerName,
+                issuerId,
+                "Duration changed",
+                effective,
+                null,
+                null
         );
 
         String durationText = newDuration == null || newDuration < 0
-                              ? "permanent"
-                              : PunishmentMapper.formatDuration(newDuration, false);
+                ? "permanent"
+                : PunishmentMapper.formatDuration(newDuration, false);
         PunishmentNote note = new PunishmentNote(
-            IdGenerator.generateShortId(),
-            "changed duration to " + durationText,
-            now,
-            resolvedIssuerName,
-            issuerId
+                IdGenerator.generateShortId(),
+                "changed duration to " + durationText,
+                now,
+                resolvedIssuerName,
+                issuerId
         );
 
         punishment.getModifications().add(modification);
@@ -143,10 +136,10 @@ public class PunishmentMutationService {
             int cascaded = punishmentLifecycleService.cascadeDurationChangeToLinkedBans(server, punishmentId, newDuration, issuerName);
             if (cascaded > 0) {
                 return new PunishmentOperationResult(
-                    PunishmentOperationStatus.SUCCESS,
-                    "Duration changed (cascaded to " + cascaded + " linked ban" + (cascaded > 1 ? "s" : "") + ")",
-                    true,
-                    cascaded + 1
+                        PunishmentOperationStatus.SUCCESS,
+                        "Duration changed (cascaded to " + cascaded + " linked ban" + (cascaded > 1 ? "s" : "") + ")",
+                        true,
+                        cascaded + 1
                 );
             }
         }
@@ -169,16 +162,16 @@ public class PunishmentMutationService {
         Date now = new Date();
         String resolvedIssuerName = PunishmentMapper.storedName(issuerId, issuerName);
         PunishmentNote note = new PunishmentNote(
-            IdGenerator.generateShortId(),
-            (enabled ? "enabled " : "disabled ") + toggleOption.displayName(),
-            now,
-            resolvedIssuerName,
-            issuerId
+                IdGenerator.generateShortId(),
+                (enabled ? "enabled " : "disabled ") + toggleOption.displayName(),
+                now,
+                resolvedIssuerName,
+                issuerId
         );
         toggleOption.apply(punishment.data(), enabled);
         punishment.getNotes().add(note);
         punishmentRepository.setPunishmentData(server, context.player().getMinecraftUuid().toString(), punishmentId,
-            Map.of(toggleOption.dataKey(), enabled), note);
+                Map.of(toggleOption.dataKey(), enabled), note);
         realtimePublisher.punishmentModified(server, context.player(), punishment);
 
         return new PunishmentOperationResult(PunishmentOperationStatus.SUCCESS, "Option toggled", true, 1);
@@ -192,15 +185,15 @@ public class PunishmentMutationService {
 
         if (!context.punishment().data().wipeAfterExpiry()) {
             return new PunishmentOperationResult(
-                PunishmentOperationStatus.NO_OP,
-                "Stat wipe no longer enabled for this punishment",
-                false,
-                0
+                    PunishmentOperationStatus.NO_OP,
+                    "Stat wipe no longer enabled for this punishment",
+                    false,
+                    0
             );
         }
 
         punishmentRepository.markStatWipeAcknowledged(server, context.player().getMinecraftUuid().toString(),
-            punishmentId, new Date());
+                punishmentId, new Date());
 
         return new PunishmentOperationResult(PunishmentOperationStatus.SUCCESS, "Stat wipe acknowledged", true, 1);
     }
@@ -216,36 +209,36 @@ public class PunishmentMutationService {
     }
 
     public PunishmentOperationResult modifyPunishmentTickets(
-        Server server,
-        String punishmentId,
-        List<String> addTicketIds,
-        List<String> removeTicketIds,
-        boolean modifyAssociatedTickets,
-        String issuerName,
-        String issuerId
+            Server server,
+            String punishmentId,
+            List<String> addTicketIds,
+            List<String> removeTicketIds,
+            boolean modifyAssociatedTickets,
+            String issuerName,
+            String issuerId
     ) {
         return modifyPunishmentTickets(
-            server,
-            punishmentId,
-            new ModifyPunishmentTicketsRequest(
-                addTicketIds,
-                removeTicketIds,
-                modifyAssociatedTickets,
-                issuerName,
-                issuerId
-            )
+                server,
+                punishmentId,
+                new ModifyPunishmentTicketsRequest(
+                        addTicketIds,
+                        removeTicketIds,
+                        modifyAssociatedTickets,
+                        issuerName,
+                        issuerId
+                )
         );
     }
 
     public Player modifyPunishmentTickets(Server server, UUID playerUuid, String punishmentId, ModifyPunishmentTicketsRequest request) {
         Player player = playerRepository.findByMinecraftUuid(server, playerUuid.toString())
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
 
         Punishment punishment = player.getPunishments()
-            .stream()
-            .filter(p -> p.getId().equals(punishmentId))
-            .findFirst()
-            .orElseThrow(() -> new ResourceNotFoundException("Punishment not found"));
+                .stream()
+                .filter(p -> p.getId().equals(punishmentId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Punishment not found"));
 
         applyPunishmentTicketModifications(server, player, punishment, request);
         realtimePublisher.punishmentDetailsChanged(server, player, punishment);
@@ -255,8 +248,8 @@ public class PunishmentMutationService {
     private void applyPunishmentTicketModifications(Server server, Player player, Punishment punishment, ModifyPunishmentTicketsRequest request) {
 
         List<String> currentIds = punishment.getAttachedTicketIds() != null
-            ? new ArrayList<>(punishment.getAttachedTicketIds())
-            : new ArrayList<>();
+                ? new ArrayList<>(punishment.getAttachedTicketIds())
+                : new ArrayList<>();
         List<String> originalIds = new ArrayList<>(currentIds);
 
         if (request.addTicketIds() != null) {
@@ -309,7 +302,7 @@ public class PunishmentMutationService {
     public void recordAppealRejection(Server server, String playerUuid, String punishmentId,
                                       PunishmentNote note, String appealTicketId) {
         punishmentRepository.appendAppealResultNote(server, UuidUtils.normalize(playerUuid), punishmentId,
-            note, "Rejected", appealTicketId);
+                note, "Rejected", appealTicketId);
     }
 
     public void applyAppealApproval(Server server, String playerUuid, String punishmentId,
@@ -317,7 +310,7 @@ public class PunishmentMutationService {
                                     String appealOutcome, String appealTicketId) {
         String normalizedUuid = UuidUtils.normalize(playerUuid);
         punishmentRepository.applyAppealApproval(server, normalizedUuid, punishmentId,
-            modification, note, appealOutcome, appealTicketId);
+                modification, note, appealOutcome, appealTicketId);
 
         playerRepository.findByMinecraftUuid(server, normalizedUuid).ifPresent(player -> {
             Punishment punishment = PunishmentQueryService.findPunishment(player, punishmentId);

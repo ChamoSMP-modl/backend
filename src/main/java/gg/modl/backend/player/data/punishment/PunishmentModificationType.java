@@ -13,14 +13,6 @@ public enum PunishmentModificationType {
     REMOVE,
     REVOKE;
 
-    public boolean isPardon() {
-        return this == MANUAL_PARDON || this == APPEAL_ACCEPT || this == SYSTEM_PARDON;
-    }
-
-    public boolean isDurationChange() {
-        return this == MANUAL_DURATION_CHANGE || this == APPEAL_DURATION_CHANGE;
-    }
-
     public static boolean isPardon(String type) {
         PunishmentModificationType value = fromName(type);
         return value != null && value.isPardon();
@@ -29,14 +21,6 @@ public enum PunishmentModificationType {
     public static boolean isDurationChange(String type) {
         PunishmentModificationType value = fromName(type);
         return value != null && value.isDurationChange();
-    }
-
-    public AppealWorkflowStatus appealOutcome() {
-        return switch (this) {
-            case APPEAL_ACCEPT, APPEAL_DURATION_CHANGE -> AppealWorkflowStatus.APPROVED;
-            case APPEAL_REJECT -> AppealWorkflowStatus.REJECTED;
-            default -> null;
-        };
     }
 
     public static PunishmentModificationType fromName(String type) {
@@ -48,5 +32,21 @@ public enum PunishmentModificationType {
         } catch (IllegalArgumentException invalidType) {
             return null;
         }
+    }
+
+    public boolean isPardon() {
+        return this == MANUAL_PARDON || this == APPEAL_ACCEPT || this == SYSTEM_PARDON;
+    }
+
+    public boolean isDurationChange() {
+        return this == MANUAL_DURATION_CHANGE || this == APPEAL_DURATION_CHANGE;
+    }
+
+    public AppealWorkflowStatus appealOutcome() {
+        return switch (this) {
+            case APPEAL_ACCEPT, APPEAL_DURATION_CHANGE -> AppealWorkflowStatus.APPROVED;
+            case APPEAL_REJECT -> AppealWorkflowStatus.REJECTED;
+            default -> null;
+        };
     }
 }

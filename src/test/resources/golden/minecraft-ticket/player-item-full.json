@@ -1,1 +1,8 @@
-{"id":"TICKET-FULL","type":"player","category":"player","subject":"Rule break","status":"open","createdAt":1700000000000}
+{
+  "id": "TICKET-FULL",
+  "type": "player",
+  "category": "player",
+  "subject": "Rule break",
+  "status": "open",
+  "createdAt": 1700000000000
+}

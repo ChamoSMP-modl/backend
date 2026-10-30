@@ -1,27 +1,11 @@
 package gg.modl.backend.database;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import com.mongodb.client.AggregateIterable;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.*;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import gg.modl.backend.player.service.DuplicatePlayerMerger;
-import java.util.ArrayList;
-import java.util.List;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -32,7 +16,18 @@ import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.NoOpDbRefResolver;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 class TenantMigrationServiceTest {
+    private static String toJson(Bson bson) {
+        return bson.toBsonDocument(Document.class, com.mongodb.MongoClientSettings.getDefaultCodecRegistry()).toJson();
+    }
+
     @Test
     void appliesLowercaseUuidMigrationWhenMarkerMissing() {
         MongoTemplate template = mock(MongoTemplate.class);
@@ -90,8 +85,8 @@ class TenantMigrationServiceTest {
         mockMigrationsCollection(template, null);
         mockTicketsCollection(template, 0L, 0L);
         RoleCollections roleCollections = mockRoleCollections(template, List.of(
-            new Document("_id", "helper").append("name", "Helper"),
-            new Document("_id", "admin").append("name", "Admin")
+                new Document("_id", "helper").append("name", "Helper"),
+                new Document("_id", "admin").append("name", "Admin")
         ));
         mockEmptyDedupeCollections(template);
 
@@ -118,7 +113,7 @@ class TenantMigrationServiceTest {
         mockTicketsCollection(template, 0L, 0L);
         ObjectId helperId = new ObjectId("507f1f77bcf86cd799439011");
         RoleCollections roleCollections = mockRoleCollections(template, List.of(
-            new Document("_id", helperId).append("name", "Helper")
+                new Document("_id", helperId).append("name", "Helper")
         ));
         mockEmptyDedupeCollections(template);
 
@@ -138,8 +133,8 @@ class TenantMigrationServiceTest {
         mockMigrationsCollection(template, null);
         mockTicketsCollection(template, 0L, 0L);
         RoleCollections roleCollections = mockRoleCollections(template, List.of(
-            new Document("_id", "admin").append("name", "Admin"),
-            new Document("_id", "custom-1").append("name", "admin")
+                new Document("_id", "admin").append("name", "Admin"),
+                new Document("_id", "custom-1").append("name", "admin")
         ));
         mockEmptyDedupeCollections(template);
 
@@ -218,9 +213,9 @@ class TenantMigrationServiceTest {
         when(groupFind.into(any())).thenAnswer(invocation -> {
             List<Document> sink = invocation.getArgument(0);
             sink.add(new Document("_id", "keep").append("minecraftUuid", minecraftUuid)
-                .append("punishments", List.of(new Document("id", "p1"), new Document("id", "p2"))));
+                    .append("punishments", List.of(new Document("id", "p1"), new Document("id", "p2"))));
             sink.add(new Document("_id", loserStoredId).append("minecraftUuid", minecraftUuid)
-                .append("punishments", List.of(new Document("id", "p3"))));
+                    .append("punishments", List.of(new Document("id", "p3"))));
             return sink;
         });
         when(players.updateOne(any(Bson.class), any(Bson.class))).thenReturn(UpdateResult.acknowledged(1L, 1L, null));
@@ -273,9 +268,9 @@ class TenantMigrationServiceTest {
         when(groupFind.into(any())).thenAnswer(invocation -> {
             List<Document> sink = invocation.getArgument(0);
             sink.add(new Document("_id", primaryStoredId).append("minecraftUuid", minecraftUuid)
-                .append("punishments", List.of(new Document("id", "p1"), new Document("id", "p2"))));
+                    .append("punishments", List.of(new Document("id", "p1"), new Document("id", "p2"))));
             sink.add(new Document("_id", "loser").append("minecraftUuid", minecraftUuid)
-                .append("punishments", List.of(new Document("id", "p3"))));
+                    .append("punishments", List.of(new Document("id", "p3"))));
             return sink;
         });
         when(players.updateOne(any(Bson.class), any(Bson.class))).thenReturn(UpdateResult.acknowledged(1L, 1L, null));
@@ -316,7 +311,7 @@ class TenantMigrationServiceTest {
         when(legacyFind.into(any())).thenAnswer(invocation -> {
             List<Document> sink = invocation.getArgument(0);
             sink.add(new Document("_id", legacyId).append("minecraftUuid", uuid)
-                .append("usernames", List.of(new Document("username", "Legacy"))));
+                    .append("usernames", List.of(new Document("username", "Legacy"))));
             return sink;
         });
         @SuppressWarnings("unchecked")
@@ -368,7 +363,7 @@ class TenantMigrationServiceTest {
         when(migrations.find(any(Bson.class))).thenReturn(findIterable);
         when(findIterable.first()).thenReturn(existingMarker);
         when(migrations.updateOne(any(Bson.class), any(Bson.class), any(UpdateOptions.class)))
-            .thenReturn(UpdateResult.acknowledged(0, 1L, null));
+                .thenReturn(UpdateResult.acknowledged(0, 1L, null));
         return migrations;
     }
 
@@ -380,7 +375,7 @@ class TenantMigrationServiceTest {
         when(template.getDb()).thenReturn(database);
         when(database.getName()).thenReturn("tenant_db");
         when(tickets.updateMany(any(Bson.class), anyList()))
-            .thenReturn(UpdateResult.acknowledged(matched, modified, null));
+                .thenReturn(UpdateResult.acknowledged(matched, modified, null));
         return tickets;
     }
 
@@ -415,8 +410,6 @@ class TenantMigrationServiceTest {
         when(playersFind.into(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
-    private record RoleCollections(MongoCollection<Document> staff, MongoCollection<Document> invitations) {}
-
     private RoleCollections mockRoleCollections(MongoTemplate template, List<Document> roleDocs) {
         @SuppressWarnings("unchecked")
         MongoCollection<Document> roles = mock(MongoCollection.class);
@@ -441,7 +434,6 @@ class TenantMigrationServiceTest {
         return new RoleCollections(staff, invitations);
     }
 
-    private static String toJson(Bson bson) {
-        return bson.toBsonDocument(Document.class, com.mongodb.MongoClientSettings.getDefaultCodecRegistry()).toJson();
+    private record RoleCollections(MongoCollection<Document> staff, MongoCollection<Document> invitations) {
     }
 }

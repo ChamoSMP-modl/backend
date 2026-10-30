@@ -1,11 +1,11 @@
 package gg.modl.backend.appeal.controller;
 
+import gg.modl.backend.appeal.dto.request.UpdateAppealStatusRequest;
 import gg.modl.backend.appeal.service.AppealService;
 import gg.modl.backend.infrastructure.authorization.PanelAccessRule;
 import gg.modl.backend.infrastructure.authorization.RequiresPanelPermission;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
-import gg.modl.backend.appeal.dto.request.UpdateAppealStatusRequest;
 import gg.modl.backend.log.service.PanelActionAuditor;
 import gg.modl.backend.realtime.publish.RealtimeEventPublisher;
 import gg.modl.backend.server.data.Server;
@@ -16,17 +16,12 @@ import gg.modl.proto.modl.v1.AddTicketReplyResponse;
 import gg.modl.proto.modl.v1.AppealTicketsResponse;
 import gg.modl.proto.modl.v1.PanelResource;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_APPEALS)
@@ -37,10 +32,16 @@ public class PanelAppealController {
     private final RealtimeEventPublisher realtimeEventPublisher;
     private final PanelActionAuditor panelActionAuditor;
 
+    private static String describeAppealDecision(String appealId, TicketResponse appeal, UpdateAppealStatusRequest command) {
+        String resolution = command.resolution();
+        String resolutionSuffix = resolution != null && !resolution.isBlank() ? " (" + resolution + ")" : "";
+        return "Appeal " + appealId + " " + appeal.status() + resolutionSuffix;
+    }
+
     @GetMapping("/punishment/{punishmentId}")
     public ResponseEntity<AppealTicketsResponse> getAppealsByPunishment(
-        @PathVariable String punishmentId,
-        HttpServletRequest request
+            @PathVariable String punishmentId,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         List<TicketResponse> appeals = appealService.getAppealsByPunishment(server, punishmentId);
@@ -54,8 +55,8 @@ public class PanelAppealController {
 
     @GetMapping("/{id}")
     public ResponseEntity<gg.modl.proto.modl.v1.TicketResponse> getAppealById(
-        @PathVariable String id,
-        HttpServletRequest request
+            @PathVariable String id,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         return ResponseEntity.ok(PanelAppealProtoMapper.toTicketResponse(appealService.getAppealById(server, id)));
@@ -64,9 +65,9 @@ public class PanelAppealController {
     @PostMapping("/{id}/replies")
     @RequiresPanelPermission(rule = PanelAccessRule.APPEAL_REPLY)
     public ResponseEntity<AddTicketReplyResponse> addReply(
-        @PathVariable String id,
-        @RequestBody AddAppealReplyRequest replyRequest,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody AddAppealReplyRequest replyRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         TicketReply reply = appealService.addReply(server, id, PanelAppealProtoMapper.fromAddAppealReplyRequest(replyRequest));
@@ -76,9 +77,9 @@ public class PanelAppealController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<gg.modl.proto.modl.v1.TicketResponse> updateStatus(
-        @PathVariable String id,
-        @RequestBody gg.modl.proto.modl.v1.UpdateAppealStatusRequest statusRequest,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody gg.modl.proto.modl.v1.UpdateAppealStatusRequest statusRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         UpdateAppealStatusRequest command = PanelAppealProtoMapper.fromUpdateAppealStatusRequest(statusRequest);
@@ -92,11 +93,5 @@ public class PanelAppealController {
             panelActionAuditor.recordStaffAction(server, actorEmail, "Updated appeal " + id);
         }
         return ResponseEntity.ok(PanelAppealProtoMapper.toTicketResponse(appeal));
-    }
-
-    private static String describeAppealDecision(String appealId, TicketResponse appeal, UpdateAppealStatusRequest command) {
-        String resolution = command.resolution();
-        String resolutionSuffix = resolution != null && !resolution.isBlank() ? " (" + resolution + ")" : "";
-        return "Appeal " + appealId + " " + appeal.status() + resolutionSuffix;
     }
 }

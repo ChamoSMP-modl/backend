@@ -6,29 +6,17 @@ import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.TicketFields;
 import gg.modl.backend.infrastructure.util.CanonicalAliasIndex;
 import gg.modl.backend.server.data.Server;
-import gg.modl.backend.ticket.data.AppealWorkflowStatus;
-import gg.modl.backend.ticket.data.Ticket;
-import gg.modl.backend.ticket.data.TicketCategory;
-import gg.modl.backend.ticket.data.TicketReply;
-import gg.modl.backend.ticket.data.TicketStatus;
+import gg.modl.backend.ticket.data.*;
 import gg.modl.backend.ticket.util.TicketAssigneeUtil;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Repository
 public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket> {
@@ -48,10 +36,10 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
     public void updateState(Server server, Ticket ticket) {
         Query query = Query.query(Criteria.where(TicketFields.ID).is(ticket.getId()));
         Update update = new Update()
-            .set(TicketFields.REPLIES, ticket.getReplies())
-            .set(TicketFields.LOCKED, ticket.isLocked())
-            .set(TicketFields.STATUS, ticket.getStatus() != null ? ticket.getStatus().getId() : null)
-            .set(TicketFields.UPDATED_AT, ticket.getUpdatedAt());
+                .set(TicketFields.REPLIES, ticket.getReplies())
+                .set(TicketFields.LOCKED, ticket.isLocked())
+                .set(TicketFields.STATUS, ticket.getStatus() != null ? ticket.getStatus().getId() : null)
+                .set(TicketFields.UPDATED_AT, ticket.getUpdatedAt());
         updateFirst(server, query, update);
     }
 
@@ -80,15 +68,15 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
             conditions.add(buildTypeCriteria(type));
         } else {
             conditions.add(Criteria.where(TicketFields.TYPE).in(
-                TicketCategory.SUPPORT.getId(),
-                TicketCategory.BUG.getId(),
-                TicketCategory.APPEAL.getId()
+                    TicketCategory.SUPPORT.getId(),
+                    TicketCategory.BUG.getId(),
+                    TicketCategory.APPEAL.getId()
             ));
         }
 
         Query query = conditions.isEmpty()
-                      ? new Query()
-                      : Query.query(new Criteria().andOperator(conditions.toArray(new Criteria[0])));
+                ? new Query()
+                : Query.query(new Criteria().andOperator(conditions.toArray(new Criteria[0])));
         query.with(Sort.by(Sort.Direction.DESC, TicketFields.CREATED));
         query.limit(Math.min(limit, 100));
         return find(server, query);
@@ -137,15 +125,15 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
         String lower = playerUuid == null ? null : playerUuid.toLowerCase(Locale.ROOT);
         String upper = playerUuid == null ? null : playerUuid.toUpperCase(Locale.ROOT);
         List<String> uuidCandidates = lower != null && lower.equals(upper)
-            ? List.of(lower)
-            : Arrays.asList(lower, upper);
+                ? List.of(lower)
+                : Arrays.asList(lower, upper);
 
         Query query = Query.query(new Criteria().andOperator(
-            new Criteria().orOperator(
-                Criteria.where(TicketFields.CREATOR_UUID).in(uuidCandidates),
-                Criteria.where(TicketFields.REPORTED_PLAYER_UUID).in(uuidCandidates)
-            ),
-            Criteria.where(TicketFields.REPLAY_URL).exists(true).nin(Arrays.asList(null, ""))
+                new Criteria().orOperator(
+                        Criteria.where(TicketFields.CREATOR_UUID).in(uuidCandidates),
+                        Criteria.where(TicketFields.REPORTED_PLAYER_UUID).in(uuidCandidates)
+                ),
+                Criteria.where(TicketFields.REPLAY_URL).exists(true).nin(Arrays.asList(null, ""))
         ));
         query.with(Sort.by(Sort.Direction.DESC, TicketFields.CREATED));
         query.limit(Math.min(limit, 100));
@@ -168,14 +156,14 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
             return Set.of();
         }
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(TicketFields.REPLAY_ID).in(ids),
-            Criteria.where(TicketFields.STATUS).ne(TicketStatus.CLOSED.getId())
+                Criteria.where(TicketFields.REPLAY_ID).in(ids),
+                Criteria.where(TicketFields.STATUS).ne(TicketStatus.CLOSED.getId())
         ));
         query.fields().include(TicketFields.REPLAY_ID);
         return find(server, query).stream()
-            .map(Ticket::getReplayId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
+                .map(Ticket::getReplayId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     private List<String> sanitizeReplayIds(Collection<String> replayIds) {
@@ -213,8 +201,8 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
         }
 
         return conditions.size() == 1
-               ? conditions.get(0)
-               : new Criteria().andOperator(conditions.toArray(new Criteria[0]));
+                ? conditions.get(0)
+                : new Criteria().andOperator(conditions.toArray(new Criteria[0]));
     }
 
     public TicketSearchPage searchTickets(Server server, TicketSearchFilter filter, TicketSortOption sort, int page, int limit) {
@@ -253,8 +241,8 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
                 query.addCriteria(Criteria.where(TicketFields.STATUS).is(TicketStatus.UNFINISHED.getId()));
             } else if (requestedStatus != null) {
                 query.addCriteria(requestedStatus.isTerminal()
-                                  ? Criteria.where(TicketFields.LOCKED).is(true)
-                                  : Criteria.where(TicketFields.LOCKED).ne(true));
+                        ? Criteria.where(TicketFields.LOCKED).is(true)
+                        : Criteria.where(TicketFields.LOCKED).ne(true));
             } else if (filter.status().equalsIgnoreCase(FILTER_OPEN)) {
                 query.addCriteria(Criteria.where(TicketFields.LOCKED).ne(true));
             } else if (filter.status().equalsIgnoreCase(FILTER_CLOSED)) {
@@ -264,13 +252,13 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
         if (filter.types() != null && !filter.types().isEmpty()) {
             List<String> validTypes = filter.types()
-                .stream()
-                .filter(type -> type != null && !type.isBlank() && !type.equals(FILTER_ALL))
-                .toList();
+                    .stream()
+                    .filter(type -> type != null && !type.isBlank() && !type.equals(FILTER_ALL))
+                    .toList();
             if (!validTypes.isEmpty()) {
                 List<Criteria> typeCriteria = validTypes.stream()
-                    .map(this::buildTypeCriteria)
-                    .toList();
+                        .map(this::buildTypeCriteria)
+                        .toList();
                 query.addCriteria(new Criteria().orOperator(typeCriteria.toArray(new Criteria[0])));
             }
         }
@@ -323,9 +311,9 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
     private Criteria buildUnassignedCriteria() {
         return new Criteria().orOperator(
-            Criteria.where(TicketFields.ASSIGNED_TO).exists(false),
-            Criteria.where(TicketFields.ASSIGNED_TO).is(null),
-            Criteria.where(TicketFields.ASSIGNED_TO).size(0)
+                Criteria.where(TicketFields.ASSIGNED_TO).exists(false),
+                Criteria.where(TicketFields.ASSIGNED_TO).is(null),
+                Criteria.where(TicketFields.ASSIGNED_TO).size(0)
         );
     }
 
@@ -352,11 +340,11 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
     public List<Ticket> findByPlayer(Server server, String playerUuid) {
         Criteria criteria = new Criteria().andOperator(
-            new Criteria().orOperator(
-                Criteria.where(TicketFields.CREATOR_UUID).is(playerUuid),
-                Criteria.where(TicketFields.REPORTED_PLAYER_UUID).is(playerUuid)
-            ),
-            Criteria.where(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
+                new Criteria().orOperator(
+                        Criteria.where(TicketFields.CREATOR_UUID).is(playerUuid),
+                        Criteria.where(TicketFields.REPORTED_PLAYER_UUID).is(playerUuid)
+                ),
+                Criteria.where(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
         );
         Query query = Query.query(criteria).with(Sort.by(Sort.Direction.DESC, TicketFields.CREATED));
         return find(server, query);
@@ -372,9 +360,9 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
         }
 
         Query query = Query.query(
-            Criteria.where(TicketFields.ID).in(ticketIds)
-                .and(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
-                .and(TicketFields.REPLIES + ".0").exists(true)
+                Criteria.where(TicketFields.ID).in(ticketIds)
+                        .and(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
+                        .and(TicketFields.REPLIES + ".0").exists(true)
         );
         query.with(Sort.by(Sort.Direction.DESC, TicketFields.UPDATED_AT));
         query.limit(limit);
@@ -383,9 +371,9 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
     public List<Ticket> findRecentAssignedTicketsWithReplies(Server server, String assignee, int limit) {
         Query query = Query.query(
-            Criteria.where(TicketFields.ASSIGNED_TO).is(assignee)
-                .and(TicketFields.REPLIES + ".0").exists(true)
-                .and(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
+                Criteria.where(TicketFields.ASSIGNED_TO).is(assignee)
+                        .and(TicketFields.REPLIES + ".0").exists(true)
+                        .and(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
         );
         query.with(Sort.by(Sort.Direction.DESC, TicketFields.UPDATED_AT));
         query.limit(limit);
@@ -398,8 +386,8 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
     public List<Ticket> findAppealsByPunishmentId(Server server, String punishmentId) {
         Query query = Query.query(
-            Criteria.where(TicketFields.TYPE).is(TicketCategory.APPEAL.getId())
-                .and(TicketFields.DATA + ".punishmentId").is(punishmentId)
+                Criteria.where(TicketFields.TYPE).is(TicketCategory.APPEAL.getId())
+                        .and(TicketFields.DATA + ".punishmentId").is(punishmentId)
         );
         return find(server, query);
     }
@@ -415,16 +403,16 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
     public void pushReply(Server server, String ticketId, TicketReply reply) {
         Query query = Query.query(Criteria.where(TicketFields.ID).is(ticketId));
         Update update = new Update()
-            .push(TicketFields.REPLIES, reply)
-            .set(TicketFields.UPDATED_AT, new Date());
+                .push(TicketFields.REPLIES, reply)
+                .set(TicketFields.UPDATED_AT, new Date());
         updateFirst(server, query, update);
     }
 
     public void updateAppealState(Server server, String ticketId,
-                                   AppealWorkflowStatus appealWorkflowStatus,
-                                   TicketStatus status, Boolean locked,
-                                   Map<String, Object> data,
-                                   List<TicketReply> systemReplies) {
+                                  AppealWorkflowStatus appealWorkflowStatus,
+                                  TicketStatus status, Boolean locked,
+                                  Map<String, Object> data,
+                                  List<TicketReply> systemReplies) {
         Query query = Query.query(Criteria.where(TicketFields.ID).is(ticketId));
         Update update = new Update().set(TicketFields.UPDATED_AT, new Date());
 
@@ -450,8 +438,8 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
     public List<Ticket> findCreatedAfterExcludingUnfinished(Server server, Date after, int limit) {
         Query query = Query.query(
-            Criteria.where(TicketFields.CREATED).gte(after)
-                .and(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
+                Criteria.where(TicketFields.CREATED).gte(after)
+                        .and(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId())
         );
         query.limit(limit);
         return find(server, query);
@@ -459,20 +447,20 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
     public long countUnresolvedReports(Server server) {
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(TicketFields.TYPE).in(TicketCategory.reportCategoryIds()),
-            Criteria.where(TicketFields.STATUS).in(TicketStatus.OPEN.getId(), TicketStatus.UNFINISHED.getId())
+                Criteria.where(TicketFields.TYPE).in(TicketCategory.reportCategoryIds()),
+                Criteria.where(TicketFields.STATUS).in(TicketStatus.OPEN.getId(), TicketStatus.UNFINISHED.getId())
         ));
         return count(server, query);
     }
 
     public long countUnresolvedTickets(Server server) {
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(TicketFields.TYPE).in(
-                TicketCategory.SUPPORT.getId(),
-                TicketCategory.BUG.getId(),
-                TicketCategory.APPEAL.getId()
-            ),
-            Criteria.where(TicketFields.STATUS).in(TicketStatus.OPEN.getId(), TicketStatus.UNFINISHED.getId())
+                Criteria.where(TicketFields.TYPE).in(
+                        TicketCategory.SUPPORT.getId(),
+                        TicketCategory.BUG.getId(),
+                        TicketCategory.APPEAL.getId()
+                ),
+                Criteria.where(TicketFields.STATUS).in(TicketStatus.OPEN.getId(), TicketStatus.UNFINISHED.getId())
         ));
         return count(server, query);
     }
@@ -495,17 +483,17 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
 
     public List<Ticket> findRecentWithProjection(Server server, int limit) {
         Query query = Query.query(Criteria.where(TicketFields.STATUS).ne(TicketStatus.UNFINISHED.getId()))
-            .with(Sort.by(Sort.Direction.DESC, TicketFields.CREATED))
-            .limit(limit);
+                .with(Sort.by(Sort.Direction.DESC, TicketFields.CREATED))
+                .limit(limit);
 
         query.fields()
-            .include(TicketFields.SUBJECT)
-            .include(TicketFields.STATUS)
-            .include(TicketFields.PRIORITY)
-            .include(TicketFields.CREATED)
-            .include(TicketFields.CREATOR_NAME)
-            .include(TicketFields.TYPE)
-            .include(TicketFields.REPLIES);
+                .include(TicketFields.SUBJECT)
+                .include(TicketFields.STATUS)
+                .include(TicketFields.PRIORITY)
+                .include(TicketFields.CREATED)
+                .include(TicketFields.CREATOR_NAME)
+                .include(TicketFields.TYPE)
+                .include(TicketFields.REPLIES);
         query.fields().slice(TicketFields.REPLIES, 1);
 
         return find(server, query);
@@ -520,19 +508,34 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
         staffMatchCriteria.add(Criteria.where(TicketFields.REPLY_NAME).is(staffUsername));
 
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(TicketFields.UPDATED_AT).gte(cutoffDate),
-            new Criteria().orOperator(staffMatchCriteria.toArray(new Criteria[0]))
+                Criteria.where(TicketFields.UPDATED_AT).gte(cutoffDate),
+                new Criteria().orOperator(staffMatchCriteria.toArray(new Criteria[0]))
         )).with(Sort.by(Sort.Direction.DESC, TicketFields.UPDATED_AT)).limit(limit);
 
         query.fields()
-            .include(TicketFields.SUBJECT)
-            .include(TicketFields.TYPE)
-            .include(TicketFields.CREATED)
-            .include(TicketFields.CREATOR_NAME)
-            .include(TicketFields.REPLY_NAME)
-            .include(TicketFields.REPLY_CREATED);
+                .include(TicketFields.SUBJECT)
+                .include(TicketFields.TYPE)
+                .include(TicketFields.CREATED)
+                .include(TicketFields.CREATOR_NAME)
+                .include(TicketFields.REPLY_NAME)
+                .include(TicketFields.REPLY_CREATED);
 
         return find(server, query);
+    }
+
+    public void bulkCloseForPunishment(Server server, List<String> ticketIds) {
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            return;
+        }
+        Query query = Query.query(
+                Criteria.where(TicketFields.ID).in(ticketIds)
+                        .and(TicketFields.LOCKED).ne(true)
+        );
+        Update update = new Update()
+                .set(TicketFields.STATUS, TicketStatus.CLOSED.getId())
+                .set(TicketFields.LOCKED, true)
+                .set(TicketFields.UPDATED_AT, new Date());
+        updateMulti(server, query, update);
     }
 
     public enum TicketSortOption {
@@ -565,30 +568,18 @@ public class TicketMongoRepository extends AbstractServerMongoRepository<Ticket>
     }
 
     public record TicketSearchFilter(
-        String search,
-        String status,
-        List<String> types,
-        String author,
-        List<String> labels,
-        List<String> assignees
-    ) {}
+            String search,
+            String status,
+            List<String> types,
+            String author,
+            List<String> labels,
+            List<String> assignees
+    ) {
+    }
 
-    public record TicketSearchPage(List<Ticket> tickets, long total) {}
+    public record TicketSearchPage(List<Ticket> tickets, long total) {
+    }
 
-    public record TicketCounts(long open, long closed) {}
-
-    public void bulkCloseForPunishment(Server server, List<String> ticketIds) {
-        if (ticketIds == null || ticketIds.isEmpty()) {
-            return;
-        }
-        Query query = Query.query(
-            Criteria.where(TicketFields.ID).in(ticketIds)
-                .and(TicketFields.LOCKED).ne(true)
-        );
-        Update update = new Update()
-            .set(TicketFields.STATUS, TicketStatus.CLOSED.getId())
-            .set(TicketFields.LOCKED, true)
-            .set(TicketFields.UPDATED_AT, new Date());
-        updateMulti(server, query, update);
+    public record TicketCounts(long open, long closed) {
     }
 }

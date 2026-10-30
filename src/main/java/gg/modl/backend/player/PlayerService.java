@@ -1,11 +1,11 @@
 package gg.modl.backend.player;
 
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
-import gg.modl.backend.player.data.IPEntry;
-import gg.modl.backend.player.data.NoteEntry;
-import gg.modl.backend.player.data.Player;
-import gg.modl.backend.player.data.PlayerDataView;
-import gg.modl.backend.player.data.UsernameEntry;
+import gg.modl.backend.infrastructure.exception.ConflictException;
+import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
+import gg.modl.backend.infrastructure.util.IdGenerator;
+import gg.modl.backend.infrastructure.util.UuidUtils;
+import gg.modl.backend.player.data.*;
 import gg.modl.backend.player.data.punishment.EnforcementCategory;
 import gg.modl.backend.player.data.punishment.Punishment;
 import gg.modl.backend.player.dto.response.PlayerDetailResponse;
@@ -17,34 +17,18 @@ import gg.modl.backend.realtime.publish.RealtimeEventPublisher;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.PunishmentTypeService;
-import gg.modl.backend.infrastructure.exception.ConflictException;
-import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
 import gg.modl.proto.modl.v1.PanelResource;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import gg.modl.backend.infrastructure.util.IdGenerator;
-import gg.modl.backend.infrastructure.util.UuidUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PlayerService {
-    private final PlayerMongoRepository playerRepository;
-    private final PlayerStatusCalculator statusCalculator;
-    private final PunishmentTypeService punishmentTypeService;
-    private final RealtimeEventPublisher realtimePublisher;
-    private final PunishmentQueryService punishmentQueryService;
     private static final int SEARCH_RESULT_LIMIT = 20;
     private static final int SEARCH_CANDIDATE_LIMIT = 100;
     private static final int RANK_EXACT_CURRENT_USERNAME = 0;
@@ -57,6 +41,11 @@ public class PlayerService {
     private static final int DETAIL_PUNISHMENT_CAP = 100;
     private static final int DETAIL_NOTE_CAP = 100;
     private static final int DETAIL_LOGIN_CAP = 50;
+    private final PlayerMongoRepository playerRepository;
+    private final PlayerStatusCalculator statusCalculator;
+    private final PunishmentTypeService punishmentTypeService;
+    private final RealtimeEventPublisher realtimePublisher;
+    private final PunishmentQueryService punishmentQueryService;
 
     public List<PlayerSearchResult> searchPlayers(Server server, String searchTerm) {
         String normalizedSearch = searchTerm == null ? "" : searchTerm.trim();
@@ -67,23 +56,23 @@ public class PlayerService {
         List<Player> players;
         if (isUuid(normalizedSearch)) {
             players = playerRepository.findByMinecraftUuid(server, UuidUtils.normalize(normalizedSearch))
-                .map(List::of)
-                .orElseGet(List::of);
+                    .map(List::of)
+                    .orElseGet(List::of);
         } else {
             players = playerRepository.searchByUsernamePattern(server, normalizedSearch, SEARCH_CANDIDATE_LIMIT);
             String normalizedSearchLower = normalizedSearch.toLowerCase(Locale.ROOT);
             players = players.stream()
-                .sorted(Comparator
-                    .comparingInt((Player player) -> computeMatchRank(player, normalizedSearchLower))
-                    .thenComparing((Player a, Player b) -> Long.compare(getLastLoginMillis(b), getLastLoginMillis(a)))
-                    .thenComparing(player -> player.getMinecraftUuid().toString()))
-                .limit(SEARCH_RESULT_LIMIT)
-                .toList();
+                    .sorted(Comparator
+                            .comparingInt((Player player) -> computeMatchRank(player, normalizedSearchLower))
+                            .thenComparing((Player a, Player b) -> Long.compare(getLastLoginMillis(b), getLastLoginMillis(a)))
+                            .thenComparing(player -> player.getMinecraftUuid().toString()))
+                    .limit(SEARCH_RESULT_LIMIT)
+                    .toList();
         }
 
         return players.stream()
-            .map(player -> toPlayerSearchResult(server, player))
-            .toList();
+                .map(player -> toPlayerSearchResult(server, player))
+                .toList();
     }
 
     public Optional<Player> findBestByUsername(Server server, String username) {
@@ -96,31 +85,31 @@ public class PlayerService {
         List<Player> candidates = playerRepository.searchByUsernamePattern(server, normalizedUsername, SEARCH_CANDIDATE_LIMIT);
 
         return candidates.stream()
-            .filter(player -> hasExactUsernameMatch(player, normalizedUsernameLower))
-            .sorted(Comparator
-                .comparingInt((Player player) -> exactUsernameMatchRank(player, normalizedUsernameLower))
-                .thenComparing((Player a, Player b) -> Boolean.compare(isOnline(b), isOnline(a)))
-                .thenComparing((Player a, Player b) -> Long.compare(getLastLoginMillis(b), getLastLoginMillis(a)))
-                .thenComparing(player -> player.getMinecraftUuid().toString()))
-            .findFirst()
-            .or(() -> playerRepository.findByUsernameIgnoreCase(server, normalizedUsername));
+                .filter(player -> hasExactUsernameMatch(player, normalizedUsernameLower))
+                .sorted(Comparator
+                        .comparingInt((Player player) -> exactUsernameMatchRank(player, normalizedUsernameLower))
+                        .thenComparing((Player a, Player b) -> Boolean.compare(isOnline(b), isOnline(a)))
+                        .thenComparing((Player a, Player b) -> Long.compare(getLastLoginMillis(b), getLastLoginMillis(a)))
+                        .thenComparing(player -> player.getMinecraftUuid().toString()))
+                .findFirst()
+                .or(() -> playerRepository.findByUsernameIgnoreCase(server, normalizedUsername));
     }
 
     private PlayerSearchResult toPlayerSearchResult(Server server, Player player) {
         List<UsernameEntry> usernames = player.getUsernames();
         String username = usernames == null || usernames.isEmpty() ? "Unknown" :
-                          usernames.get(usernames.size() - 1).username();
+                usernames.get(usernames.size() - 1).username();
 
         String status = calculatePlayerStatus(server, player);
         Date lastOnline = getLastOnline(player);
         boolean isOnline = player.data().isOnline();
 
         return new PlayerSearchResult(
-            player.getMinecraftUuid().toString(),
-            username,
-            status,
-            lastOnline,
-            isOnline
+                player.getMinecraftUuid().toString(),
+                username,
+                status,
+                lastOnline,
+                isOnline
         );
     }
 
@@ -252,7 +241,7 @@ public class PlayerService {
 
     public PlayerDetailResponse getPlayerDetails(Server server, UUID minecraftUuid) {
         Player player = findByMinecraftUuid(server, minecraftUuid)
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
         return buildPlayerDetailResponse(server, player);
     }
 
@@ -265,23 +254,23 @@ public class PlayerService {
         PlayerStatusCalculator.PlayerStatus status = statusCalculator.calculateStatus(server, punishments);
 
         List<PunishmentResponse> punishmentResponses = capPunishments(
-            punishmentQueryService.getPlayerPunishmentResponses(server, player));
+                punishmentQueryService.getPlayerPunishmentResponses(server, player));
 
         List<IPEntry> sanitizedIps = (player.getIpAddresses() != null ? player.getIpAddresses() : List.<IPEntry>of()).stream()
-            .map(ip -> IPEntry.builder()
-                .ipAddress(null)
-                .country(ip.getCountry())
-                .region(ip.getRegion())
-                .asn(ip.getAsn())
-                .proxy(ip.isProxy())
-                .hosting(ip.isHosting())
-                .firstLogin(ip.getFirstLogin())
-                .logins(capLogins(ip.getLogins()))
-                .build())
-            .toList();
+                .map(ip -> IPEntry.builder()
+                        .ipAddress(null)
+                        .country(ip.getCountry())
+                        .region(ip.getRegion())
+                        .asn(ip.getAsn())
+                        .proxy(ip.isProxy())
+                        .hosting(ip.isHosting())
+                        .firstLogin(ip.getFirstLogin())
+                        .logins(capLogins(ip.getLogins()))
+                        .build())
+                .toList();
 
         IPEntry latestIp = sanitizedIps.isEmpty() ? null :
-                           sanitizedIps.get(sanitizedIps.size() - 1);
+                sanitizedIps.get(sanitizedIps.size() - 1);
 
         String lastServer = player.data().lastServer();
 
@@ -289,20 +278,20 @@ public class PlayerService {
         double playtimeHours = playtime != null ? playtime.doubleValue() / 3600.0 : 0;
 
         return new PlayerDetailResponse(
-            player.getId(),
-            player.getMinecraftUuid().toString(),
-            player.getUsernames(),
-            capNotes(player.getNotes()),
-            sanitizedIps,
-            punishmentResponses,
-            player.data().asMap(),
-            status.social(),
-            status.gameplay(),
-            status.socialPoints(),
-            status.gameplayPoints(),
-            latestIp,
-            lastServer,
-            playtimeHours
+                player.getId(),
+                player.getMinecraftUuid().toString(),
+                player.getUsernames(),
+                capNotes(player.getNotes()),
+                sanitizedIps,
+                punishmentResponses,
+                player.data().asMap(),
+                status.social(),
+                status.gameplay(),
+                status.socialPoints(),
+                status.gameplayPoints(),
+                latestIp,
+                lastServer,
+                playtimeHours
         );
     }
 
@@ -331,9 +320,9 @@ public class PlayerService {
             return notes;
         }
         return notes.stream()
-            .sorted(Comparator.comparing(NoteEntry::getDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-            .limit(DETAIL_NOTE_CAP)
-            .toList();
+                .sorted(Comparator.comparing(NoteEntry::getDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .limit(DETAIL_NOTE_CAP)
+                .toList();
     }
 
     private List<Date> capLogins(List<Date> logins) {
@@ -356,17 +345,15 @@ public class PlayerService {
 
     private Player newPlayer(UUID minecraftUuid, String username) {
         return Player.builder()
-            .id(PlayerDocumentIdGenerator.generate())
-            .minecraftUuid(minecraftUuid)
-            .usernames(new ArrayList<>(List.of(new UsernameEntry(username, new Date()))))
-            .notes(new ArrayList<>())
-            .ipAddresses(new ArrayList<>())
-            .punishments(new ArrayList<>())
-            .data(new HashMap<>())
-            .build();
+                .id(PlayerDocumentIdGenerator.generate())
+                .minecraftUuid(minecraftUuid)
+                .usernames(new ArrayList<>(List.of(new UsernameEntry(username, new Date()))))
+                .notes(new ArrayList<>())
+                .ipAddresses(new ArrayList<>())
+                .punishments(new ArrayList<>())
+                .data(new HashMap<>())
+                .build();
     }
-
-    public record LoginResult(Player player, boolean isNewIp) {}
 
     public LoginResult loginPlayer(Server server, UUID minecraftUuid, String username, String ip) {
         return loginPlayer(server, minecraftUuid, username, ip, null, null, null);
@@ -406,7 +393,7 @@ public class PlayerService {
 
     public Player addUsername(Server server, UUID minecraftUuid, String username) {
         Player player = findByMinecraftUuid(server, minecraftUuid)
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
 
         ensureUsernames(player).add(new UsernameEntry(username, new Date()));
         playerRepository.replaceUsernames(server, player);
@@ -423,15 +410,15 @@ public class PlayerService {
 
     public Player addNote(Server server, UUID minecraftUuid, String text, String issuerName, String issuerId) {
         Player player = findByMinecraftUuid(server, minecraftUuid)
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
 
         NoteEntry entry = NoteEntry.builder()
-            .id(IdGenerator.generateShortId())
-            .text(text)
-            .date(new Date())
-            .issuerName(issuerName)
-            .issuerId(issuerId)
-            .build();
+                .id(IdGenerator.generateShortId())
+                .text(text)
+                .date(new Date())
+                .issuerName(issuerName)
+                .issuerId(issuerId)
+                .build();
 
         ensureNotes(player).add(entry);
         playerRepository.replaceNotes(server, player);
@@ -448,7 +435,7 @@ public class PlayerService {
 
     public Player addIp(Server server, UUID minecraftUuid, String ipAddress) {
         Player player = findByMinecraftUuid(server, minecraftUuid)
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
         addIpToPlayer(player, ipAddress, null);
         playerRepository.replaceIpAddresses(server, player);
         realtimePublisher.invalidatePanel(server, PanelResource.PANEL_RESOURCE_PLAYERS, minecraftUuid.toString());
@@ -464,8 +451,8 @@ public class PlayerService {
         List<IPEntry> ipAddresses = ensureIpAddresses(player);
 
         Optional<IPEntry> existingIp = ipAddresses.stream()
-            .filter(ip -> ipAddress.equals(ip.getIpAddress()))
-            .findFirst();
+                .filter(ip -> ipAddress.equals(ip.getIpAddress()))
+                .findFirst();
 
         if (existingIp.isPresent()) {
             IPEntry entry = existingIp.get();
@@ -480,16 +467,16 @@ public class PlayerService {
         }
 
         IPEntry.IPEntryBuilder builder = IPEntry.builder()
-            .ipAddress(ipAddress)
-            .firstLogin(now)
-            .logins(new ArrayList<>(List.of(now)));
+                .ipAddress(ipAddress)
+                .firstLogin(now)
+                .logins(new ArrayList<>(List.of(now)));
 
         if (ipInfo != null) {
             builder.country((String) ipInfo.get("country"))
-                .region((String) ipInfo.get("region"))
-                .asn((String) ipInfo.get("asn"))
-                .proxy(Boolean.TRUE.equals(ipInfo.get("proxy")))
-                .hosting(Boolean.TRUE.equals(ipInfo.get("hosting")));
+                    .region((String) ipInfo.get("region"))
+                    .asn((String) ipInfo.get("asn"))
+                    .proxy(Boolean.TRUE.equals(ipInfo.get("proxy")))
+                    .hosting(Boolean.TRUE.equals(ipInfo.get("hosting")));
         }
 
         ipAddresses.add(builder.build());
@@ -525,9 +512,9 @@ public class PlayerService {
         }
 
         IPEntry ipEntry = ensureIpAddresses(player).stream()
-            .filter(entry -> ipAddress.equals(entry.getIpAddress()))
-            .findFirst()
-            .orElse(null);
+                .filter(entry -> ipAddress.equals(entry.getIpAddress()))
+                .findFirst()
+                .orElse(null);
         if (ipEntry == null) {
             return;
         }
@@ -569,5 +556,8 @@ public class PlayerService {
         if (serverName != null && !serverName.isBlank()) {
             data.setLastServer(serverName);
         }
+    }
+
+    public record LoginResult(Player player, boolean isNewIp) {
     }
 }

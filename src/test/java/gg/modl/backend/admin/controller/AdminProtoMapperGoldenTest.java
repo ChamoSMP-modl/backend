@@ -1,38 +1,23 @@
 package gg.modl.backend.admin.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.google.protobuf.Message;
 import com.google.protobuf.TextFormat;
 import gg.modl.backend.admin.data.SecurityEvent;
 import gg.modl.backend.admin.data.SystemConfig;
 import gg.modl.backend.admin.data.SystemLog;
-import gg.modl.backend.admin.dto.response.AdminAnalyticsActivity;
-import gg.modl.backend.admin.dto.response.AdminAnalyticsDashboard;
-import gg.modl.backend.admin.dto.response.AdminAnalyticsExport;
-import gg.modl.backend.admin.dto.response.AdminAnalyticsHistorical;
-import gg.modl.backend.admin.dto.response.AdminAnalyticsUsage;
-import gg.modl.backend.admin.dto.response.AdminHistoricalPoint;
-import gg.modl.backend.admin.dto.response.AdminMaintenanceStatus;
-import gg.modl.backend.admin.dto.response.AdminMonitoringDashboard;
-import gg.modl.backend.admin.dto.response.AdminMonitoringHealth;
-import gg.modl.backend.admin.dto.response.AdminMonitoringLogs;
-import gg.modl.backend.admin.dto.response.AdminMonitoringSources;
-import gg.modl.backend.admin.dto.response.AdminNameCount;
-import gg.modl.backend.admin.dto.response.AdminPagination;
-import gg.modl.backend.admin.dto.response.AdminRateLimitStatus;
-import gg.modl.backend.admin.dto.response.AdminRegistrationPoint;
-import gg.modl.backend.admin.dto.response.AdminSecurityEvents;
-import gg.modl.backend.admin.dto.response.AdminSecuritySummary;
+import gg.modl.backend.admin.dto.response.*;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AdminProtoMapperGoldenTest {
 
@@ -45,6 +30,37 @@ class AdminProtoMapperGoldenTest {
         assertEquals(Files.readString(GOLDEN_DIR.resolve(name + ".txtpb")), actual, name);
     }
 
+    private static AdminAnalyticsDashboard dashboard(boolean populated) {
+        AdminAnalyticsDashboard.Overview overview = new AdminAnalyticsDashboard.Overview(
+                10L, 7L, 500L, 42L, "12.34", "0.00", "5.0", "2.0");
+
+        AdminAnalyticsDashboard.ServerMetrics serverMetrics = populated
+                ? new AdminAnalyticsDashboard.ServerMetrics(
+                List.of(new AdminNameCount("free", 6), new AdminNameCount("premium", 4)),
+                List.of(new AdminNameCount("completed", 8)),
+                List.of(new AdminRegistrationPoint("2026-07-01", 3), new AdminRegistrationPoint("2026-07-02", 5)))
+                : new AdminAnalyticsDashboard.ServerMetrics(List.of(), List.of(), List.of());
+
+        AdminAnalyticsDashboard.UsageStatistics usageStatistics;
+        if (populated) {
+            Server topServer = new Server("Alpha", "alpha.modl.gg", "db_alpha", "admin@x.com", true, ServerPlan.PREMIUM);
+            topServer.setId("srv-1");
+            usageStatistics = new AdminAnalyticsDashboard.UsageStatistics(
+                    List.of(topServer),
+                    List.of(new AdminAnalyticsDashboard.ServerActivityPoint("2026-07-01T00:00:00Z", 5L)),
+                    List.of(
+                            new AdminAnalyticsDashboard.LiveServer("srv-1", "Alpha", 12, "paper", "1.21", "2.2.0"),
+                            new AdminAnalyticsDashboard.LiveServer("srv-2", "Beta", 0, null, null, null)),
+                    42,
+                    List.of(new AdminAnalyticsDashboard.PlayerActivityPoint("2026-07-01T00:00:00Z", 30)));
+        } else {
+            usageStatistics = new AdminAnalyticsDashboard.UsageStatistics(
+                    List.of(), List.of(), List.of(), 0, List.of());
+        }
+
+        return new AdminAnalyticsDashboard(overview, serverMetrics, usageStatistics);
+    }
+
     @Test
     void analyticsDashboard() throws IOException {
         verify("analytics_dashboard_full", AdminAnalyticsProtoMapper.toDashboardResponse(dashboard(true)));
@@ -54,8 +70,8 @@ class AdminProtoMapperGoldenTest {
     @Test
     void analyticsActivity() throws IOException {
         AdminAnalyticsActivity full = new AdminAnalyticsActivity(500L, 10L, List.of(
-            new AdminAnalyticsActivity.ActivityPoint("2026-07-01T00:00:00Z", 5L, 30),
-            new AdminAnalyticsActivity.ActivityPoint("2026-07-02T00:00:00Z", 7L, 42)));
+                new AdminAnalyticsActivity.ActivityPoint("2026-07-01T00:00:00Z", 5L, 30),
+                new AdminAnalyticsActivity.ActivityPoint("2026-07-02T00:00:00Z", 7L, 42)));
         verify("analytics_activity_full", AdminAnalyticsProtoMapper.toActivityResponse(full));
 
         AdminAnalyticsActivity empty = new AdminAnalyticsActivity(0L, 0L, List.of());
@@ -71,8 +87,8 @@ class AdminProtoMapperGoldenTest {
     @Test
     void analyticsHistorical() throws IOException {
         AdminAnalyticsHistorical historical = new AdminAnalyticsHistorical("servers", "30d", List.of(
-            new AdminHistoricalPoint("2026-07-01", 3L),
-            new AdminHistoricalPoint("2026-07-02", 6L)));
+                new AdminHistoricalPoint("2026-07-01", 3L),
+                new AdminHistoricalPoint("2026-07-02", 6L)));
         verify("analytics_historical", AdminAnalyticsProtoMapper.toHistoricalResponse(historical));
     }
 
@@ -85,16 +101,16 @@ class AdminProtoMapperGoldenTest {
     @Test
     void monitoringDashboard() throws IOException {
         AdminMonitoringDashboard dashboard = new AdminMonitoringDashboard(
-            new AdminMonitoringDashboard.ServerMetrics(10L, 7L, 1L, 2L, 3L, 4L, 55L),
-            new AdminMonitoringDashboard.LogMetrics(
-                new AdminMonitoringDashboard.LogWindow(20L, 1L, 3L, 5L),
-                new AdminMonitoringDashboard.UnresolvedLogs(1L, 2L)),
-            new AdminMonitoringDashboard.SystemHealth(88, "good"),
-            List.of(Map.of(
-                "_id", "2026-07-01",
-                "total", 5,
-                "levels", List.of(Map.of("level", "error", "count", 2)))),
-            FIXED_A);
+                new AdminMonitoringDashboard.ServerMetrics(10L, 7L, 1L, 2L, 3L, 4L, 55L),
+                new AdminMonitoringDashboard.LogMetrics(
+                        new AdminMonitoringDashboard.LogWindow(20L, 1L, 3L, 5L),
+                        new AdminMonitoringDashboard.UnresolvedLogs(1L, 2L)),
+                new AdminMonitoringDashboard.SystemHealth(88, "good"),
+                List.of(Map.of(
+                        "_id", "2026-07-01",
+                        "total", 5,
+                        "levels", List.of(Map.of("level", "error", "count", 2)))),
+                FIXED_A);
         verify("monitoring_dashboard", AdminMonitoringProtoMapper.toDashboardResponse(dashboard));
     }
 
@@ -114,38 +130,38 @@ class AdminProtoMapperGoldenTest {
         log.setTimestamp(FIXED_A);
 
         AdminMonitoringLogs full = new AdminMonitoringLogs(
-            List.of(log),
-            new AdminPagination(1, 50, 1L, 1),
-            new AdminMonitoringLogs.Filters("warning", "monitor", "srv-1", "infra", "true", "cpu"));
+                List.of(log),
+                new AdminPagination(1, 50, 1L, 1),
+                new AdminMonitoringLogs.Filters("warning", "monitor", "srv-1", "infra", "true", "cpu"));
         verify("monitoring_logs_full", AdminMonitoringProtoMapper.toLogsResponse(full));
 
         AdminMonitoringLogs minimal = new AdminMonitoringLogs(
-            List.of(),
-            new AdminPagination(1, 50, 0L, 0),
-            new AdminMonitoringLogs.Filters(null, null, null, null, null, null));
+                List.of(),
+                new AdminPagination(1, 50, 0L, 0),
+                new AdminMonitoringLogs.Filters(null, null, null, null, null, null));
         verify("monitoring_logs_null_filters", AdminMonitoringProtoMapper.toLogsResponse(minimal));
     }
 
     @Test
     void monitoringSources() throws IOException {
         AdminMonitoringSources sources = new AdminMonitoringSources(
-            List.of("monitor", "gateway"),
-            List.of("infra", "security"));
+                List.of("monitor", "gateway"),
+                List.of("infra", "security"));
         verify("monitoring_sources", AdminMonitoringProtoMapper.toSourcesResponse(sources));
     }
 
     @Test
     void monitoringHealth() throws IOException {
         AdminMonitoringHealth health = new AdminMonitoringHealth("degraded", List.of(
-            AdminMonitoringHealth.HealthCheck.responsive(
-                "Database Connectivity", "healthy", "MongoDB connection is responsive.", 12L),
-            AdminMonitoringHealth.HealthCheck.failure(
-                "Database Connectivity", "critical", "Failed to ping MongoDB.", "timeout"),
-            AdminMonitoringHealth.HealthCheck.counted(
-                "Critical System Logs", "degraded", "2 unresolved critical log(s) in the last 24 hours.", 2L),
-            AdminMonitoringHealth.HealthCheck.counted(
-                "Server Provisioning", "healthy", "0 server(s) failed to provision.", 0L)),
-            FIXED_A);
+                AdminMonitoringHealth.HealthCheck.responsive(
+                        "Database Connectivity", "healthy", "MongoDB connection is responsive.", 12L),
+                AdminMonitoringHealth.HealthCheck.failure(
+                        "Database Connectivity", "critical", "Failed to ping MongoDB.", "timeout"),
+                AdminMonitoringHealth.HealthCheck.counted(
+                        "Critical System Logs", "degraded", "2 unresolved critical log(s) in the last 24 hours.", 2L),
+                AdminMonitoringHealth.HealthCheck.counted(
+                        "Server Provisioning", "healthy", "0 server(s) failed to provision.", 0L)),
+                FIXED_A);
         verify("monitoring_health", AdminMonitoringProtoMapper.toHealthResponse(health));
     }
 
@@ -166,16 +182,16 @@ class AdminProtoMapperGoldenTest {
     @Test
     void securitySummary() throws IOException {
         AdminSecuritySummary summary = new AdminSecuritySummary(
-            new AdminSecuritySummary.Last24Hours(1L, 2L, 3L), 10L, FIXED_A);
+                new AdminSecuritySummary.Last24Hours(1L, 2L, 3L), 10L, FIXED_A);
         verify("security_summary", AdminSecurityProtoMapper.toSummaryResponse(summary));
     }
 
     @Test
     void systemMaintenance() throws IOException {
         verify("system_maintenance_with_message", AdminSystemProtoMapper.toMaintenanceResponse(
-            new AdminMaintenanceStatus(true, "System under maintenance."), "Maintenance mode enabled"));
+                new AdminMaintenanceStatus(true, "System under maintenance."), "Maintenance mode enabled"));
         verify("system_maintenance_null_message", AdminSystemProtoMapper.toMaintenanceResponse(
-            new AdminMaintenanceStatus(false, null), null));
+                new AdminMaintenanceStatus(false, null), null));
     }
 
     @Test
@@ -189,37 +205,6 @@ class AdminProtoMapperGoldenTest {
         performance.setEnableCaching(true);
 
         verify("system_rate_limits", AdminSystemProtoMapper.toRateLimitsResponse(
-            new AdminRateLimitStatus(performance, true, FIXED_B)));
-    }
-
-    private static AdminAnalyticsDashboard dashboard(boolean populated) {
-        AdminAnalyticsDashboard.Overview overview = new AdminAnalyticsDashboard.Overview(
-            10L, 7L, 500L, 42L, "12.34", "0.00", "5.0", "2.0");
-
-        AdminAnalyticsDashboard.ServerMetrics serverMetrics = populated
-            ? new AdminAnalyticsDashboard.ServerMetrics(
-                List.of(new AdminNameCount("free", 6), new AdminNameCount("premium", 4)),
-                List.of(new AdminNameCount("completed", 8)),
-                List.of(new AdminRegistrationPoint("2026-07-01", 3), new AdminRegistrationPoint("2026-07-02", 5)))
-            : new AdminAnalyticsDashboard.ServerMetrics(List.of(), List.of(), List.of());
-
-        AdminAnalyticsDashboard.UsageStatistics usageStatistics;
-        if (populated) {
-            Server topServer = new Server("Alpha", "alpha.modl.gg", "db_alpha", "admin@x.com", true, ServerPlan.PREMIUM);
-            topServer.setId("srv-1");
-            usageStatistics = new AdminAnalyticsDashboard.UsageStatistics(
-                List.of(topServer),
-                List.of(new AdminAnalyticsDashboard.ServerActivityPoint("2026-07-01T00:00:00Z", 5L)),
-                List.of(
-                    new AdminAnalyticsDashboard.LiveServer("srv-1", "Alpha", 12, "paper", "1.21", "2.2.0"),
-                    new AdminAnalyticsDashboard.LiveServer("srv-2", "Beta", 0, null, null, null)),
-                42,
-                List.of(new AdminAnalyticsDashboard.PlayerActivityPoint("2026-07-01T00:00:00Z", 30)));
-        } else {
-            usageStatistics = new AdminAnalyticsDashboard.UsageStatistics(
-                List.of(), List.of(), List.of(), 0, List.of());
-        }
-
-        return new AdminAnalyticsDashboard(overview, serverMetrics, usageStatistics);
+                new AdminRateLimitStatus(performance, true, FIXED_B)));
     }
 }

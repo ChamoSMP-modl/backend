@@ -65,11 +65,11 @@ public class InProcessRealtimeEventDispatcher implements RealtimeEventDispatcher
 
     private boolean matches(RealtimeOutboundEvent event, RealtimeConnectionState state, WebSocketSession session) {
         return session.isOpen()
-            && !state.isClosing()
-            && !connectionRegistry.isTerminal(session)
-            && state.isAuthenticated()
-            && event.serverId().equals(state.getServerId())
-            && state.isSubscribedTo(event.topic());
+                && !state.isClosing()
+                && !connectionRegistry.isTerminal(session)
+                && state.isAuthenticated()
+                && event.serverId().equals(state.getServerId())
+                && state.isSubscribedTo(event.topic());
     }
 
 }

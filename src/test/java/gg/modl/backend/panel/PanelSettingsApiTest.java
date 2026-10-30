@@ -1,7 +1,5 @@
 package gg.modl.backend.panel;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import gg.modl.backend.support.ApiClient;
 import gg.modl.backend.support.JsonHelper;
 import gg.modl.backend.support.StagingCredentials;
@@ -9,6 +7,8 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PanelSettingsApiTest {
 
@@ -36,7 +36,8 @@ class PanelSettingsApiTest {
 
     @Disabled("Skipped: would reset punishment types to defaults on staging")
     @Test
-    void resetPunishmentTypes() throws Exception {}
+    void resetPunishmentTypes() throws Exception {
+    }
 
     // -- General Settings --
 
@@ -73,7 +74,8 @@ class PanelSettingsApiTest {
 
     @Disabled("Skipped: would rotate the real API key on staging")
     @Test
-    void generateApiKey() throws Exception {}
+    void generateApiKey() throws Exception {
+    }
 
     // -- AI Moderation --
 

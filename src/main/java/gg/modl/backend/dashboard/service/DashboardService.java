@@ -2,48 +2,43 @@ package gg.modl.backend.dashboard.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import gg.modl.backend.dashboard.dto.response.ActivityItemResponse;
-import gg.modl.backend.dashboard.dto.response.DashboardMetricsResponse;
-import gg.modl.backend.dashboard.dto.response.MinecraftDashboardStatsResponse;
-import gg.modl.backend.dashboard.dto.response.RecentPunishmentResponse;
-import gg.modl.backend.dashboard.dto.response.RecentTicketResponse;
+import gg.modl.backend.dashboard.dto.response.*;
 import gg.modl.backend.database.mongo.fields.PlayerFields;
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
+import gg.modl.backend.infrastructure.util.DateRangeUtil;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.punishment.EnforcementCategory;
 import gg.modl.backend.player.data.punishment.Punishment;
+import gg.modl.backend.player.service.PlayerDataUtils;
 import gg.modl.backend.player.service.PlayerStatusCalculator;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.PunishmentTypeIndex;
 import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.staff.service.StaffService;
-import gg.modl.backend.ticket.data.Ticket;
-import gg.modl.backend.ticket.data.TicketCategory;
-import gg.modl.backend.ticket.data.TicketPriority;
-import gg.modl.backend.ticket.data.TicketReply;
-import gg.modl.backend.ticket.data.TicketStatus;
+import gg.modl.backend.ticket.data.*;
 import gg.modl.backend.ticket.util.TicketAssigneeUtil;
-import gg.modl.backend.infrastructure.util.DateRangeUtil;
-import gg.modl.backend.player.service.PlayerDataUtils;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.*;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class DashboardService {
+    public static final int MAX_DAYS = 90;
+    private static final int RECENT_PUNISHMENT_WINDOW_DAYS = 7;
+    private static final int MAX_RECENT_TICKETS_LIMIT = 20;
+    private static final int MAX_RECENT_PUNISHMENTS_LIMIT = 20;
+    private static final int MAX_ACTIVITY_LIMIT = 100;
+    private static final int MAX_QUERY_RESULTS = 200;
     private final TicketMongoRepository ticketRepository;
     private final PlayerMongoRepository playerRepository;
     private final PunishmentMongoRepository punishmentRepository;
@@ -51,18 +46,10 @@ public class DashboardService {
     private final StaffService staffService;
     private final PunishmentTypeService punishmentTypeService;
     private final PlayerStatusCalculator statusCalculator;
-
     private final Cache<String, ActivePunishmentCounts> activePunishmentCountsCache = Caffeine.newBuilder()
-        .expireAfterWrite(Duration.ofSeconds(60))
-        .maximumSize(500)
-        .build();
-
-    private static final int RECENT_PUNISHMENT_WINDOW_DAYS = 7;
-    private static final int MAX_RECENT_TICKETS_LIMIT = 20;
-    private static final int MAX_RECENT_PUNISHMENTS_LIMIT = 20;
-    private static final int MAX_ACTIVITY_LIMIT = 100;
-    public static final int MAX_DAYS = 90;
-    private static final int MAX_QUERY_RESULTS = 200;
+            .expireAfterWrite(Duration.ofSeconds(60))
+            .maximumSize(500)
+            .build();
 
     public MinecraftDashboardStatsResponse getMinecraftStats(Server server) {
         long unresolvedReports = ticketRepository.countUnresolvedReports(server);
@@ -74,14 +61,14 @@ public class DashboardService {
         ActivePunishmentCounts punishmentCounts = countActivePunishments(server);
 
         return new MinecraftDashboardStatsResponse(
-            unresolvedReports,
-            unresolvedTickets,
-            onlineStaff,
-            onlinePlayers,
-            punishmentCounts.bans,
-            punishmentCounts.mutes,
-            punishmentCounts.total,
-            totalPlayers
+                unresolvedReports,
+                unresolvedTickets,
+                onlineStaff,
+                onlinePlayers,
+                punishmentCounts.bans,
+                punishmentCounts.mutes,
+                punishmentCounts.total,
+                totalPlayers
         );
     }
 
@@ -166,14 +153,14 @@ public class DashboardService {
         int playersTrend = prevPlayers > 0 ? (int) Math.round(((double) (recentPlayers - prevPlayers) / prevPlayers) * 100) : 0;
 
         return new DashboardMetricsResponse(
-            totalTickets,
-            openTickets,
-            totalPlayers,
-            totalPunishments,
-            activePunishments,
-            totalStaff,
-            ticketsTrend,
-            playersTrend
+                totalTickets,
+                openTickets,
+                totalPlayers,
+                totalPunishments,
+                activePunishments,
+                totalStaff,
+                ticketsTrend,
+                playersTrend
         );
     }
 
@@ -182,27 +169,27 @@ public class DashboardService {
         List<Ticket> tickets = ticketRepository.findRecentWithProjection(server, safeLimit);
 
         return tickets.stream()
-            .map(ticket -> {
-                String initialMessage = null;
-                if (ticket.getReplies() != null && !ticket.getReplies().isEmpty()) {
-                    TicketReply firstReply = ticket.getReplies().get(0);
-                    if (firstReply.getContent() != null) {
-                        initialMessage = firstReply.getContent();
+                .map(ticket -> {
+                    String initialMessage = null;
+                    if (ticket.getReplies() != null && !ticket.getReplies().isEmpty()) {
+                        TicketReply firstReply = ticket.getReplies().get(0);
+                        if (firstReply.getContent() != null) {
+                            initialMessage = firstReply.getContent();
+                        }
                     }
-                }
 
-                return new RecentTicketResponse(
-                    ticket.getId(),
-                    ticket.getSubject() != null ? ticket.getSubject() : "No Subject",
-                    initialMessage,
-                    ticket.getStatus() != null ? ticket.getStatus().getId() : TicketStatus.OPEN.getId(),
-                    ticket.getPriority() != null ? ticket.getPriority().getId() : TicketPriority.NORMAL.getId(),
-                    ticket.getCreated(),
-                    ticket.getCreatorName() != null ? ticket.getCreatorName() : "Unknown",
-                    ticket.getType() != null ? ticket.getType().getId() : TicketCategory.SUPPORT.getId()
-                );
-            })
-            .toList();
+                    return new RecentTicketResponse(
+                            ticket.getId(),
+                            ticket.getSubject() != null ? ticket.getSubject() : "No Subject",
+                            initialMessage,
+                            ticket.getStatus() != null ? ticket.getStatus().getId() : TicketStatus.OPEN.getId(),
+                            ticket.getPriority() != null ? ticket.getPriority().getId() : TicketPriority.NORMAL.getId(),
+                            ticket.getCreated(),
+                            ticket.getCreatorName() != null ? ticket.getCreatorName() : "Unknown",
+                            ticket.getType() != null ? ticket.getType().getId() : TicketCategory.SUPPORT.getId()
+                    );
+                })
+                .toList();
     }
 
     private int clampLimit(int value, int max) {
@@ -233,14 +220,14 @@ public class DashboardService {
             String playerUuid = PlayerDataUtils.extractMinecraftUuid(row);
 
             results.add(new RecentPunishmentResponse(
-                punishment.getId(),
-                playerName,
-                playerUuid,
-                typeName,
-                reason,
-                punishment.getIssuerName() != null ? punishment.getIssuerName() : "Unknown",
-                punishment.getIssued(),
-                isPunishmentActiveSafely(punishment)
+                    punishment.getId(),
+                    playerName,
+                    playerUuid,
+                    typeName,
+                    reason,
+                    punishment.getIssuerName() != null ? punishment.getIssuerName() : "Unknown",
+                    punishment.getIssued(),
+                    isPunishmentActiveSafely(punishment)
             ));
         }
 
@@ -267,7 +254,7 @@ public class DashboardService {
     private Map<Integer, String> buildPunishmentTypeNameByOrdinal(Server server) {
         Map<Integer, String> names = new HashMap<>();
         buildPunishmentTypeByOrdinal(server).forEach((ordinal, type) ->
-            names.put(ordinal, type.getName()));
+                names.put(ordinal, type.getName()));
         return names;
     }
 
@@ -304,17 +291,17 @@ public class DashboardService {
 
             for (Ticket ticket : tickets) {
                 if (ticket.getCreatorName() != null
-                    && ticket.getCreatorName().equals(staffUsername)
-                    && ticket.getCreated() != null
-                    && ticket.getCreated().after(cutoffDate)) {
+                        && ticket.getCreatorName().equals(staffUsername)
+                        && ticket.getCreated() != null
+                        && ticket.getCreated().after(cutoffDate)) {
                     activities.add(new ActivityItemResponse(
-                        "ticket-created-" + ticket.getId(),
-                        "new_ticket",
-                        "blue",
-                        "Created ticket: " + (ticket.getSubject() != null ? ticket.getSubject() : "No Subject"),
-                        ticket.getCreated(),
-                        "Created " + displayCategory(ticket) + " ticket",
-                        List.of(new ActivityItemResponse.ActivityAction("View Ticket", "/panel/tickets/" + ticket.getId(), true))
+                            "ticket-created-" + ticket.getId(),
+                            "new_ticket",
+                            "blue",
+                            "Created ticket: " + (ticket.getSubject() != null ? ticket.getSubject() : "No Subject"),
+                            ticket.getCreated(),
+                            "Created " + displayCategory(ticket) + " ticket",
+                            List.of(new ActivityItemResponse.ActivityAction("View Ticket", "/panel/tickets/" + ticket.getId(), true))
                     ));
                 }
 
@@ -329,17 +316,17 @@ public class DashboardService {
                         String color = isStaffReply ? "green" : "blue";
                         String replyName = reply.getName() != null ? reply.getName() : "Unknown";
                         String description = isStaffReply
-                                             ? "You replied to " + displayCategory(ticket) + " ticket"
-                                             : replyName + " replied to " + displayCategory(ticket) + " ticket";
+                                ? "You replied to " + displayCategory(ticket) + " ticket"
+                                : replyName + " replied to " + displayCategory(ticket) + " ticket";
 
                         activities.add(new ActivityItemResponse(
-                            "ticket-reply-" + ticket.getId() + "-" + reply.getCreated().getTime(),
-                            "mod_action",
-                            color,
-                            actionType + " on ticket: " + (ticket.getSubject() != null ? ticket.getSubject() : "No Subject"),
-                            reply.getCreated(),
-                            description,
-                            List.of(new ActivityItemResponse.ActivityAction("View Ticket", "/panel/tickets/" + ticket.getId(), true))
+                                "ticket-reply-" + ticket.getId() + "-" + reply.getCreated().getTime(),
+                                "mod_action",
+                                color,
+                                actionType + " on ticket: " + (ticket.getSubject() != null ? ticket.getSubject() : "No Subject"),
+                                reply.getCreated(),
+                                description,
+                                List.of(new ActivityItemResponse.ActivityAction("View Ticket", "/panel/tickets/" + ticket.getId(), true))
                         ));
                     }
                 }
@@ -370,13 +357,13 @@ public class DashboardService {
                 String playerUuid = PlayerDataUtils.extractMinecraftUuid(row);
 
                 activities.add(new ActivityItemResponse(
-                    "punishment-" + punishment.getId(),
-                    "new_punishment",
-                    "red",
-                    "Applied " + punishmentTypeName + " to " + username,
-                    punishment.getIssued(),
-                    "Applied " + punishmentTypeName + " punishment",
-                    List.of(new ActivityItemResponse.ActivityAction("View Player", "/panel/players/" + playerUuid, true))
+                        "punishment-" + punishment.getId(),
+                        "new_punishment",
+                        "red",
+                        "Applied " + punishmentTypeName + " to " + username,
+                        punishment.getIssued(),
+                        "Applied " + punishmentTypeName + " punishment",
+                        List.of(new ActivityItemResponse.ActivityAction("View Player", "/panel/players/" + playerUuid, true))
                 ));
             }
         } catch (Exception exception) {
@@ -384,5 +371,6 @@ public class DashboardService {
         }
     }
 
-    private record ActivePunishmentCounts(long bans, long mutes, long total) {}
+    private record ActivePunishmentCounts(long bans, long mutes, long total) {
+    }
 }

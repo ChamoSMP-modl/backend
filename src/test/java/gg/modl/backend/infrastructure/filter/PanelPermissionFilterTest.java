@@ -1,41 +1,42 @@
 package gg.modl.backend.infrastructure.filter;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.auth.session.AuthSessionData;
+import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.infrastructure.authorization.PanelAccessPolicyResolver;
 import gg.modl.backend.infrastructure.authorization.PanelHandlerMappingTestSupport;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
 import gg.modl.backend.role.service.PermissionService;
+import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.service.StaffLookupCache;
-import gg.modl.backend.role.service.RoleAuthorization;
-import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import jakarta.servlet.FilterChain;
-import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 class PanelPermissionFilterTest {
 
     private static final PanelAccessPolicyResolver POLICY_RESOLVER = PanelHandlerMappingTestSupport.buildResolver();
-    private static final Server SERVER = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+    private static final Server SERVER = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     private static final String STAFF_EMAIL = "staff@example.com";
     private static final String SUPER_ADMIN_EMAIL = "admin@example.com";
     private static final String DENY_BODY =
-        "{\"success\":false,\"status\":403,\"error\":\"Insufficient permissions\",\"message\":\"Insufficient permissions\"}";
+            "{\"success\":false,\"status\":403,\"error\":\"Insufficient permissions\",\"message\":\"Insufficient permissions\"}";
+
+    private static RoleAuthorization roleAuthorization(PermissionService permissionService,
+                                                       StaffLookupCache staffLookupCache) {
+        return new RoleAuthorization(permissionService, mock(StaffMongoRepository.class), staffLookupCache);
+    }
 
     @Test
     void permitPolicySkipsStaffLookup() throws Exception {
@@ -185,10 +186,5 @@ class PanelPermissionFilterTest {
         session.setEmail(email);
         request.setAttribute(RequestAttribute.SESSION, session);
         return request;
-    }
-
-    private static RoleAuthorization roleAuthorization(PermissionService permissionService,
-                                                      StaffLookupCache staffLookupCache) {
-        return new RoleAuthorization(permissionService, mock(StaffMongoRepository.class), staffLookupCache);
     }
 }

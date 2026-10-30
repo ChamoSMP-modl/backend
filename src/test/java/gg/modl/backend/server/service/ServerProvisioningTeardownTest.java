@@ -1,10 +1,5 @@
 package gg.modl.backend.server.service;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import com.mongodb.client.MongoDatabase;
 import gg.modl.backend.database.MongoIndexReconciler;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
@@ -18,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
+import static org.mockito.Mockito.*;
+
 class ServerProvisioningTeardownTest {
 
     private TenantMongoAccess tenantMongoAccess;
@@ -28,14 +25,14 @@ class ServerProvisioningTeardownTest {
     void setUp() {
         tenantMongoAccess = mock(TenantMongoAccess.class);
         service = new ServerProvisioningService(
-            tenantMongoAccess,
-            mock(MongoIndexReconciler.class),
-            mock(SettingsMongoRepository.class),
-            mock(KnowledgebaseCategoryMongoRepository.class),
-            mock(HomepageCardMongoRepository.class),
-            mock(RoleService.class)
+                tenantMongoAccess,
+                mock(MongoIndexReconciler.class),
+                mock(SettingsMongoRepository.class),
+                mock(KnowledgebaseCategoryMongoRepository.class),
+                mock(HomepageCardMongoRepository.class),
+                mock(RoleService.class)
         );
-        server = new Server("Server", "server", "server_db", "owner@example.com", true, ServerPlan.FREE);
+        server = new Server("Server", "server", "server_db", "owner@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
     }
 

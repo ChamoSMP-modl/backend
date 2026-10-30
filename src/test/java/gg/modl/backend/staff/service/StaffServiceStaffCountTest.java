@@ -1,15 +1,7 @@
 package gg.modl.backend.staff.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.auth.WebAuthnService;
 import gg.modl.backend.auth.session.SessionService;
-import gg.modl.backend.settings.service.GeneralSettingsService;
 import gg.modl.backend.database.mongo.repository.InvitationMongoRepository;
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.role.service.PermissionService;
@@ -17,9 +9,15 @@ import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.server.service.ServerTimestampService;
-import java.util.Date;
+import gg.modl.backend.settings.service.GeneralSettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Date;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class StaffServiceStaffCountTest {
 
@@ -33,17 +31,17 @@ class StaffServiceStaffCountTest {
     void setUp() {
         staffRepository = mock(StaffMongoRepository.class);
         service = new StaffService(
-            mock(InvitationMongoRepository.class),
-            staffRepository,
-            mock(PermissionService.class),
-            mock(RoleAuthorization.class),
-            mock(ServerTimestampService.class),
-            mock(WebAuthnService.class),
-            mock(SessionService.class),
-            mock(GeneralSettingsService.class),
-            mock(StaffLookupCache.class)
+                mock(InvitationMongoRepository.class),
+                staffRepository,
+                mock(PermissionService.class),
+                mock(RoleAuthorization.class),
+                mock(ServerTimestampService.class),
+                mock(WebAuthnService.class),
+                mock(SessionService.class),
+                mock(GeneralSettingsService.class),
+                mock(StaffLookupCache.class)
         );
-        server = new Server("Server", "server", "server_db", ADMIN_EMAIL, true, ServerPlan.FREE);
+        server = new Server("Server", "server", "server_db", ADMIN_EMAIL, true, ServerPlan.PREMIUM);
         server.setId("server-id");
         server.setCreatedAt(new Date(1_700_000_000_000L));
     }

@@ -1,9 +1,5 @@
 package gg.modl.backend.staff.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.nullToEmpty;
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.setOptionalEpochMillis;
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.setOptionalString;
-
 import gg.modl.backend.staff.dto.request.AssignMinecraftPlayerRequest;
 import gg.modl.backend.staff.dto.request.CreateStaffRequest;
 import gg.modl.backend.staff.dto.request.InviteStaffRequest;
@@ -16,7 +12,10 @@ import gg.modl.proto.modl.v1.CheckUsernameResponse;
 import gg.modl.proto.modl.v1.InviteResultResponse.FailedInvite;
 import gg.modl.proto.modl.v1.PanelStaffListResponse;
 import gg.modl.proto.modl.v1.StaffMutationResponse;
+
 import java.util.List;
+
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.*;
 
 final class PanelStaffProtoMapper {
     private PanelStaffProtoMapper() {
@@ -24,30 +23,30 @@ final class PanelStaffProtoMapper {
 
     static CreateStaffRequest toCreateStaffRequest(gg.modl.proto.modl.v1.CreateStaffRequest request) {
         return new CreateStaffRequest(
-            request.getEmail(),
-            request.getUsername(),
-            request.hasRole() ? request.getRole() : null
+                request.getEmail(),
+                request.getUsername(),
+                request.hasRole() ? request.getRole() : null
         );
     }
 
     static UpdateStaffRequest toUpdateStaffRequest(gg.modl.proto.modl.v1.UpdateStaffRequest request) {
         return new UpdateStaffRequest(
-            request.hasEmail() ? request.getEmail() : null
+                request.hasEmail() ? request.getEmail() : null
         );
     }
 
     static InviteStaffRequest toInviteStaffRequest(gg.modl.proto.modl.v1.InviteStaffRequest request) {
         return new InviteStaffRequest(
-            request.hasEmail() ? request.getEmail() : null,
-            request.getEmailsList().isEmpty() ? null : List.copyOf(request.getEmailsList()),
-            request.getRole()
+                request.hasEmail() ? request.getEmail() : null,
+                request.getEmailsList().isEmpty() ? null : List.copyOf(request.getEmailsList()),
+                request.getRole()
         );
     }
 
     static AssignMinecraftPlayerRequest toAssignMinecraftPlayerRequest(gg.modl.proto.modl.v1.AssignMinecraftPlayerRequest request) {
         return new AssignMinecraftPlayerRequest(
-            request.hasMinecraftUuid() ? request.getMinecraftUuid() : null,
-            request.hasMinecraftUsername() ? request.getMinecraftUsername() : null
+                request.hasMinecraftUuid() ? request.getMinecraftUuid() : null,
+                request.hasMinecraftUsername() ? request.getMinecraftUsername() : null
         );
     }
 
@@ -84,18 +83,18 @@ final class PanelStaffProtoMapper {
 
     static gg.modl.proto.modl.v1.InviteResultResponse toInviteResultResponse(InviteResultResponse result) {
         gg.modl.proto.modl.v1.InviteResultResponse.Builder builder =
-            gg.modl.proto.modl.v1.InviteResultResponse.newBuilder();
+                gg.modl.proto.modl.v1.InviteResultResponse.newBuilder();
         setOptionalString(builder::setMessage, result.message());
         if (result.success() != null) {
             builder.addAllSuccess(result.success());
         }
         if (result.failed() != null) {
             result.failed().stream()
-                .map(failed -> FailedInvite.newBuilder()
-                    .setEmail(nullToEmpty(failed.email()))
-                    .setReason(nullToEmpty(failed.reason()))
-                    .build())
-                .forEach(builder::addFailed);
+                    .map(failed -> FailedInvite.newBuilder()
+                            .setEmail(nullToEmpty(failed.email()))
+                            .setReason(nullToEmpty(failed.reason()))
+                            .build())
+                    .forEach(builder::addFailed);
         }
         return builder.build();
     }
@@ -103,11 +102,11 @@ final class PanelStaffProtoMapper {
     static AvailablePlayersResponse toAvailablePlayersResponse(List<AvailablePlayerResponse> players) {
         AvailablePlayersResponse.Builder builder = AvailablePlayersResponse.newBuilder();
         players.stream()
-            .map(player -> gg.modl.proto.modl.v1.AvailablePlayerResponse.newBuilder()
-                .setUuid(nullToEmpty(player.uuid()))
-                .setUsername(nullToEmpty(player.username()))
-                .build())
-            .forEach(builder::addPlayers);
+                .map(player -> gg.modl.proto.modl.v1.AvailablePlayerResponse.newBuilder()
+                        .setUuid(nullToEmpty(player.uuid()))
+                        .setUsername(nullToEmpty(player.username()))
+                        .build())
+                .forEach(builder::addPlayers);
         return builder.build();
     }
 }

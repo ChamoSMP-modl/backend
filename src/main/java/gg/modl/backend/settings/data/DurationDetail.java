@@ -6,11 +6,11 @@ import jakarta.validation.constraints.Min;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record DurationDetail(
-    @Min(MIN_DURATION_VALUE)
-    @Max(MAX_DURATION_VALUE)
-    int value,
-    String unit,
-    String type
+        @Min(MIN_DURATION_VALUE)
+        @Max(MAX_DURATION_VALUE)
+        int value,
+        String unit,
+        String type
 ) {
     private static final long MIN_DURATION_VALUE = 0L;
     private static final long MAX_DURATION_VALUE = 100_000_000L;

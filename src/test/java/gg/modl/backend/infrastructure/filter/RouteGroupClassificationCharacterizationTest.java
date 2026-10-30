@@ -1,8 +1,5 @@
 package gg.modl.backend.infrastructure.filter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
 import gg.modl.backend.auth.AuthConfiguration;
 import gg.modl.backend.infrastructure.proto.ProtobufErrorResponseWriter;
 import gg.modl.backend.infrastructure.proto.ProtobufMediaTypes;
@@ -11,43 +8,18 @@ import gg.modl.backend.infrastructure.ratelimit.RateLimitConfig;
 import gg.modl.backend.infrastructure.ratelimit.RateLimitConfig.RateLimitTier;
 import gg.modl.backend.infrastructure.rest.RouteGroups;
 import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockHttpServletRequest;
+
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Predicate;
-import org.junit.jupiter.api.Test;
-import org.springframework.mock.web.MockHttpServletRequest;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class RouteGroupClassificationCharacterizationTest {
-
-    private enum Group {
-        PANEL_AREA(RouteGroups::isPanelArea),
-        ADMIN_AREA(RouteGroups::isAdminArea),
-        PANEL_AUTH_AREA(RouteGroups::isPanelAuthArea),
-        PANEL_PREFIX(RouteGroups::isPanelPrefix),
-        MC_API_PREFIX(RouteGroups::isMinecraftApiPrefix),
-        MC_OR_RL_PREFIX(RouteGroups::isMinecraftOrReplayLitePrefix),
-        V1_PREFIX(RouteGroups::isVersion1Prefix),
-        V2_MC_PREFIX(RouteGroups::isVersion2MinecraftPrefix),
-        V3_PREFIX(RouteGroups::isVersion3Prefix),
-        PANEL_CHILD(RouteGroups::isPanelChild),
-        PUBLIC_CHILD(RouteGroups::isPublicChild),
-        PUBLIC_RL_CHILD(RouteGroups::isPublicReplayLiteChild),
-        RL_CHILD(RouteGroups::isReplayLiteChild),
-        ADMIN_CHILD(RouteGroups::isAdminChild),
-        ADMIN_AUTH_CHILD(RouteGroups::isAdminAuthChild);
-
-        private final Predicate<String> predicate;
-
-        Group(Predicate<String> predicate) {
-            this.predicate = predicate;
-        }
-
-        boolean matches(String path) {
-            return predicate.test(path);
-        }
-    }
 
     private static final Map<String, EnumSet<Group>> MATRIX = buildMatrix();
 
@@ -112,7 +84,6 @@ class RouteGroupClassificationCharacterizationTest {
         put(matrix, "/v3/minecraft/players/sync", Group.MC_API_PREFIX, Group.MC_OR_RL_PREFIX, Group.V3_PREFIX);
         put(matrix, "/v3/minecraft/players/login", Group.MC_API_PREFIX, Group.MC_OR_RL_PREFIX, Group.V3_PREFIX);
         put(matrix, "/v3foo", Group.V3_PREFIX);
-        put(matrix, "/v1/webhooks/stripe", Group.V1_PREFIX);
         put(matrix, "/v1/realtime/ws", Group.V1_PREFIX);
         put(matrix, "/v1/health", Group.V1_PREFIX);
         put(matrix, "/actuator/health");
@@ -134,6 +105,16 @@ class RouteGroupClassificationCharacterizationTest {
         matrix.put(path, set);
     }
 
+    private static MockHttpServletRequest request(String method, String path) {
+        return new MockHttpServletRequest(method, path);
+    }
+
+    private static MockHttpServletRequest withAccept(String path, String accept) {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
+        request.addHeader("Accept", accept);
+        return request;
+    }
+
     @Test
     void routeGroupPredicatesMatchGoldenMatrix() {
         for (Map.Entry<String, EnumSet<Group>> entry : MATRIX.entrySet()) {
@@ -141,9 +122,9 @@ class RouteGroupClassificationCharacterizationTest {
             EnumSet<Group> expected = entry.getValue();
             for (Group group : Group.values()) {
                 assertEquals(
-                    expected.contains(group),
-                    group.matches(path),
-                    () -> "path=" + path + " group=" + group);
+                        expected.contains(group),
+                        group.matches(path),
+                        () -> "path=" + path + " group=" + group);
             }
         }
     }
@@ -206,11 +187,11 @@ class RouteGroupClassificationCharacterizationTest {
     void protobufErrorWriterHonorsVersionShortCircuitsAndAcceptNegotiation() {
         ProtobufErrorResponseWriter writer = new ProtobufErrorResponseWriter();
 
-        assertEquals(true, writer.shouldWriteProtobuf(withAccept("/v3/minecraft/players/sync", "application/json")));
-        assertEquals(false, writer.shouldWriteProtobuf(withAccept("/v1/panel/players", ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)));
-        assertEquals(false, writer.shouldWriteProtobuf(withAccept("/v2/minecraft/players/sync", ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)));
-        assertEquals(true, writer.shouldWriteProtobuf(withAccept("/actuator/health", ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)));
-        assertEquals(false, writer.shouldWriteProtobuf(request("GET", "/actuator/health")));
+        assertTrue(writer.shouldWriteProtobuf(withAccept("/v3/minecraft/players/sync", "application/json")));
+        assertFalse(writer.shouldWriteProtobuf(withAccept("/v1/panel/players", ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)));
+        assertFalse(writer.shouldWriteProtobuf(withAccept("/v2/minecraft/players/sync", ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)));
+        assertTrue(writer.shouldWriteProtobuf(withAccept("/actuator/health", ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)));
+        assertFalse(writer.shouldWriteProtobuf(request("GET", "/actuator/health")));
     }
 
     @Test
@@ -233,17 +214,34 @@ class RouteGroupClassificationCharacterizationTest {
         assertEquals(RateLimitTier.MINECRAFT_STANDARD, config.getTierForPath("/v1/minecraft/players/sync", "POST"));
         assertEquals(RateLimitTier.REPLAY_LITE_UPLOAD, config.getTierForPath("/v1/replay-lite/replays/upload", "POST"));
         assertEquals(RateLimitTier.ADMIN_STANDARD, config.getTierForPath("/v1/admin/servers", "GET"));
-        assertEquals(RateLimitTier.WEBHOOK, config.getTierForPath("/v1/webhooks/stripe", "POST"));
         assertEquals(RateLimitTier.PANEL_STANDARD, config.getTierForPath("/unknown", "GET"));
     }
 
-    private static MockHttpServletRequest request(String method, String path) {
-        return new MockHttpServletRequest(method, path);
-    }
+    private enum Group {
+        PANEL_AREA(RouteGroups::isPanelArea),
+        ADMIN_AREA(RouteGroups::isAdminArea),
+        PANEL_AUTH_AREA(RouteGroups::isPanelAuthArea),
+        PANEL_PREFIX(RouteGroups::isPanelPrefix),
+        MC_API_PREFIX(RouteGroups::isMinecraftApiPrefix),
+        MC_OR_RL_PREFIX(RouteGroups::isMinecraftOrReplayLitePrefix),
+        V1_PREFIX(RouteGroups::isVersion1Prefix),
+        V2_MC_PREFIX(RouteGroups::isVersion2MinecraftPrefix),
+        V3_PREFIX(RouteGroups::isVersion3Prefix),
+        PANEL_CHILD(RouteGroups::isPanelChild),
+        PUBLIC_CHILD(RouteGroups::isPublicChild),
+        PUBLIC_RL_CHILD(RouteGroups::isPublicReplayLiteChild),
+        RL_CHILD(RouteGroups::isReplayLiteChild),
+        ADMIN_CHILD(RouteGroups::isAdminChild),
+        ADMIN_AUTH_CHILD(RouteGroups::isAdminAuthChild);
 
-    private static MockHttpServletRequest withAccept(String path, String accept) {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", path);
-        request.addHeader("Accept", accept);
-        return request;
+        private final Predicate<String> predicate;
+
+        Group(Predicate<String> predicate) {
+            this.predicate = predicate;
+        }
+
+        boolean matches(String path) {
+            return predicate.test(path);
+        }
     }
 }

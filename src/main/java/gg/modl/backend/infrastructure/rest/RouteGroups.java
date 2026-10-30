@@ -23,8 +23,8 @@ public final class RouteGroups {
 
     public static boolean isMinecraftApiPrefix(String path) {
         return matchesPrefix(path, RESTMappingV1.PREFIX_MINECRAFT)
-            || matchesPrefix(path, RESTMappingV2.PREFIX_MINECRAFT)
-            || matchesPrefix(path, RESTMappingV3.PREFIX_MINECRAFT);
+                || matchesPrefix(path, RESTMappingV2.PREFIX_MINECRAFT)
+                || matchesPrefix(path, RESTMappingV3.PREFIX_MINECRAFT);
     }
 
     public static boolean isMinecraftOrReplayLitePrefix(String path) {

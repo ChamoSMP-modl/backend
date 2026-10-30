@@ -1,22 +1,8 @@
 package gg.modl.backend.database.mongo.codegen;
 
-import java.util.Set;
-import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.Filer;
-import javax.annotation.processing.Messager;
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
+import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
@@ -28,10 +14,7 @@ import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SupportedAnnotationTypes("gg.modl.backend.database.mongo.codegen.GenerateMongoFields")
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
@@ -380,7 +363,7 @@ public final class MongoFieldsProcessor extends AbstractProcessor {
         }
 
         for (final Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry :
-            elements.getElementValuesWithDefaults(mirror).entrySet()) {
+                elements.getElementValuesWithDefaults(mirror).entrySet()) {
 
             if (propertyName.equals(entry.getKey().getSimpleName().toString())) {
                 Object value = entry.getValue().getValue();

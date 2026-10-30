@@ -15,28 +15,28 @@ final class BackendPunishmentPreviewFactory {
     }
 
     static PunishmentPreviewResponse.SeverityPreview severityPreview(
-        String severity,
-        int points,
-        long durationMs,
-        String durationFormatted,
-        String punishmentType,
-        boolean permanent,
-        String newSocialStatus,
-        String newGameplayStatus,
-        int newSocialPoints,
-        int newGameplayPoints
+            String severity,
+            int points,
+            long durationMs,
+            String durationFormatted,
+            String punishmentType,
+            boolean permanent,
+            String newSocialStatus,
+            String newGameplayStatus,
+            int newSocialPoints,
+            int newGameplayPoints
     ) {
         return PunishmentPreviewResponse.SeverityPreview.builder()
-            .severity(severity)
-            .points(points)
-            .durationMs(durationMs)
-            .durationFormatted(durationFormatted)
-            .punishmentType(punishmentType)
-            .permanent(permanent)
-            .newSocialStatus(newSocialStatus)
-            .newGameplayStatus(newGameplayStatus)
-            .newSocialPoints(newSocialPoints)
-            .newGameplayPoints(newGameplayPoints)
-            .build();
+                .severity(severity)
+                .points(points)
+                .durationMs(durationMs)
+                .durationFormatted(durationFormatted)
+                .punishmentType(punishmentType)
+                .permanent(permanent)
+                .newSocialStatus(newSocialStatus)
+                .newGameplayStatus(newGameplayStatus)
+                .newSocialPoints(newSocialPoints)
+                .newGameplayPoints(newGameplayPoints)
+                .build();
     }
 }

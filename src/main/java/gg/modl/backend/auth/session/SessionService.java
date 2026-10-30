@@ -1,21 +1,23 @@
 package gg.modl.backend.auth.session;
 
 import gg.modl.backend.auth.AuthConfiguration;
-import gg.modl.backend.email.EmailAddressUtil;
 import gg.modl.backend.database.mongo.repository.AuthSessionMongoRepository;
+import gg.modl.backend.email.EmailAddressUtil;
 import gg.modl.backend.infrastructure.util.IdGenerator;
 import gg.modl.backend.server.data.Server;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class SessionService {
+    private static final long REFRESH_SKIP_THRESHOLD_MS = 10L * 60 * 1000;
     private final AuthSessionMongoRepository sessionRepository;
     private final AuthConfiguration authConfiguration;
     private final IdGenerator idGenerator;
@@ -25,10 +27,10 @@ public class SessionService {
     }
 
     private AuthSessionData createSessionInternal(
-        String email,
-        String ipAddress,
-        String userAgent,
-        Function<AuthSessionData, AuthSessionData> saver
+            String email,
+            String ipAddress,
+            String userAgent,
+            Function<AuthSessionData, AuthSessionData> saver
     ) {
         if (email == null || email.isBlank()) {
             throw new IllegalArgumentException("Session email cannot be empty");
@@ -67,32 +69,30 @@ public class SessionService {
             return Optional.empty();
         }
         return findAllSessionsForEmail(server, email).stream()
-            .filter(session -> publicId.equals(SessionPublicId.of(session.getId())))
-            .findFirst();
+                .filter(session -> publicId.equals(SessionPublicId.of(session.getId())))
+                .findFirst();
     }
-
-    private static final long REFRESH_SKIP_THRESHOLD_MS = 10L * 60 * 1000;
 
     public Optional<AuthSessionData> findAndRefreshSession(Server server, String sessionId) {
         return findAndRefreshInternal(
-            sessionId,
-            now -> sessionRepository.findActiveById(server, sessionId, now),
-            (now, newExpiresAt) -> sessionRepository.findAndRefreshById(server, sessionId, now, newExpiresAt)
+                sessionId,
+                now -> sessionRepository.findActiveById(server, sessionId, now),
+                (now, newExpiresAt) -> sessionRepository.findAndRefreshById(server, sessionId, now, newExpiresAt)
         );
     }
 
     public Optional<AuthSessionData> findAndRefreshAdminSession(String sessionId) {
         return findAndRefreshInternal(
-            sessionId,
-            now -> sessionRepository.findActiveByIdGlobal(sessionId, now),
-            (now, newExpiresAt) -> sessionRepository.findAndRefreshByIdGlobal(sessionId, now, newExpiresAt)
+                sessionId,
+                now -> sessionRepository.findActiveByIdGlobal(sessionId, now),
+                (now, newExpiresAt) -> sessionRepository.findAndRefreshByIdGlobal(sessionId, now, newExpiresAt)
         );
     }
 
     private Optional<AuthSessionData> findAndRefreshInternal(
-        String sessionId,
-        Function<Date, Optional<AuthSessionData>> findActive,
-        BiFunction<Date, Date, Optional<AuthSessionData>> findAndRefresh
+            String sessionId,
+            Function<Date, Optional<AuthSessionData>> findActive,
+            BiFunction<Date, Date, Optional<AuthSessionData>> findAndRefresh
     ) {
         if (sessionId == null || sessionId.isBlank()) {
             return Optional.empty();

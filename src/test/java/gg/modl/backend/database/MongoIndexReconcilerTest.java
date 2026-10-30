@@ -1,15 +1,6 @@
 package gg.modl.backend.database;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.TenantMongoAccess;
-import java.util.List;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,6 +8,12 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.IndexDefinition;
 import org.springframework.data.mongodb.core.index.IndexInfo;
 import org.springframework.data.mongodb.core.index.IndexOperations;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class MongoIndexReconcilerTest {
     @Test
@@ -44,9 +41,9 @@ class MongoIndexReconcilerTest {
         when(replayLiteQuotas.getIndexInfo()).thenReturn(List.of());
         when(systemAlerts.getIndexInfo()).thenReturn(List.of());
         when(adminUsers.getIndexInfo()).thenReturn(List.of(IndexInfo.indexInfoOf(
-            new Document("name", "email_1")
-                .append("key", new Document("email", 1))
-                .append("unique", true)
+                new Document("name", "email_1")
+                        .append("key", new Document("email", 1))
+                        .append("unique", true)
         )));
 
         MongoIndexReconciler reconciler = new MongoIndexReconciler(tenantMongoAccess);
@@ -58,9 +55,9 @@ class MongoIndexReconcilerTest {
         assertThat(serverIndexCaptor.getAllValues()).anySatisfy(index -> {
             assertThat(index.getIndexOptions().getString("name")).isEqualTo("idx_servers_registration_cleanup");
             assertThat(index.getIndexKeys()).isEqualTo(new Document("emailVerified", 1)
-                .append("provisioningStatus", 1)
-                .append("createdAt", 1)
-                .append("emailVerificationToken", 1));
+                    .append("provisioningStatus", 1)
+                    .append("createdAt", 1)
+                    .append("emailVerificationToken", 1));
         });
         verify(metrics, atLeastOnce()).createIndex(any());
         verify(replayLite, atLeastOnce()).createIndex(any());
@@ -92,8 +89,8 @@ class MongoIndexReconcilerTest {
         when(replayLiteQuotas.getIndexInfo()).thenReturn(List.of());
         when(systemAlerts.getIndexInfo()).thenReturn(List.of());
         when(adminUsers.getIndexInfo()).thenReturn(List.of(IndexInfo.indexInfoOf(
-            new Document("name", "email_1")
-                .append("key", new Document("email", 1))
+                new Document("name", "email_1")
+                        .append("key", new Document("email", 1))
         )));
 
         MongoIndexReconciler reconciler = new MongoIndexReconciler(tenantMongoAccess);
@@ -180,10 +177,10 @@ class MongoIndexReconcilerTest {
         when(replays.getIndexInfo()).thenReturn(List.of());
         when(template.indexOps(CollectionName.PLAYERS)).thenReturn(players);
         when(players.getIndexInfo()).thenReturn(List.of(IndexInfo.indexInfoOf(
-            new Document("name", "uidx_players_minecraftUuid")
-                .append("key", new Document("minecraftUuid", 1))
-                .append("unique", true)
-                .append("partialFilterExpression", new Document("minecraftUuid", new Document("$type", 2)))
+                new Document("name", "uidx_players_minecraftUuid")
+                        .append("key", new Document("minecraftUuid", 1))
+                        .append("unique", true)
+                        .append("partialFilterExpression", new Document("minecraftUuid", new Document("$type", 2)))
         )));
 
         MongoIndexReconciler reconciler = new MongoIndexReconciler(tenantMongoAccess);
@@ -193,32 +190,32 @@ class MongoIndexReconcilerTest {
         ArgumentCaptor<IndexDefinition> created = ArgumentCaptor.forClass(IndexDefinition.class);
         verify(players, atLeastOnce()).createIndex(created.capture());
         assertThat(created.getAllValues())
-            .noneMatch(index -> "uidx_players_minecraftUuid".equals(index.getIndexOptions().getString("name")));
+                .noneMatch(index -> "uidx_players_minecraftUuid".equals(index.getIndexOptions().getString("name")));
     }
 
     private void stubTenantIndexOps(MongoTemplate template) {
         List<String> collectionNames = List.of(
-            CollectionName.SETTINGS,
-            CollectionName.PLAYERS,
-            CollectionName.STAFF,
-            CollectionName.STAFF_ROLES,
-            CollectionName.INVITATIONS,
-            CollectionName.TICKET_VERIFICATIONS,
-            CollectionName.TICKETS,
-            CollectionName.STORAGE_FILES,
-            CollectionName.KNOWLEDGEBASE_CATEGORIES,
-            CollectionName.KNOWLEDGEBASE_ARTICLES,
-            CollectionName.WEBAUTHN_CREDENTIALS,
-            CollectionName.WEBAUTHN_CHALLENGES,
-            CollectionName.HOMEPAGE_CARDS,
-            CollectionName.SESSIONS,
-            CollectionName.AUTH_CODES,
-            CollectionName.SYSTEM_LOGS,
-            CollectionName.SECURITY_EVENTS,
-            CollectionName.CHAT_LOGS,
-            CollectionName.COMMAND_LOGS,
-            CollectionName.LOGS,
-            CollectionName.MIGRATIONS
+                CollectionName.SETTINGS,
+                CollectionName.PLAYERS,
+                CollectionName.STAFF,
+                CollectionName.STAFF_ROLES,
+                CollectionName.INVITATIONS,
+                CollectionName.TICKET_VERIFICATIONS,
+                CollectionName.TICKETS,
+                CollectionName.STORAGE_FILES,
+                CollectionName.KNOWLEDGEBASE_CATEGORIES,
+                CollectionName.KNOWLEDGEBASE_ARTICLES,
+                CollectionName.WEBAUTHN_CREDENTIALS,
+                CollectionName.WEBAUTHN_CHALLENGES,
+                CollectionName.HOMEPAGE_CARDS,
+                CollectionName.SESSIONS,
+                CollectionName.AUTH_CODES,
+                CollectionName.SYSTEM_LOGS,
+                CollectionName.SECURITY_EVENTS,
+                CollectionName.CHAT_LOGS,
+                CollectionName.COMMAND_LOGS,
+                CollectionName.LOGS,
+                CollectionName.MIGRATIONS
         );
         for (String collectionName : collectionNames) {
             IndexOperations indexOperations = mock(IndexOperations.class);

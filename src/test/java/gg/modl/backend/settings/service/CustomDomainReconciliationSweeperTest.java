@@ -1,13 +1,5 @@
 package gg.modl.backend.settings.service;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.cloudflare.config.CloudflareConfiguration;
 import gg.modl.backend.cloudflare.external.CloudflareClient;
 import gg.modl.backend.database.mongo.repository.ServerCustomDomainRepository;
@@ -16,10 +8,14 @@ import gg.modl.backend.server.data.CustomDomainStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.config.CustomDomainReconciliationProperties;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class CustomDomainReconciliationSweeperTest {
     private CustomDomainReconciliationProperties properties;
@@ -38,13 +34,13 @@ class CustomDomainReconciliationSweeperTest {
         stateWriter = mock(CustomDomainStateWriter.class);
         when(cloudflareConfiguration.isConfigured()).thenReturn(true);
         sweeper = new CustomDomainReconciliationSweeper(
-            properties,
-            cloudflareConfiguration,
-            cloudflareClient,
-            serverRepository,
-            new CustomDomainStatusMapper(),
-            stateWriter,
-            new CustomDomainLockRegistry()
+                properties,
+                cloudflareConfiguration,
+                cloudflareClient,
+                serverRepository,
+                new CustomDomainStatusMapper(),
+                stateWriter,
+                new CustomDomainLockRegistry()
         );
     }
 
@@ -68,7 +64,7 @@ class CustomDomainReconciliationSweeperTest {
         when(cloudflareClient.getCustomHostname("cf-1")).thenThrow(new ExternalServiceException("cf down"));
         when(cloudflareClient.getCustomHostname("cf-2")).thenReturn(activeHostname("cf-2", "b.example.com"));
         when(stateWriter.reconcileStatus("server-2", "b.example.com", CustomDomainStatus.ACTIVE, "cf-2", null))
-            .thenReturn(true);
+                .thenReturn(true);
         properties.setOrphanGarbageCollection(false);
 
         sweeper.runReconciliationOnce();
@@ -95,8 +91,8 @@ class CustomDomainReconciliationSweeperTest {
         when(serverRepository.findById("server-1")).thenReturn(Optional.of(claimed));
         when(cloudflareClient.getCustomHostname("cf-1")).thenReturn(activeHostname("cf-1", "claimed.example.com"));
         when(cloudflareClient.listAllCustomHostnames()).thenReturn(List.of(
-            activeHostname("cf-1", "claimed.example.com"),
-            activeHostname("orphan-id", "Orphan.example.com")
+                activeHostname("cf-1", "claimed.example.com"),
+                activeHostname("orphan-id", "Orphan.example.com")
         ));
         when(serverRepository.isCustomDomainClaimed("orphan.example.com")).thenReturn(false);
         when(cloudflareClient.deleteCustomHostname("orphan-id")).thenReturn(true);
@@ -113,7 +109,7 @@ class CustomDomainReconciliationSweeperTest {
     void gcRecheckUnderLockPreventsDeletion() {
         when(serverRepository.findAllWithCustomDomainOverride()).thenReturn(List.of());
         when(cloudflareClient.listAllCustomHostnames()).thenReturn(List.of(
-            activeHostname("orphan-id", "orphan.example.com")
+                activeHostname("orphan-id", "orphan.example.com")
         ));
         when(serverRepository.isCustomDomainClaimed("orphan.example.com")).thenReturn(true);
 
@@ -124,7 +120,7 @@ class CustomDomainReconciliationSweeperTest {
 
     private CloudflareClient.CustomHostnameResult activeHostname(String id, String hostname) {
         return new CloudflareClient.CustomHostnameResult(id, hostname, "active",
-            new CloudflareClient.CustomHostnameResult.SslStatus("active", "http", "dv"), null, null);
+                new CloudflareClient.CustomHostnameResult.SslStatus("active", "http", "dv"), null, null);
     }
 
     private Server server(String id, String domain, String cloudflareId, CustomDomainStatus status) {

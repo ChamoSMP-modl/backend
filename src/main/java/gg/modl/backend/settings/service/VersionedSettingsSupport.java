@@ -1,6 +1,7 @@
 package gg.modl.backend.settings.service;
 
 import gg.modl.backend.server.data.Server;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -11,9 +12,9 @@ public final class VersionedSettingsSupport<T> {
     private final Function<Map<String, Object>, T> decoder;
 
     private VersionedSettingsSupport(
-        SettingsDocumentService documentService,
-        String type,
-        Function<Map<String, Object>, T> decoder
+            SettingsDocumentService documentService,
+            String type,
+            Function<Map<String, Object>, T> decoder
     ) {
         this.documentService = documentService;
         this.type = type;
@@ -21,9 +22,9 @@ public final class VersionedSettingsSupport<T> {
     }
 
     public static <T> VersionedSettingsSupport<T> of(
-        SettingsDocumentService documentService,
-        String type,
-        Function<Map<String, Object>, T> decoder
+            SettingsDocumentService documentService,
+            String type,
+            Function<Map<String, Object>, T> decoder
     ) {
         return new VersionedSettingsSupport<>(documentService, type, decoder);
     }

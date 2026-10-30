@@ -39,22 +39,22 @@ public class CustomErrorController implements ErrorController {
         } else {
             error = "Error";
             errorMessage = statusCode >= 500
-                ? "An internal server error occurred."
-                : "Your request could not be processed.";
+                    ? "An internal server error occurred."
+                    : "Your request could not be processed.";
         }
 
         String machineCode = resolved != null
-            ? HttpErrorMapping.machineCode(resolved)
-            : (statusCode >= 500 ? "INTERNAL" : "UNKNOWN");
+                ? HttpErrorMapping.machineCode(resolved)
+                : (statusCode >= 500 ? "INTERNAL" : "UNKNOWN");
 
         if (protobufErrorResponseWriter.shouldWriteProtobuf(request)) {
             return ResponseEntity.status(statusCode)
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .body(ApiError.newBuilder()
-                    .setStatusCode(statusCode)
-                    .setCode(machineCode)
-                    .setMessage(errorMessage)
-                    .build());
+                    .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                    .body(ApiError.newBuilder()
+                            .setStatusCode(statusCode)
+                            .setCode(machineCode)
+                            .setMessage(errorMessage)
+                            .build());
         }
 
         return ResponseEntity.status(statusCode).body(new ErrorResponseDTO(statusCode, error, errorMessage));

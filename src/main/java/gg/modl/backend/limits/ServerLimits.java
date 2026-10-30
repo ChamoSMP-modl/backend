@@ -9,7 +9,6 @@ public class ServerLimits {
     long maxStaffSeats;
     long maxStorageBytes;
     boolean aiModerationEnabled;
-    long aiRequestLimit;
     boolean customDomainAllowed;
     long migrationFileSizeLimit;
     long maxUploadBytes;

@@ -1,24 +1,20 @@
 package gg.modl.backend.role.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.database.mongo.repository.StaffRoleMongoRepository;
 import gg.modl.backend.role.data.StaffRole;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.service.PunishmentTypeService;
+import org.junit.jupiter.api.Test;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class PermissionServiceTest {
 
@@ -52,7 +48,7 @@ class PermissionServiceTest {
         PermissionService service = newService(roleRepository);
         Server server = server();
         when(roleRepository.findById(server, "admin"))
-            .thenReturn(Optional.of(role("admin", "Admin", 1, List.of("admin.staff.manage"))));
+                .thenReturn(Optional.of(role("admin", "Admin", 1, List.of("admin.staff.manage"))));
 
         assertTrue(service.hasPermission(server, "admin", "admin.staff.manage.members"));
     }
@@ -76,7 +72,7 @@ class PermissionServiceTest {
         PermissionService service = newService(roleRepository);
         Server server = server();
         when(roleRepository.findByIds(server, java.util.Set.of("admin", "helper")))
-            .thenReturn(List.of(role("admin", "Admin", 1, List.of()), role("helper", "Helper", 3, List.of())));
+                .thenReturn(List.of(role("admin", "Admin", 1, List.of()), role("helper", "Helper", 3, List.of())));
 
         Map<String, String> names = service.resolveRoleNames(server, List.of("admin", "helper", "admin"));
         assertEquals("Admin", names.get("admin"));
@@ -93,8 +89,6 @@ class PermissionServiceTest {
 
         assertTrue(all.containsAll(PermissionService.superAdminOnlyPermissionIds()));
         assertTrue(PermissionService.superAdminOnlyPermissionIds().stream().noneMatch(grantable::contains));
-        assertTrue(PermissionService.isSuperAdminOnly(PermissionService.ADMIN_SETTINGS_VIEW_BILLING));
-        assertTrue(PermissionService.isSuperAdminOnly(PermissionService.ADMIN_SETTINGS_MODIFY_BILLING));
         assertTrue(PermissionService.isSuperAdminOnly(PermissionService.ADMIN_AUDIT_ROLLBACK));
         assertFalse(PermissionService.isSuperAdminOnly(PermissionService.ADMIN_SETTINGS_VIEW));
     }
@@ -108,7 +102,7 @@ class PermissionServiceTest {
     }
 
     private Server server() {
-        Server server = new Server("Server", "server", "server_db", "owner@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Server", "server", "server_db", "owner@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
         return server;
     }

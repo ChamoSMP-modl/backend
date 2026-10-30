@@ -1,28 +1,29 @@
 package gg.modl.backend.ticket.service;
 
-import gg.modl.backend.infrastructure.config.ModlProperties;
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.email.EmailAddressUtil;
 import gg.modl.backend.email.EmailHTMLTemplate;
 import gg.modl.backend.email.EmailService;
+import gg.modl.backend.infrastructure.config.ModlProperties;
+import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.service.SyncProtoFactory;
 import gg.modl.backend.realtime.publish.RealtimeEventPublisher;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.ticket.data.Ticket;
 import gg.modl.backend.ticket.data.TicketCategory;
-import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.ticket.data.TicketReply;
 import gg.modl.proto.modl.v1.SyncPlayerNotification;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -59,21 +60,21 @@ public class TicketNotificationService {
             String replyContent = HtmlUtils.htmlEscape(reply.getContent() != null ? reply.getContent() : "");
 
             EmailHTMLTemplate.HTMLEmail email = EmailHTMLTemplate.TICKET_REPLY_TEMPLATE.build(
-                header.serverName(),
-                header.playerName(),
-                true,
-                header.ticketType(),
-                header.ticketId(),
-                header.ticketSubject(),
-                replyAuthor,
-                replyContent,
-                header.ticketUrl()
+                    header.serverName(),
+                    header.playerName(),
+                    true,
+                    header.ticketType(),
+                    header.ticketId(),
+                    header.ticketSubject(),
+                    replyAuthor,
+                    replyContent,
+                    header.ticketUrl()
             );
 
             emailService.send(toEmail, email);
         } catch (Exception exception) {
             log.error("Failed to send ticket reply email to {} for ticket {}: {}",
-                toEmail, ticket.getId(), exception.getMessage());
+                    toEmail, ticket.getId(), exception.getMessage());
         }
     }
 
@@ -105,7 +106,7 @@ public class TicketNotificationService {
             appendNotification(server, player, notification);
         } catch (Exception exception) {
             log.error("Failed to create in-game notification for player {} for ticket {}: {}",
-                playerUuid, ticket.getId(), exception.getMessage());
+                    playerUuid, ticket.getId(), exception.getMessage());
         }
     }
 
@@ -145,8 +146,8 @@ public class TicketNotificationService {
         String normalizedEmail = EmailAddressUtil.normalizeIfValid(email.toString());
         if (normalizedEmail == null) {
             log.warn("Skipping ticket email notification for {} due to invalid creator email: {}",
-                ticket.getId(),
-                email);
+                    ticket.getId(),
+                    email);
             return null;
         }
 
@@ -180,25 +181,25 @@ public class TicketNotificationService {
                     String roleLabel = reply.isStaff() ? " (Staff)" : "";
 
                     messagesHtml.append("""
-                        <div style=\"border: 1px solid #e9ecef; border-radius: 4px; padding: 12px; margin: 10px 0;\">
-                          <div style=\"margin-bottom: 8px;\">
-                            <strong style=\"color: #333;\">%s%s</strong>
-                            <span style=\"color: #888; font-size: 12px; margin-left: 8px;\">%s</span>
-                          </div>
-                          <div style=\"color: #555; font-size: 14px;\">%s</div>
-                        </div>
-                        """.formatted(author, roleLabel, date, content));
+                            <div style=\"border: 1px solid #e9ecef; border-radius: 4px; padding: 12px; margin: 10px 0;\">
+                              <div style=\"margin-bottom: 8px;\">
+                                <strong style=\"color: #333;\">%s%s</strong>
+                                <span style=\"color: #888; font-size: 12px; margin-left: 8px;\">%s</span>
+                              </div>
+                              <div style=\"color: #555; font-size: 14px;\">%s</div>
+                            </div>
+                            """.formatted(author, roleLabel, date, content));
                 }
             }
 
             EmailHTMLTemplate.HTMLEmail email = EmailHTMLTemplate.TICKET_TRANSCRIPT_TEMPLATE.build(
-                header.serverName(), header.playerName(), header.ticketType(), header.ticketId(), header.ticketSubject(), messagesHtml.toString(), header.ticketUrl()
+                    header.serverName(), header.playerName(), header.ticketType(), header.ticketId(), header.ticketSubject(), messagesHtml.toString(), header.ticketUrl()
             );
 
             emailService.send(toEmail, email);
         } catch (Exception exception) {
             log.error("Failed to send ticket transcript email to {} for ticket {}: {}",
-                toEmail, ticket.getId(), exception.getMessage());
+                    toEmail, ticket.getId(), exception.getMessage());
         }
     }
 
@@ -210,14 +211,14 @@ public class TicketNotificationService {
             }
 
             Map<String, Object> notification = buildNotification(
-                "TICKET_CLOSED",
-                String.format("Your ticket #%s has been closed", ticket.getId()),
-                buildNotificationData(server, ticket));
+                    "TICKET_CLOSED",
+                    String.format("Your ticket #%s has been closed", ticket.getId()),
+                    buildNotificationData(server, ticket));
 
             appendNotification(server, player, notification);
         } catch (Exception exception) {
             log.error("Failed to create in-game closed notification for player {} for ticket {}: {}",
-                playerUuid, ticket.getId(), exception.getMessage());
+                    playerUuid, ticket.getId(), exception.getMessage());
         }
     }
 
@@ -249,12 +250,12 @@ public class TicketNotificationService {
     }
 
     private record EscapedTicketHeader(
-        String serverName,
-        String playerName,
-        String ticketType,
-        String ticketId,
-        String ticketSubject,
-        String ticketUrl
+            String serverName,
+            String playerName,
+            String ticketType,
+            String ticketId,
+            String ticketSubject,
+            String ticketUrl
     ) {
     }
 }

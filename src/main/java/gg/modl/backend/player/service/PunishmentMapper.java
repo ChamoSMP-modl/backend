@@ -7,17 +7,14 @@ import gg.modl.backend.player.dto.response.PunishmentView;
 import gg.modl.backend.player.dto.response.SimplePunishmentView;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.PunishmentTypeIndex;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 public final class PunishmentMapper {
 
-    private PunishmentMapper() {}
+    private PunishmentMapper() {
+    }
 
     public static PunishmentView toPunishmentView(Punishment punishment, List<PunishmentType> punishmentTypes) {
         return toPunishmentView(punishment, PunishmentTypeIndex.byOrdinal(punishmentTypes), Collections.emptyMap());
@@ -34,64 +31,64 @@ public final class PunishmentMapper {
 
         Map<String, Object> punishmentData = punishment.data().asMap();
         Map<String, Object> dataWithTypeName = punishmentData != null ?
-                                               new LinkedHashMap<>(punishmentData) : new LinkedHashMap<>();
+                new LinkedHashMap<>(punishmentData) : new LinkedHashMap<>();
         if (actualTypeName != null) {
             dataWithTypeName.put("typeName", actualTypeName);
         }
 
         List<Map<String, Object>> modifications = punishment.getModifications()
-            .stream()
-            .map(m -> {
-                Map<String, Object> mod = new LinkedHashMap<>();
-                mod.put("id", m.id());
-                mod.put("type", m.type());
-                mod.put("date", m.date());
-                mod.put("issuerName", resolveIssuer(m.issuerId(), m.issuerName(), resolvedIssuers));
-                mod.put("effectiveDuration", m.effectiveDuration());
-                mod.put("data", m.data());
-                return mod;
-            }).toList();
+                .stream()
+                .map(m -> {
+                    Map<String, Object> mod = new LinkedHashMap<>();
+                    mod.put("id", m.id());
+                    mod.put("type", m.type());
+                    mod.put("date", m.date());
+                    mod.put("issuerName", resolveIssuer(m.issuerId(), m.issuerName(), resolvedIssuers));
+                    mod.put("effectiveDuration", m.effectiveDuration());
+                    mod.put("data", m.data());
+                    return mod;
+                }).toList();
 
         List<Map<String, Object>> notes = punishment.getNotes()
-            .stream()
-            .map(n -> {
-                Map<String, Object> note = new LinkedHashMap<>();
-                note.put("id", n.id());
-                note.put("text", n.text());
-                note.put("issuerName", resolveIssuer(n.issuerId(), n.issuerName(), resolvedIssuers));
-                note.put("date", n.date());
-                return note;
-            }).toList();
+                .stream()
+                .map(n -> {
+                    Map<String, Object> note = new LinkedHashMap<>();
+                    note.put("id", n.id());
+                    note.put("text", n.text());
+                    note.put("issuerName", resolveIssuer(n.issuerId(), n.issuerName(), resolvedIssuers));
+                    note.put("date", n.date());
+                    return note;
+                }).toList();
 
         List<Map<String, Object>> evidence = punishment.getEvidence()
-            .stream()
-            .map(e -> {
-                Map<String, Object> ev = new LinkedHashMap<>();
-                ev.put("text", e.text());
-                ev.put("url", e.url());
-                ev.put("type", e.type());
-                ev.put("uploadedBy", resolveIssuer(e.uploadedById(), e.uploadedBy(), resolvedIssuers));
-                ev.put("uploadedAt", e.uploadedAt());
-                ev.put("fileName", e.fileName());
-                ev.put("fileType", e.fileType());
-                ev.put("fileSize", e.fileSize());
-                return ev;
-            }).toList();
+                .stream()
+                .map(e -> {
+                    Map<String, Object> ev = new LinkedHashMap<>();
+                    ev.put("text", e.text());
+                    ev.put("url", e.url());
+                    ev.put("type", e.type());
+                    ev.put("uploadedBy", resolveIssuer(e.uploadedById(), e.uploadedBy(), resolvedIssuers));
+                    ev.put("uploadedAt", e.uploadedAt());
+                    ev.put("fileName", e.fileName());
+                    ev.put("fileType", e.fileType());
+                    ev.put("fileSize", e.fileSize());
+                    return ev;
+                }).toList();
 
         return new PunishmentView(
-            punishment.getId(),
-            resolveIssuer(punishment.getIssuerId(), punishment.getIssuerName(), resolvedIssuers),
-            punishment.getIssued(),
-            punishment.getStarted(),
-            ordinal,
-            actualTypeName != null ? actualTypeName : "Unknown",
-            modifications,
-            notes,
-            evidence,
-            punishment.getAttachedTicketIds(),
-            dataWithTypeName,
-            null,
-            null
+                punishment.getId(),
+                resolveIssuer(punishment.getIssuerId(), punishment.getIssuerName(), resolvedIssuers),
+                punishment.getIssued(),
+                punishment.getStarted(),
+                ordinal,
+                actualTypeName != null ? actualTypeName : "Unknown",
+                modifications,
+                notes,
+                evidence,
+                punishment.getAttachedTicketIds(),
+                dataWithTypeName,
+                null,
+                null
         );
     }
 
@@ -148,28 +145,28 @@ public final class PunishmentMapper {
         }
 
         List<SimplePunishmentView.Modification> modifications = punishment.getModifications()
-            .stream()
-            .map(m -> new SimplePunishmentView.Modification(
-                m.type(),
-                m.date() != null ? m.date().getTime() : null,
-                m.effectiveDuration() != null ? m.effectiveDuration() : 0L,
-                resolveIssuer(m.issuerId(), m.issuerName(), resolvedIssuers)
-            ))
-            .toList();
+                .stream()
+                .map(m -> new SimplePunishmentView.Modification(
+                        m.type(),
+                        m.date() != null ? m.date().getTime() : null,
+                        m.effectiveDuration() != null ? m.effectiveDuration() : 0L,
+                        resolveIssuer(m.issuerId(), m.issuerName(), resolvedIssuers)
+                ))
+                .toList();
 
         return new SimplePunishmentView(
-            punishment.getId(),
-            typeName,
-            category,
-            punishment.getTypeOrdinal(),
-            punishment.getTypeOrdinal(),
-            punishment.getStarted() != null,
-            expires != null ? expires.getTime() : null,
-            reason != null && !reason.isBlank() ? reason : "No reason specified",
-            resolveIssuer(punishment.getIssuerId(), punishment.getIssuerName(), resolvedIssuers),
-            punishment.getIssued().getTime(),
-            playerDescription,
-            modifications
+                punishment.getId(),
+                typeName,
+                category,
+                punishment.getTypeOrdinal(),
+                punishment.getTypeOrdinal(),
+                punishment.getStarted() != null,
+                expires != null ? expires.getTime() : null,
+                reason != null && !reason.isBlank() ? reason : "No reason specified",
+                resolveIssuer(punishment.getIssuerId(), punishment.getIssuerName(), resolvedIssuers),
+                punishment.getIssued().getTime(),
+                playerDescription,
+                modifications
         );
     }
 
@@ -179,12 +176,12 @@ public final class PunishmentMapper {
         }
         String lower = noteText.toLowerCase(Locale.ROOT);
         return lower.equals("issued punishment") ||
-               lower.startsWith("issued ") ||
-               lower.equals("pardoned punishment") ||
-               lower.equals("added evidence") ||
-               lower.startsWith("changed duration to ") ||
-               lower.startsWith("enabled ") ||
-               lower.startsWith("disabled ");
+                lower.startsWith("issued ") ||
+                lower.equals("pardoned punishment") ||
+                lower.equals("added evidence") ||
+                lower.startsWith("changed duration to ") ||
+                lower.startsWith("enabled ") ||
+                lower.startsWith("disabled ");
     }
 
     public static String formatDuration(long durationMs, boolean isPermanent) {

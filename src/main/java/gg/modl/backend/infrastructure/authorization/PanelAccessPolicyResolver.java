@@ -1,9 +1,6 @@
 package gg.modl.backend.infrastructure.authorization;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -17,11 +14,40 @@ import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.ServletRequestPathUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class PanelAccessPolicyResolver {
     private final ObjectProvider<RequestMappingHandlerMapping> handlerMappingProvider;
+
+    private static boolean matchesPath(RequestMappingInfo mappingInfo, HttpServletRequest request) {
+        PathPatternsRequestCondition pathPatterns = mappingInfo.getPathPatternsCondition();
+        return pathPatterns != null && pathPatterns.getMatchingCondition(request) != null;
+    }
+
+    private static PanelAccessPolicy toPolicy(RequiresPanelPermission annotation) {
+        return switch (annotation.rule()) {
+            case PERMIT_ALL -> PermitAllPolicy.INSTANCE;
+            case PLAYER_ACCESS -> PlayerAccessPolicy.INSTANCE;
+            case PUNISHMENT_TYPE_ACCESS -> PunishmentTypeAccessPolicy.INSTANCE;
+            case APPEAL_REPLY -> AppealReplyPolicy.INSTANCE;
+            case SUPER_ADMIN -> SuperAdminOnlyPolicy.INSTANCE;
+            case REQUIRE_PERMISSION ->
+                    new ReadWritePermissionPolicy(viewPermission(annotation), modifyPermission(annotation));
+        };
+    }
+
+    private static String viewPermission(RequiresPanelPermission annotation) {
+        return annotation.view().isEmpty() ? annotation.value() : annotation.view();
+    }
+
+    private static String modifyPermission(RequiresPanelPermission annotation) {
+        return annotation.modify().isEmpty() ? annotation.value() : annotation.modify();
+    }
 
     public List<PanelAccessPolicy> resolvePolicies(HttpServletRequest request) {
         RequestMappingHandlerMapping handlerMapping = handlerMappingProvider.getObject();
@@ -55,7 +81,7 @@ public class PanelAccessPolicyResolver {
 
     public Optional<RequiresPanelPermission> resolveTypeAnnotation(HandlerMethod handlerMethod) {
         return Optional.ofNullable(
-            AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getBeanType(), RequiresPanelPermission.class));
+                AnnotatedElementUtils.findMergedAnnotation(handlerMethod.getBeanType(), RequiresPanelPermission.class));
     }
 
     private List<PanelAccessPolicy> siblingPolicies(RequestMappingHandlerMapping handlerMapping, HttpServletRequest request) {
@@ -68,35 +94,11 @@ public class PanelAccessPolicyResolver {
         return policies;
     }
 
-    private static boolean matchesPath(RequestMappingInfo mappingInfo, HttpServletRequest request) {
-        PathPatternsRequestCondition pathPatterns = mappingInfo.getPathPatternsCondition();
-        return pathPatterns != null && pathPatterns.getMatchingCondition(request) != null;
-    }
-
     private boolean ensureParsedRequestPath(RequestMappingHandlerMapping handlerMapping, HttpServletRequest request) {
         if (handlerMapping.getPatternParser() == null || ServletRequestPathUtils.hasParsedRequestPath(request)) {
             return false;
         }
         ServletRequestPathUtils.parseAndCache(request);
         return true;
-    }
-
-    private static PanelAccessPolicy toPolicy(RequiresPanelPermission annotation) {
-        return switch (annotation.rule()) {
-            case PERMIT_ALL -> PermitAllPolicy.INSTANCE;
-            case PLAYER_ACCESS -> PlayerAccessPolicy.INSTANCE;
-            case PUNISHMENT_TYPE_ACCESS -> PunishmentTypeAccessPolicy.INSTANCE;
-            case APPEAL_REPLY -> AppealReplyPolicy.INSTANCE;
-            case SUPER_ADMIN -> SuperAdminOnlyPolicy.INSTANCE;
-            case REQUIRE_PERMISSION -> new ReadWritePermissionPolicy(viewPermission(annotation), modifyPermission(annotation));
-        };
-    }
-
-    private static String viewPermission(RequiresPanelPermission annotation) {
-        return annotation.view().isEmpty() ? annotation.value() : annotation.view();
-    }
-
-    private static String modifyPermission(RequiresPanelPermission annotation) {
-        return annotation.modify().isEmpty() ? annotation.value() : annotation.modify();
     }
 }

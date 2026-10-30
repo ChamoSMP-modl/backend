@@ -18,13 +18,13 @@ public class ProtoValidationException extends RuntimeException {
         this.violations = List.copyOf(result.getViolations());
     }
 
-    public List<Violation> getViolations() {
-        return violations;
-    }
-
     private static String formatViolations(List<Violation> violationList) {
         return violationList.stream()
                 .map(violation -> violation.getFieldPath() + ": " + violation.getMessage())
                 .collect(Collectors.joining(", "));
+    }
+
+    public List<Violation> getViolations() {
+        return violations;
     }
 }

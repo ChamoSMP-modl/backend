@@ -3,13 +3,6 @@ package gg.modl.backend.settings.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.WebhookSettings;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +10,14 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Service
 @Slf4j
@@ -29,14 +30,14 @@ public class WebhookSettingsService {
     private final VersionedSettingsSupport<WebhookSettings> support;
 
     public WebhookSettingsService(
-        SettingsDocumentService settingsDocumentService,
-        ObjectMapper objectMapper,
-        RestTemplate restTemplate
+            SettingsDocumentService settingsDocumentService,
+            ObjectMapper objectMapper,
+            RestTemplate restTemplate
     ) {
         this.objectMapper = objectMapper;
         this.restTemplate = restTemplate;
         this.support = VersionedSettingsSupport.of(
-            settingsDocumentService, SETTINGS_TYPE_WEBHOOKS, this::mapToWebhookSettings);
+                settingsDocumentService, SETTINGS_TYPE_WEBHOOKS, this::mapToWebhookSettings);
     }
 
     public WebhookSettings updateWebhookSettings(Server server, WebhookSettings newSettings) {
@@ -59,67 +60,67 @@ public class WebhookSettingsService {
 
     private WebhookSettings getDefaultWebhookSettings() {
         return WebhookSettings.builder()
-            .discordWebhookUrl("")
-            .discordAdminRoleId("")
-            .botName("modl Panel")
-            .avatarUrl("")
-            .enabled(false)
-            .notifications(WebhookSettings.NotificationSettings.builder()
-                .newTickets(true)
-                .newPunishments(true)
-                .auditLogs(false)
-                .build())
-            .embedTemplates(WebhookSettings.EmbedTemplates.builder()
-                .newTickets(createDefaultTicketEmbed())
-                .newPunishments(createDefaultPunishmentEmbed())
-                .auditLogs(createDefaultAuditEmbed())
-                .build())
-            .build();
+                .discordWebhookUrl("")
+                .discordAdminRoleId("")
+                .botName("modl Panel")
+                .avatarUrl("")
+                .enabled(false)
+                .notifications(WebhookSettings.NotificationSettings.builder()
+                        .newTickets(true)
+                        .newPunishments(true)
+                        .auditLogs(false)
+                        .build())
+                .embedTemplates(WebhookSettings.EmbedTemplates.builder()
+                        .newTickets(createDefaultTicketEmbed())
+                        .newPunishments(createDefaultPunishmentEmbed())
+                        .auditLogs(createDefaultAuditEmbed())
+                        .build())
+                .build();
     }
 
     private WebhookSettings.EmbedTemplate createDefaultTicketEmbed() {
         return WebhookSettings.EmbedTemplate.builder()
-            .title("New Ticket Created")
-            .description("A new **{{type}}** ticket has been submitted.")
-            .color("#3498db")
-            .fields(List.of(
-                new WebhookSettings.EmbedField("Ticket ID", "#{{id}}", true),
-                new WebhookSettings.EmbedField("Priority", "{{priority}}", true),
-                new WebhookSettings.EmbedField("Category", "{{category}}", true),
-                new WebhookSettings.EmbedField("Subject", "{{title}}", false),
-                new WebhookSettings.EmbedField("Submitted By", "{{submittedBy}}", true)
-            ))
-            .build();
+                .title("New Ticket Created")
+                .description("A new **{{type}}** ticket has been submitted.")
+                .color("#3498db")
+                .fields(List.of(
+                        new WebhookSettings.EmbedField("Ticket ID", "#{{id}}", true),
+                        new WebhookSettings.EmbedField("Priority", "{{priority}}", true),
+                        new WebhookSettings.EmbedField("Category", "{{category}}", true),
+                        new WebhookSettings.EmbedField("Subject", "{{title}}", false),
+                        new WebhookSettings.EmbedField("Submitted By", "{{submittedBy}}", true)
+                ))
+                .build();
     }
 
     private WebhookSettings.EmbedTemplate createDefaultPunishmentEmbed() {
         return WebhookSettings.EmbedTemplate.builder()
-            .title("New Punishment Issued")
-            .description("A new **{{type}}** punishment has been issued.")
-            .color("#e74c3c")
-            .fields(List.of(
-                new WebhookSettings.EmbedField("Player", "{{playerName}}", true),
-                new WebhookSettings.EmbedField("Punishment Type", "{{type}}", true),
-                new WebhookSettings.EmbedField("Severity", "{{severity}}", true),
-                new WebhookSettings.EmbedField("Duration", "{{duration}}", true),
-                new WebhookSettings.EmbedField("Reason", "{{reason}}", false),
-                new WebhookSettings.EmbedField("Issued By", "{{issuer}}", true)
-            ))
-            .build();
+                .title("New Punishment Issued")
+                .description("A new **{{type}}** punishment has been issued.")
+                .color("#e74c3c")
+                .fields(List.of(
+                        new WebhookSettings.EmbedField("Player", "{{playerName}}", true),
+                        new WebhookSettings.EmbedField("Punishment Type", "{{type}}", true),
+                        new WebhookSettings.EmbedField("Severity", "{{severity}}", true),
+                        new WebhookSettings.EmbedField("Duration", "{{duration}}", true),
+                        new WebhookSettings.EmbedField("Reason", "{{reason}}", false),
+                        new WebhookSettings.EmbedField("Issued By", "{{issuer}}", true)
+                ))
+                .build();
     }
 
     private WebhookSettings.EmbedTemplate createDefaultAuditEmbed() {
         return WebhookSettings.EmbedTemplate.builder()
-            .title("Audit Log Entry")
-            .description("A new audit log entry has been recorded.")
-            .color("#f39c12")
-            .fields(List.of(
-                new WebhookSettings.EmbedField("User", "{{user}}", true),
-                new WebhookSettings.EmbedField("Action", "{{action}}", true),
-                new WebhookSettings.EmbedField("Target", "{{target}}", true),
-                new WebhookSettings.EmbedField("Details", "{{details}}", false)
-            ))
-            .build();
+                .title("Audit Log Entry")
+                .description("A new audit log entry has been recorded.")
+                .color("#f39c12")
+                .fields(List.of(
+                        new WebhookSettings.EmbedField("User", "{{user}}", true),
+                        new WebhookSettings.EmbedField("Action", "{{action}}", true),
+                        new WebhookSettings.EmbedField("Target", "{{target}}", true),
+                        new WebhookSettings.EmbedField("Details", "{{details}}", false)
+                ))
+                .build();
     }
 
     public boolean testWebhook(Server server) {
@@ -140,13 +141,13 @@ public class WebhookSettingsService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             Map<String, Object> payload = Map.of(
-                "username", settings.getBotName() != null ? settings.getBotName() : "modl Panel",
-                "avatar_url", settings.getAvatarUrl() != null ? settings.getAvatarUrl() : "",
-                "embeds", List.of(Map.of(
-                    "title", "Webhook Test",
-                    "description", "This is a test message from modl Panel to verify your webhook is working correctly.",
-                    "color", DEFAULT_EMBED_COLOR
-                ))
+                    "username", settings.getBotName() != null ? settings.getBotName() : "modl Panel",
+                    "avatar_url", settings.getAvatarUrl() != null ? settings.getAvatarUrl() : "",
+                    "embeds", List.of(Map.of(
+                            "title", "Webhook Test",
+                            "description", "This is a test message from modl Panel to verify your webhook is working correctly.",
+                            "color", DEFAULT_EMBED_COLOR
+                    ))
             );
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
@@ -162,20 +163,20 @@ public class WebhookSettingsService {
     @Async
     public void sendTicketCreatedWebhook(Server server, Map<String, String> variables) {
         sendEventWebhook(server, variables,
-            s -> s.getNotifications() != null && s.getNotifications().isNewTickets(),
-            s -> s.getEmbedTemplates() != null ? s.getEmbedTemplates().getNewTickets() : null);
+                s -> s.getNotifications() != null && s.getNotifications().isNewTickets(),
+                s -> s.getEmbedTemplates() != null ? s.getEmbedTemplates().getNewTickets() : null);
     }
 
     @Async
     public void sendPunishmentCreatedWebhook(Server server, Map<String, String> variables) {
         sendEventWebhook(server, variables,
-            s -> s.getNotifications() != null && s.getNotifications().isNewPunishments(),
-            s -> s.getEmbedTemplates() != null ? s.getEmbedTemplates().getNewPunishments() : null);
+                s -> s.getNotifications() != null && s.getNotifications().isNewPunishments(),
+                s -> s.getEmbedTemplates() != null ? s.getEmbedTemplates().getNewPunishments() : null);
     }
 
     private void sendEventWebhook(Server server, Map<String, String> variables,
-            Predicate<WebhookSettings> isEnabled,
-            Function<WebhookSettings, WebhookSettings.EmbedTemplate> getTemplate) {
+                                  Predicate<WebhookSettings> isEnabled,
+                                  Function<WebhookSettings, WebhookSettings.EmbedTemplate> getTemplate) {
         try {
             WebhookSettings settings = getWebhookSettings(server);
 

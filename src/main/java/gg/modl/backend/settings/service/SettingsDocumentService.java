@@ -4,20 +4,21 @@ import gg.modl.backend.database.mongo.repository.SettingsMongoRepository;
 import gg.modl.backend.infrastructure.util.MongoKeyUtils;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.Settings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SettingsDocumentService {
-    private final SettingsMongoRepository settingsRepository;
     private static final long INITIAL_VERSION = 0L;
+    private final SettingsMongoRepository settingsRepository;
 
     public RawSettingsState saveRawState(Server server, String type, long expectedVersion, Map<String, Object> data) {
         Settings current = findLatestSettingsDocument(server, type);
@@ -28,8 +29,8 @@ public class SettingsDocumentService {
         }
 
         Map<String, Object> normalizedData = data == null
-                                             ? new LinkedHashMap<>()
-                                             : MongoKeyUtils.sanitizeKeys(data);
+                ? new LinkedHashMap<>()
+                : MongoKeyUtils.sanitizeKeys(data);
         Date now = new Date();
 
         if (!currentState.exists()) {
@@ -47,7 +48,7 @@ public class SettingsDocumentService {
         }
 
         boolean updated = settingsRepository.updateWithVersionCheck(
-            server, current.getId(), expectedVersion, type, normalizedData, expectedVersion + 1, now);
+                server, current.getId(), expectedVersion, type, normalizedData, expectedVersion + 1, now);
         if (!updated) {
             throwConflict(getRawState(server, type).version());
         }
@@ -66,8 +67,8 @@ public class SettingsDocumentService {
 
     private void throwConflict(long currentVersion) {
         throw new SettingsConflictException(
-            "Settings were modified by another user. Reload and retry.",
-            currentVersion
+                "Settings were modified by another user. Reload and retry.",
+                currentVersion
         );
     }
 
@@ -75,9 +76,9 @@ public class SettingsDocumentService {
         List<Settings> matches = settingsRepository.findLatestByType(server, type, 2);
         if (matches.size() > 1) {
             log.warn(
-                "Detected duplicate settings documents for type '{}'. Using latest id '{}'.",
-                type,
-                matches.get(0).getId()
+                    "Detected duplicate settings documents for type '{}'. Using latest id '{}'.",
+                    type,
+                    matches.get(0).getId()
             );
         }
         return matches.isEmpty() ? null : matches.get(0);
@@ -99,10 +100,10 @@ public class SettingsDocumentService {
     }
 
     public record RawSettingsState(
-        Map<String, Object> data,
-        long version,
-        Date updatedAt,
-        boolean exists
+            Map<String, Object> data,
+            long version,
+            Date updatedAt,
+            boolean exists
     ) {
     }
 }

@@ -6,11 +6,12 @@ import gg.modl.backend.database.mongo.AbstractServerMongoRepository;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.WebAuthnChallengeFields;
 import gg.modl.backend.server.data.Server;
-import java.util.Date;
-import java.util.Optional;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.Date;
+import java.util.Optional;
 
 @Repository
 public class WebAuthnChallengeMongoRepository extends AbstractServerMongoRepository<WebAuthnChallenge> {
@@ -20,8 +21,8 @@ public class WebAuthnChallengeMongoRepository extends AbstractServerMongoReposit
 
     public Optional<WebAuthnChallenge> consumeActiveChallenge(Server server, String challengeId, Date now) {
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(WebAuthnChallengeFields.ID).is(challengeId),
-            Criteria.where(WebAuthnChallengeFields.EXPIRES_AT).gt(now)
+                Criteria.where(WebAuthnChallengeFields.ID).is(challengeId),
+                Criteria.where(WebAuthnChallengeFields.EXPIRES_AT).gt(now)
         ));
         return Optional.ofNullable(findAndRemove(server, query));
     }

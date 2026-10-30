@@ -2,15 +2,13 @@ package gg.modl.backend.analytics.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import gg.modl.backend.analytics.dto.response.AuditLogsAnalyticsResponse;
-import gg.modl.backend.analytics.dto.response.OverviewResponse;
-import gg.modl.backend.analytics.dto.response.PlayerActivityResponse;
-import gg.modl.backend.analytics.dto.response.PunishmentAnalyticsResponse;
-import gg.modl.backend.analytics.dto.response.TicketAnalyticsResponse;
+import gg.modl.backend.analytics.dto.response.*;
 import gg.modl.backend.database.mongo.repository.AnalyticsMongoRepository;
 import gg.modl.backend.database.mongo.repository.AnalyticsMongoRepository.IdCountResult;
 import gg.modl.backend.database.mongo.repository.AnalyticsMongoRepository.PlayerActivityFacet;
 import gg.modl.backend.database.mongo.repository.AnalyticsMongoRepository.PunishmentAnalyticsFacet;
+import gg.modl.backend.infrastructure.proto.ProtoMapperSupport;
+import gg.modl.backend.infrastructure.util.DateRangeUtil;
 import gg.modl.backend.player.service.IssuerNameResolver;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.service.PunishmentTypeIndex;
@@ -18,26 +16,18 @@ import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.staff.service.StaffService;
 import gg.modl.backend.ticket.data.TicketCategory;
 import gg.modl.backend.ticket.data.TicketStatus;
-import gg.modl.backend.infrastructure.proto.ProtoMapperSupport;
-import gg.modl.backend.infrastructure.util.DateRangeUtil;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -59,9 +49,9 @@ public class AnalyticsService {
 
     private static <V> Cache<String, V> analyticsResultCache() {
         return Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofSeconds(60))
-            .maximumSize(500)
-            .build();
+                .expireAfterWrite(Duration.ofSeconds(60))
+                .maximumSize(500)
+                .build();
     }
 
     private static String cacheKey(Server server, String period) {
@@ -79,19 +69,19 @@ public class AnalyticsService {
         final AnalyticsMongoRepository.OverviewStats stats = analyticsRepository.loadOverviewStats(server, thirtyDaysAgo, sixtyDaysAgo);
 
         final int ticketChange = stats.previousTickets() > 0
-                                 ? (int) Math.round(((double) (stats.recentTickets() - stats.previousTickets()) / stats.previousTickets()) * 100)
-                                 : 0;
+                ? (int) Math.round(((double) (stats.recentTickets() - stats.previousTickets()) / stats.previousTickets()) * 100)
+                : 0;
         final int playerChange = stats.previousPlayers() > 0
-                                 ? (int) Math.round(((double) (stats.recentPlayers() - stats.previousPlayers()) / stats.previousPlayers()) * 100)
-                                 : 0;
+                ? (int) Math.round(((double) (stats.recentPlayers() - stats.previousPlayers()) / stats.previousPlayers()) * 100)
+                : 0;
 
         return new OverviewResponse(
-            stats.totalTickets(),
-            stats.totalPlayers(),
-            staffService.countStaffIncludingSuperAdmin(server),
-            stats.activeTickets(),
-            ticketChange,
-            playerChange
+                stats.totalTickets(),
+                stats.totalPlayers(),
+                staffService.countStaffIncludingSuperAdmin(server),
+                stats.activeTickets(),
+                ticketChange,
+                playerChange
         );
     }
 
@@ -104,25 +94,25 @@ public class AnalyticsService {
         final Date startDate = DateRangeUtil.getStartDate(period);
         final List<IdCountResult> statusResults = analyticsRepository.aggregateTicketStatusCounts(server, startDate);
         final List<TicketAnalyticsResponse.StatusCount> byStatus = statusResults.stream()
-            .map(result -> new TicketAnalyticsResponse.StatusCount(normalizeStatus(result.id()), result.count()))
-            .toList();
+                .map(result -> new TicketAnalyticsResponse.StatusCount(normalizeStatus(result.id()), result.count()))
+                .toList();
 
         final List<IdCountResult> categoryResults = analyticsRepository.aggregateTicketCategoryCounts(server, startDate);
         final List<TicketAnalyticsResponse.CategoryCount> byCategory = categoryResults.stream()
-            .map(result -> new TicketAnalyticsResponse.CategoryCount(normalizeCategory(result.id()), result.count()))
-            .toList();
+                .map(result -> new TicketAnalyticsResponse.CategoryCount(normalizeCategory(result.id()), result.count()))
+                .toList();
 
         final List<TicketAnalyticsResponse.DailyTicket> dailyTickets = analyticsRepository.aggregateDailyTicketCounts(server, startDate, ANALYTICS_TIME_ZONE)
-            .stream()
-            .map(result -> new TicketAnalyticsResponse.DailyTicket(result.id(), result.count()))
-            .toList();
+                .stream()
+                .map(result -> new TicketAnalyticsResponse.DailyTicket(result.id(), result.count()))
+                .toList();
 
         final List<TicketAnalyticsResponse.CategoryResolutionTime> avgResolution =
-            analyticsRepository.aggregateAvgResolutionByCategory(server, startDate).stream()
-                .map(result -> new TicketAnalyticsResponse.CategoryResolutionTime(
-                    normalizeCategory(result.id()),
-                    result.avgMillis() / MILLIS_PER_HOUR))
-                .toList();
+                analyticsRepository.aggregateAvgResolutionByCategory(server, startDate).stream()
+                        .map(result -> new TicketAnalyticsResponse.CategoryResolutionTime(
+                                normalizeCategory(result.id()),
+                                result.avgMillis() / MILLIS_PER_HOUR))
+                        .toList();
 
         return new TicketAnalyticsResponse(byStatus, byCategory, avgResolution, dailyTickets);
     }
@@ -157,15 +147,15 @@ public class AnalyticsService {
         Map<Integer, String> punishmentTypeNames = resolvePunishmentTypeNames(server);
 
         List<PunishmentAnalyticsResponse.TypeCount> byType = facet.byType().stream()
-            .map(entry -> {
-                Integer typeOrdinal = entry.typeOrdinal();
-                String typeName = typeOrdinal != null
-                                  ? punishmentTypeNames.getOrDefault(typeOrdinal, "Unknown")
-                                  : "Unknown";
-                return new PunishmentAnalyticsResponse.TypeCount(typeName, entry.count());
-            })
-            .sorted((a, b) -> Integer.compare(b.count(), a.count()))
-            .toList();
+                .map(entry -> {
+                    Integer typeOrdinal = entry.typeOrdinal();
+                    String typeName = typeOrdinal != null
+                            ? punishmentTypeNames.getOrDefault(typeOrdinal, "Unknown")
+                            : "Unknown";
+                    return new PunishmentAnalyticsResponse.TypeCount(typeName, entry.count());
+                })
+                .sorted((a, b) -> Integer.compare(b.count(), a.count()))
+                .toList();
 
         Set<String> potentialIds = new HashSet<>();
         for (var entry : facet.byStaff()) {
@@ -186,20 +176,20 @@ public class AnalyticsService {
             staffCountMap.merge(staffName, entry.count(), Integer::sum);
         }
         List<PunishmentAnalyticsResponse.StaffPunishment> byStaff = staffCountMap.entrySet()
-            .stream()
-            .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
-            .limit(20)
-            .map(entry -> new PunishmentAnalyticsResponse.StaffPunishment(entry.getKey(), entry.getValue()))
-            .toList();
+                .stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .limit(20)
+                .map(entry -> new PunishmentAnalyticsResponse.StaffPunishment(entry.getKey(), entry.getValue()))
+                .toList();
 
         Map<String, Integer> dailyPunishmentMap = new LinkedHashMap<>();
         for (var entry : facet.daily()) {
             dailyPunishmentMap.merge(entry.date(), entry.count(), Integer::sum);
         }
         List<PunishmentAnalyticsResponse.DailyPunishment> dailyPunishments = dailyPunishmentMap.entrySet()
-            .stream()
-            .map(entry -> new PunishmentAnalyticsResponse.DailyPunishment(entry.getKey(), entry.getValue()))
-            .toList();
+                .stream()
+                .map(entry -> new PunishmentAnalyticsResponse.DailyPunishment(entry.getKey(), entry.getValue()))
+                .toList();
 
         return new PunishmentAnalyticsResponse(byType, dailyPunishments, byStaff);
     }
@@ -207,7 +197,7 @@ public class AnalyticsService {
     private Map<Integer, String> resolvePunishmentTypeNames(Server server) {
         Map<Integer, String> typeNames = new HashMap<>();
         PunishmentTypeIndex.byOrdinal(punishmentTypeService.getPunishmentTypes(server))
-            .forEach((ordinal, type) -> typeNames.put(ordinal, type.getName()));
+                .forEach((ordinal, type) -> typeNames.put(ordinal, type.getName()));
         return typeNames;
     }
 
@@ -229,11 +219,11 @@ public class AnalyticsService {
         Date startDate = DateRangeUtil.getStartDate(period);
         List<IdCountResult> levelResults = analyticsRepository.aggregateAuditLogLevelCounts(server, startDate);
         List<AuditLogsAnalyticsResponse.LevelCount> byLevel = levelResults.stream()
-            .map(result -> new AuditLogsAnalyticsResponse.LevelCount(
-                result.id() != null ? result.id() : "unknown",
-                result.count()
-            ))
-            .toList();
+                .map(result -> new AuditLogsAnalyticsResponse.LevelCount(
+                        result.id() != null ? result.id() : "unknown",
+                        result.count()
+                ))
+                .toList();
 
         long now = System.currentTimeMillis();
         Date since = DateRangeUtil.daysAgo(1);
@@ -274,23 +264,23 @@ public class AnalyticsService {
         PlayerActivityFacet facet = analyticsRepository.aggregatePlayerActivity(server, startDate, ANALYTICS_TIME_ZONE);
         if (facet == null) {
             return new PlayerActivityResponse(List.of(), List.of(),
-                new PlayerActivityResponse.SuspiciousActivity(0, 0));
+                    new PlayerActivityResponse.SuspiciousActivity(0, 0));
         }
 
         List<PlayerActivityResponse.DailyCount> newPlayersTrend = facet.newPlayers().stream()
-            .map(entry -> new PlayerActivityResponse.DailyCount(entry.date(), entry.count()))
-            .toList();
+                .map(entry -> new PlayerActivityResponse.DailyCount(entry.date(), entry.count()))
+                .toList();
 
         List<PlayerActivityResponse.CountryCount> loginsByCountry = facet.byCountry().stream()
-            .map(entry -> new PlayerActivityResponse.CountryCount(entry.country(), entry.count()))
-            .toList();
+                .map(entry -> new PlayerActivityResponse.CountryCount(entry.country(), entry.count()))
+                .toList();
 
         return new PlayerActivityResponse(
-            newPlayersTrend,
-            loginsByCountry,
-            new PlayerActivityResponse.SuspiciousActivity(
-                facet.suspicious().proxyCount(),
-                facet.suspicious().hostingCount())
+                newPlayersTrend,
+                loginsByCountry,
+                new PlayerActivityResponse.SuspiciousActivity(
+                        facet.suspicious().proxyCount(),
+                        facet.suspicious().hostingCount())
         );
     }
 

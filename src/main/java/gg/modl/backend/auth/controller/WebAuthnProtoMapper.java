@@ -26,14 +26,14 @@ final class WebAuthnProtoMapper {
 
     static WebAuthnCredentialMutationResponse toMutationResponse(boolean success) {
         return WebAuthnCredentialMutationResponse.newBuilder()
-            .setSuccess(success)
-            .build();
+                .setSuccess(success)
+                .build();
     }
 
     private static WebAuthnCredentialMetadata toMetadata(WebAuthnService.CredentialInfo credential) {
         WebAuthnCredentialMetadata.Builder builder = WebAuthnCredentialMetadata.newBuilder()
-            .setId(stringValue(credential.id()))
-            .setName(stringValue(credential.name()));
+                .setId(stringValue(credential.id()))
+                .setName(stringValue(credential.name()));
         Date createdAt = credential.createdAt();
         if (createdAt != null) {
             builder.setCreatedAt(toTimestamp(createdAt));

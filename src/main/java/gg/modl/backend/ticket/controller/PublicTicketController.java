@@ -18,18 +18,13 @@ import gg.modl.proto.modl.v1.AddReplyRequest;
 import gg.modl.proto.modl.v1.AddTicketReplyResponse;
 import gg.modl.proto.modl.v1.PanelResource;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping(RESTMappingV1.PUBLIC_TICKETS)
@@ -43,34 +38,34 @@ public class PublicTicketController {
 
     @PostMapping
     public ResponseEntity<gg.modl.proto.modl.v1.CreateTicketResponse> createTicket(
-        @RequestBody gg.modl.proto.modl.v1.CreateTicketRequest createRequest,
-        HttpServletRequest request
+            @RequestBody gg.modl.proto.modl.v1.CreateTicketRequest createRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
         TicketResponse ticket = ticketService.createTicket(server, PanelTicketProtoMapper.fromCreateTicketRequest(createRequest));
         realtimeEventPublisher.invalidatePanel(server, PanelResource.PANEL_RESOURCE_TICKETS, ticket.id());
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(PublicTicketProtoMapper.toCreateTicketResponse(ticket, "Ticket created successfully"));
+                .body(PublicTicketProtoMapper.toCreateTicketResponse(ticket, "Ticket created successfully"));
     }
 
     @PostMapping("/unfinished")
     public ResponseEntity<gg.modl.proto.modl.v1.CreateTicketResponse> createUnfinishedTicket(
-        @RequestBody gg.modl.proto.modl.v1.CreateTicketRequest createRequest,
-        HttpServletRequest request
+            @RequestBody gg.modl.proto.modl.v1.CreateTicketRequest createRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
         TicketResponse ticket = ticketService.createUnfinishedTicket(server, PanelTicketProtoMapper.fromCreateTicketRequest(createRequest));
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(PublicTicketProtoMapper.toCreateTicketResponse(ticket, "Ticket created successfully (Unfinished)"));
+                .body(PublicTicketProtoMapper.toCreateTicketResponse(ticket, "Ticket created successfully (Unfinished)"));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getTicket(
-        @PathVariable String id,
-        @RequestParam(value = "token", required = false) String ticketToken,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestParam(value = "token", required = false) String ticketToken,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -81,7 +76,7 @@ public class PublicTicketController {
         }
         if (access.access() == Access.TOKEN_REQUIRED) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(PublicVerificationProtoMapper.toVerificationRequiredResponse(id, access.emailHint()));
+                    .body(PublicVerificationProtoMapper.toVerificationRequiredResponse(id, access.emailHint()));
         }
 
         TicketResponse ticketResponse = ticketService.toResponse(server, ticket);
@@ -91,9 +86,9 @@ public class PublicTicketController {
 
     @GetMapping("/{id}/status")
     public ResponseEntity<?> getTicketStatus(
-        @PathVariable String id,
-        @RequestParam(value = "token", required = false) String ticketToken,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestParam(value = "token", required = false) String ticketToken,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -112,10 +107,10 @@ public class PublicTicketController {
 
     @PostMapping("/{id}/replies")
     public ResponseEntity<?> addReply(
-        @PathVariable String id,
-        @RequestBody AddReplyRequest replyRequest,
-        @RequestParam(value = "token", required = false) String ticketToken,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody AddReplyRequest replyRequest,
+            @RequestParam(value = "token", required = false) String ticketToken,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -132,19 +127,19 @@ public class PublicTicketController {
         TicketReply reply = ticketReplyService.addPublicReply(server, id, replyRequest.getContent(), attachments);
         realtimeEventPublisher.invalidatePanel(server, PanelResource.PANEL_RESOURCE_TICKETS, id);
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(AddTicketReplyResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Reply added successfully")
-                .setReply(PublicTicketProtoMapper.toPublicReply(reply))
-                .build());
+                .body(AddTicketReplyResponse.newBuilder()
+                        .setSuccess(true)
+                        .setMessage("Reply added successfully")
+                        .setReply(PublicTicketProtoMapper.toPublicReply(reply))
+                        .build());
     }
 
     @PostMapping("/{id}/submit")
     public ResponseEntity<?> submitTicketForm(
-        @PathVariable String id,
-        @RequestBody gg.modl.proto.modl.v1.SubmitTicketFormRequest submitRequest,
-        @RequestParam(value = "token", required = false) String ticketToken,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody gg.modl.proto.modl.v1.SubmitTicketFormRequest submitRequest,
+            @RequestParam(value = "token", required = false) String ticketToken,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -162,15 +157,15 @@ public class PublicTicketController {
         }
 
         TicketResponse ticketResp = ticketService.submitTicketForm(
-            server, id, PublicTicketProtoMapper.fromSubmitTicketFormRequest(submitRequest), access.tokenVerified());
+                server, id, PublicTicketProtoMapper.fromSubmitTicketFormRequest(submitRequest), access.tokenVerified());
         realtimeEventPublisher.invalidatePanel(server, PanelResource.PANEL_RESOURCE_TICKETS, id);
         return ResponseEntity.ok(PublicTicketProtoMapper.toSubmitResponse(ticketResp));
     }
 
     @PostMapping("/{id}/request-verification")
     public ResponseEntity<?> requestVerification(
-        @PathVariable String id,
-        HttpServletRequest request
+            @PathVariable String id,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -185,9 +180,9 @@ public class PublicTicketController {
 
     @PostMapping("/{id}/verify")
     public ResponseEntity<?> verifyCode(
-        @PathVariable String id,
-        @RequestBody gg.modl.proto.modl.v1.VerifyTicketCodeRequest body,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody gg.modl.proto.modl.v1.VerifyTicketCodeRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 

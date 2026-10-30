@@ -6,9 +6,9 @@ public final class RESTMappingV1 {
     public static final String PREFIX_ADMIN = V1 + "/admin";
     public static final String ADMIN_AUTH = PREFIX_ADMIN + "/auth";
     public static final String PREFIX_PUBLIC = V1 + "/public";
+    public static final String PUBLIC_REPLAY_LITE = PREFIX_PUBLIC + "/replay-lite";
     public static final String PREFIX_MINECRAFT = V1 + "/minecraft";
     public static final String PREFIX_REPLAY_LITE = V1 + "/replay-lite";
-    public static final String PUBLIC_REPLAY_LITE = PREFIX_PUBLIC + "/replay-lite";
     public static final String HEALTH = V1 + "/health";
     private static final String SERVER = "/server";
     public static final String PUBLIC_SERVER = PREFIX_PUBLIC + SERVER;
@@ -55,8 +55,6 @@ public final class RESTMappingV1 {
     private static final String HOMEPAGE_CARDS = "/homepage-cards";
     public static final String PANEL_HOMEPAGE_CARDS = PREFIX_PANEL + HOMEPAGE_CARDS;
     public static final String PUBLIC_HOMEPAGE_CARDS = PREFIX_PUBLIC + HOMEPAGE_CARDS;
-    private static final String WEBHOOKS = "/webhooks";
-    public static final String WEBHOOKS_STRIPE = V1 + WEBHOOKS + "/stripe";
     private static final String APPEALS = "/appeals";
     public static final String PANEL_APPEALS = PREFIX_PANEL + APPEALS;
     public static final String PUBLIC_APPEALS = PREFIX_PUBLIC + APPEALS;

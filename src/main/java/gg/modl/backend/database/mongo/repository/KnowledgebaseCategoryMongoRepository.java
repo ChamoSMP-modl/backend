@@ -6,16 +6,17 @@ import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.KnowledgebaseCategoryFields;
 import gg.modl.backend.knowledgebase.data.KnowledgebaseCategory;
 import gg.modl.backend.server.data.Server;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class KnowledgebaseCategoryMongoRepository extends AbstractServerMongoRepository<KnowledgebaseCategory> {
@@ -33,7 +34,7 @@ public class KnowledgebaseCategoryMongoRepository extends AbstractServerMongoRep
 
     public List<KnowledgebaseCategory> findVisibleOrdered(Server server) {
         Query query = Query.query(Criteria.where(KnowledgebaseCategoryFields.IS_VISIBLE).is(true))
-            .with(Sort.by(Sort.Direction.ASC, KnowledgebaseCategoryFields.ORDINAL));
+                .with(Sort.by(Sort.Direction.ASC, KnowledgebaseCategoryFields.ORDINAL));
         return find(server, query);
     }
 
@@ -50,21 +51,21 @@ public class KnowledgebaseCategoryMongoRepository extends AbstractServerMongoRep
 
     public int findMaxOrdinal(Server server) {
         Query query = new Query()
-            .with(Sort.by(Sort.Direction.DESC, KnowledgebaseCategoryFields.ORDINAL))
-            .limit(1);
+                .with(Sort.by(Sort.Direction.DESC, KnowledgebaseCategoryFields.ORDINAL))
+                .limit(1);
         return findOne(server, query)
-            .map(KnowledgebaseCategory::getOrdinal)
-            .orElse(-1);
+                .map(KnowledgebaseCategory::getOrdinal)
+                .orElse(-1);
     }
 
     public Optional<KnowledgebaseCategory> updateCategory(
-        Server server,
-        String id,
-        String name,
-        String slug,
-        String description,
-        Boolean isVisible,
-        Date updatedAt
+            Server server,
+            String id,
+            String name,
+            String slug,
+            String description,
+            Boolean isVisible,
+            Date updatedAt
     ) {
         Update update = new Update().set(KnowledgebaseCategoryFields.UPDATED_AT, updatedAt);
         if (name != null) {
@@ -81,10 +82,10 @@ public class KnowledgebaseCategoryMongoRepository extends AbstractServerMongoRep
         }
 
         KnowledgebaseCategory updated = findAndModify(
-            server,
-            Query.query(Criteria.where(KnowledgebaseCategoryFields.ID).is(id)),
-            update,
-            FindAndModifyOptions.options().returnNew(true)
+                server,
+                Query.query(Criteria.where(KnowledgebaseCategoryFields.ID).is(id)),
+                update,
+                FindAndModifyOptions.options().returnNew(true)
         );
         return Optional.ofNullable(updated);
     }

@@ -10,11 +10,11 @@ public final class KeysetDrainer {
     }
 
     public static <T, C> long drain(
-        int maxPages,
-        int pageSize,
-        PageFinder<T, C> finder,
-        Function<List<T>, C> cursorExtractor,
-        ToLongFunction<List<T>> pageConsumer
+            int maxPages,
+            int pageSize,
+            PageFinder<T, C> finder,
+            Function<List<T>, C> cursorExtractor,
+            ToLongFunction<List<T>> pageConsumer
     ) {
         long total = 0;
         C cursor = null;

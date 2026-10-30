@@ -5,34 +5,12 @@ import com.mongodb.MongoWriteException;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
-import gg.modl.backend.database.mongo.fields.AuditLogFields;
-import gg.modl.backend.database.mongo.fields.InvitationFields;
-import gg.modl.backend.database.mongo.fields.PlayerFields;
-import gg.modl.backend.database.mongo.fields.SettingsFields;
-import gg.modl.backend.database.mongo.fields.StaffFields;
-import gg.modl.backend.database.mongo.fields.StaffRoleFields;
-import gg.modl.backend.database.mongo.fields.TicketFields;
+import gg.modl.backend.database.mongo.fields.*;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.service.DuplicatePlayerMerger;
 import gg.modl.backend.replay.util.ReplayReferenceUtil;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.BsonType;
@@ -43,6 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -67,15 +49,51 @@ public class TenantMigrationService {
     private static final Duration MIGRATION_LEASE = Duration.ofMinutes(15);
 
     private static final Comparator<Document> SETTINGS_RECENCY = Comparator
-        .comparing(TenantMigrationService::settingsVersion, Comparator.nullsFirst(Comparator.naturalOrder()))
-        .thenComparing(TenantMigrationService::settingsUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
-        .thenComparing(TenantMigrationService::settingsId, Comparator.nullsFirst(Comparator.naturalOrder()))
-        .reversed();
+            .comparing(TenantMigrationService::settingsVersion, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(TenantMigrationService::settingsUpdatedAt, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(TenantMigrationService::settingsId, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .reversed();
 
     private final DuplicatePlayerMerger duplicatePlayerMerger;
     private final MongoClient mongoClient;
     private final String migrationOwner = UUID.randomUUID().toString();
     private volatile Boolean transactionsSupported;
+
+    private static Long settingsVersion(Document document) {
+        return document.get(SettingsFields.VERSION) instanceof Number number ? number.longValue() : null;
+    }
+
+    private static Date settingsUpdatedAt(Document document) {
+        return document.get(SettingsFields.UPDATED_AT) instanceof Date date ? date : null;
+    }
+
+    private static String settingsId(Document document) {
+        Object rawId = document.get(ID_FIELD);
+        return rawId == null ? null : rawId.toString();
+    }
+
+    private static String stringifyId(Object rawId) {
+        if (rawId == null) {
+            return null;
+        }
+        if (rawId instanceof ObjectId objectId) {
+            return objectId.toHexString();
+        }
+        return rawId.toString();
+    }
+
+    private static Document conditionalLowercase(String field) {
+        String fieldRef = "$" + field;
+        Document isNonEmptyString = new Document("$and", List.of(
+                new Document("$eq", List.of(new Document("$type", fieldRef), "string")),
+                new Document("$ne", List.of(fieldRef, ""))
+        ));
+        return new Document("$cond", List.of(
+                isNonEmptyString,
+                new Document("$toLower", fieldRef),
+                fieldRef
+        ));
+    }
 
     void applyMigrationsForTenant(MongoTemplate template) {
         runMigrationOnce(template, LOWERCASE_TICKET_UUIDS_MIGRATION_ID, this::lowercaseTicketUuids);
@@ -89,13 +107,13 @@ public class TenantMigrationService {
     private void backfillTicketReplayIds(MongoTemplate template) {
         MongoCollection<Document> tickets = template.getCollection(CollectionName.TICKETS);
         Bson filter = Filters.and(
-            Filters.type(TicketFields.REPLAY_URL, BsonType.STRING),
-            Filters.ne(TicketFields.REPLAY_URL, ""),
-            Filters.eq(TicketFields.REPLAY_ID, null)
+                Filters.type(TicketFields.REPLAY_URL, BsonType.STRING),
+                Filters.ne(TicketFields.REPLAY_URL, ""),
+                Filters.eq(TicketFields.REPLAY_ID, null)
         );
         List<Document> candidates = tickets.find(filter)
-            .projection(Projections.include(TicketFields.REPLAY_URL))
-            .into(new ArrayList<>());
+                .projection(Projections.include(TicketFields.REPLAY_URL))
+                .into(new ArrayList<>());
 
         long updated = 0;
         for (Document ticket : candidates) {
@@ -104,12 +122,12 @@ public class TenantMigrationService {
                 continue;
             }
             updated += tickets.updateOne(
-                Filters.eq(ID_FIELD, ticket.get(ID_FIELD)),
-                Updates.set(TicketFields.REPLAY_ID, replayId)
+                    Filters.eq(ID_FIELD, ticket.get(ID_FIELD)),
+                    Updates.set(TicketFields.REPLAY_ID, replayId)
             ).getModifiedCount();
         }
         log.info("Backfilled ticket replayId in database={} candidates={} updated={}",
-            template.getDb().getName(), candidates.size(), updated);
+                template.getDb().getName(), candidates.size(), updated);
     }
 
     private void runMigrationOnce(MongoTemplate template, String migrationId, MigrationStep step) {
@@ -124,14 +142,14 @@ public class TenantMigrationService {
             completeMigration(template, migrationId);
         } catch (RuntimeException e) {
             log.error("Tenant migration {} failed in database={}; claim left to expire for re-claim on a later startup",
-                migrationId, template.getDb().getName(), e);
+                    migrationId, template.getDb().getName(), e);
         }
     }
 
     private boolean isMigrationCompleted(MongoTemplate template, String migrationId) {
         Document marker = template.getCollection(CollectionName.TENANT_MIGRATIONS)
-            .find(Filters.eq(ID_FIELD, migrationId))
-            .first();
+                .find(Filters.eq(ID_FIELD, migrationId))
+                .first();
         if (marker == null) {
             return false;
         }
@@ -143,22 +161,22 @@ public class TenantMigrationService {
         Date now = new Date();
         Date leaseUntil = new Date(now.getTime() + MIGRATION_LEASE.toMillis());
         Bson filter = Filters.and(
-            Filters.eq(ID_FIELD, migrationId),
-            Filters.ne(STATUS_FIELD, STATUS_COMPLETED),
-            Filters.or(
-                Filters.exists(STATUS_FIELD, false),
-                Filters.lt(LEASE_UNTIL_FIELD, now)
-            )
+                Filters.eq(ID_FIELD, migrationId),
+                Filters.ne(STATUS_FIELD, STATUS_COMPLETED),
+                Filters.or(
+                        Filters.exists(STATUS_FIELD, false),
+                        Filters.lt(LEASE_UNTIL_FIELD, now)
+                )
         );
         Bson update = Updates.combine(
-            Updates.set(STATUS_FIELD, STATUS_IN_PROGRESS),
-            Updates.set(OWNER_FIELD, migrationOwner),
-            Updates.set(LEASE_UNTIL_FIELD, leaseUntil),
-            Updates.set(STARTED_AT_FIELD, now)
+                Updates.set(STATUS_FIELD, STATUS_IN_PROGRESS),
+                Updates.set(OWNER_FIELD, migrationOwner),
+                Updates.set(LEASE_UNTIL_FIELD, leaseUntil),
+                Updates.set(STARTED_AT_FIELD, now)
         );
         try {
             UpdateResult result = template.getCollection(CollectionName.TENANT_MIGRATIONS)
-                .updateOne(filter, update, new UpdateOptions().upsert(true));
+                    .updateOne(filter, update, new UpdateOptions().upsert(true));
             return result.getUpsertedId() != null || result.getModifiedCount() > 0;
         } catch (MongoWriteException e) {
             if (e.getError().getCategory() == ErrorCategory.DUPLICATE_KEY) {
@@ -170,11 +188,11 @@ public class TenantMigrationService {
 
     private void completeMigration(MongoTemplate template, String migrationId) {
         template.getCollection(CollectionName.TENANT_MIGRATIONS).updateOne(
-            Filters.and(Filters.eq(ID_FIELD, migrationId), Filters.eq(OWNER_FIELD, migrationOwner)),
-            Updates.combine(
-                Updates.set(STATUS_FIELD, STATUS_COMPLETED),
-                Updates.set(APPLIED_AT_FIELD, new Date())
-            )
+                Filters.and(Filters.eq(ID_FIELD, migrationId), Filters.eq(OWNER_FIELD, migrationOwner)),
+                Updates.combine(
+                        Updates.set(STATUS_FIELD, STATUS_COMPLETED),
+                        Updates.set(APPLIED_AT_FIELD, new Date())
+                )
         );
     }
 
@@ -182,24 +200,24 @@ public class TenantMigrationService {
         MongoCollection<Document> tickets = template.getCollection(CollectionName.TICKETS);
 
         Bson filter = Filters.or(
-            Filters.regex(TicketFields.CREATOR_UUID, UPPERCASE_HEX_PATTERN),
-            Filters.regex(TicketFields.REPORTED_PLAYER_UUID, UPPERCASE_HEX_PATTERN)
+                Filters.regex(TicketFields.CREATOR_UUID, UPPERCASE_HEX_PATTERN),
+                Filters.regex(TicketFields.REPORTED_PLAYER_UUID, UPPERCASE_HEX_PATTERN)
         );
 
         List<Bson> pipeline = List.of(new Document("$set", new Document()
-            .append(TicketFields.CREATOR_UUID, conditionalLowercase(TicketFields.CREATOR_UUID))
-            .append(TicketFields.REPORTED_PLAYER_UUID, conditionalLowercase(TicketFields.REPORTED_PLAYER_UUID))
+                .append(TicketFields.CREATOR_UUID, conditionalLowercase(TicketFields.CREATOR_UUID))
+                .append(TicketFields.REPORTED_PLAYER_UUID, conditionalLowercase(TicketFields.REPORTED_PLAYER_UUID))
         ));
 
         UpdateResult result = tickets.updateMany(filter, pipeline);
         log.info("Lowercased ticket UUIDs in database={} matched={} modified={}",
-            template.getDb().getName(), result.getMatchedCount(), result.getModifiedCount());
+                template.getDb().getName(), result.getMatchedCount(), result.getModifiedCount());
     }
 
     private void backfillStaffRoleIds(MongoTemplate template) {
         List<Document> roles = template.getCollection(CollectionName.STAFF_ROLES)
-            .find()
-            .into(new ArrayList<>());
+                .find()
+                .into(new ArrayList<>());
 
         Set<String> roleIds = new HashSet<>();
         for (Document role : roles) {
@@ -222,7 +240,7 @@ public class TenantMigrationService {
             }
             if (roleIds.contains(name)) {
                 log.warn("Skipping role-id backfill for role name '{}' in database={} because it collides with an existing role id",
-                    name, template.getDb().getName());
+                        name, template.getDb().getName());
                 continue;
             }
             staffUpdated += staff.updateMany(Filters.eq(StaffFields.ROLE_ID, name), Updates.set(StaffFields.ROLE_ID, id)).getModifiedCount();
@@ -233,10 +251,10 @@ public class TenantMigrationService {
         long invitationOrphans = invitations.countDocuments(Filters.nin(InvitationFields.ROLE_ID, roleIds));
         if (staffOrphans > 0 || invitationOrphans > 0) {
             log.warn("Role-id backfill left unresolved role references in database={} staffOrphans={} invitationOrphans={}",
-                template.getDb().getName(), staffOrphans, invitationOrphans);
+                    template.getDb().getName(), staffOrphans, invitationOrphans);
         }
         log.info("Backfilled staff role ids in database={} staffUpdated={} invitationsUpdated={}",
-            template.getDb().getName(), staffUpdated, invitationsUpdated);
+                template.getDb().getName(), staffUpdated, invitationsUpdated);
     }
 
     private void dedupeSettingsByType(MongoTemplate template) {
@@ -262,7 +280,7 @@ public class TenantMigrationService {
 
         long removedDuplicates = removeByIds(template, CollectionName.SETTINGS, removableIds);
         log.info("Deduped settings by type in database={} removedUntyped={} removedDuplicates={}",
-            template.getDb().getName(), removedUntyped, removedDuplicates);
+                template.getDb().getName(), removedUntyped, removedDuplicates);
     }
 
     private void dedupePlayersByMinecraftUuid(MongoTemplate template) {
@@ -278,8 +296,8 @@ public class TenantMigrationService {
         List<Object> removableIds = new ArrayList<>();
         for (String minecraftUuid : duplicateUuids) {
             List<Document> rawGroup = players
-                .find(Filters.eq(PlayerFields.MINECRAFT_UUID, minecraftUuid))
-                .into(new ArrayList<>());
+                    .find(Filters.eq(PlayerFields.MINECRAFT_UUID, minecraftUuid))
+                    .into(new ArrayList<>());
             if (rawGroup.size() < 2) {
                 continue;
             }
@@ -305,7 +323,7 @@ public class TenantMigrationService {
 
         long removedDocuments = removeByIds(template, CollectionName.PLAYERS, removableIds);
         log.info("Deduped players by minecraftUuid in database={} mergedGroups={} removedDocuments={}",
-            template.getDb().getName(), mergedGroups, removedDocuments);
+                template.getDb().getName(), mergedGroups, removedDocuments);
     }
 
     private void persistMergedPlayer(MongoCollection<Document> players, MongoConverter converter,
@@ -313,11 +331,11 @@ public class TenantMigrationService {
         Document merged = new Document();
         converter.write(primary, merged);
         players.updateOne(Filters.eq(PlayerFields.ID, storedId), Updates.combine(
-            Updates.set(PlayerFields.USERNAMES, merged.get(PlayerFields.USERNAMES)),
-            Updates.set(PlayerFields.IP_ADDRESSES, merged.get(PlayerFields.IP_ADDRESSES)),
-            Updates.set(PlayerFields.NOTES, merged.get(PlayerFields.NOTES)),
-            Updates.set(PlayerFields.PUNISHMENTS, merged.get(PlayerFields.PUNISHMENTS)),
-            Updates.set(PlayerFields.DATA, merged.get(PlayerFields.DATA))
+                Updates.set(PlayerFields.USERNAMES, merged.get(PlayerFields.USERNAMES)),
+                Updates.set(PlayerFields.IP_ADDRESSES, merged.get(PlayerFields.IP_ADDRESSES)),
+                Updates.set(PlayerFields.NOTES, merged.get(PlayerFields.NOTES)),
+                Updates.set(PlayerFields.PUNISHMENTS, merged.get(PlayerFields.PUNISHMENTS)),
+                Updates.set(PlayerFields.DATA, merged.get(PlayerFields.DATA))
         ));
     }
 
@@ -325,8 +343,8 @@ public class TenantMigrationService {
         MongoCollection<Document> players = template.getCollection(CollectionName.PLAYERS);
         MongoCollection<Document> logs = template.getCollection(CollectionName.LOGS);
         List<Document> legacyPlayers = players
-            .find(Filters.type(PlayerFields.ID, BsonType.OBJECT_ID))
-            .into(new ArrayList<>());
+                .find(Filters.type(PlayerFields.ID, BsonType.OBJECT_ID))
+                .into(new ArrayList<>());
         if (legacyPlayers.isEmpty()) {
             return;
         }
@@ -349,7 +367,7 @@ public class TenantMigrationService {
             }
         }
         log.info("Normalized player ids in database={} reKeyed={}",
-            template.getDb().getName(), legacyPlayers.size());
+                template.getDb().getName(), legacyPlayers.size());
     }
 
     private void reKeyLegacyPlayer(MongoCollection<Document> players, MongoCollection<Document> logs,
@@ -386,16 +404,16 @@ public class TenantMigrationService {
 
     private List<String> findDuplicateMinecraftUuids(MongoTemplate template) {
         List<Bson> pipeline = List.of(
-            new Document("$match", new Document(PlayerFields.MINECRAFT_UUID, new Document("$type", "string"))),
-            new Document("$group", new Document(ID_FIELD, "$" + PlayerFields.MINECRAFT_UUID)
-                .append("count", new Document("$sum", 1))),
-            new Document("$match", new Document("count", new Document("$gt", 1)))
+                new Document("$match", new Document(PlayerFields.MINECRAFT_UUID, new Document("$type", "string"))),
+                new Document("$group", new Document(ID_FIELD, "$" + PlayerFields.MINECRAFT_UUID)
+                        .append("count", new Document("$sum", 1))),
+                new Document("$match", new Document("count", new Document("$gt", 1)))
         );
 
         List<Document> groups = template.getCollection(CollectionName.PLAYERS)
-            .aggregate(pipeline)
-            .allowDiskUse(true)
-            .into(new ArrayList<>());
+                .aggregate(pipeline)
+                .allowDiskUse(true)
+                .into(new ArrayList<>());
         List<String> minecraftUuids = new ArrayList<>();
         for (Document group : groups) {
             Object minecraftUuid = group.get(ID_FIELD);
@@ -411,42 +429,6 @@ public class TenantMigrationService {
             return 0;
         }
         return template.getCollection(collectionName).deleteMany(Filters.in(ID_FIELD, ids)).getDeletedCount();
-    }
-
-    private static Long settingsVersion(Document document) {
-        return document.get(SettingsFields.VERSION) instanceof Number number ? number.longValue() : null;
-    }
-
-    private static Date settingsUpdatedAt(Document document) {
-        return document.get(SettingsFields.UPDATED_AT) instanceof Date date ? date : null;
-    }
-
-    private static String settingsId(Document document) {
-        Object rawId = document.get(ID_FIELD);
-        return rawId == null ? null : rawId.toString();
-    }
-
-    private static String stringifyId(Object rawId) {
-        if (rawId == null) {
-            return null;
-        }
-        if (rawId instanceof ObjectId objectId) {
-            return objectId.toHexString();
-        }
-        return rawId.toString();
-    }
-
-    private static Document conditionalLowercase(String field) {
-        String fieldRef = "$" + field;
-        Document isNonEmptyString = new Document("$and", List.of(
-            new Document("$eq", List.of(new Document("$type", fieldRef), "string")),
-            new Document("$ne", List.of(fieldRef, ""))
-        ));
-        return new Document("$cond", List.of(
-            isNonEmptyString,
-            new Document("$toLower", fieldRef),
-            fieldRef
-        ));
     }
 
     @FunctionalInterface

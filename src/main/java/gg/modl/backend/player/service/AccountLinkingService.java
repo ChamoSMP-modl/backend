@@ -9,25 +9,20 @@ import gg.modl.backend.player.dto.response.LinkedAccountResponse;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.PunishmentTypeService;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AccountLinkingService {
+    private static final long SIX_HOURS_MS = 6 * 60 * 60 * 1000;
     private final PlayerMongoRepository playerRepository;
     private final PlayerStatusCalculator statusCalculator;
     private final PunishmentTypeService punishmentTypeService;
-    private static final long SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 
     public List<LinkedAccountResponse> getLinkedAccounts(Server server, UUID playerUuid) {
         Player player = findPlayerByUuid(server, playerUuid);
@@ -41,16 +36,16 @@ public class AccountLinkingService {
         }
 
         List<String> validUuids = linkedUuids.stream()
-            .filter(uuid -> {
-                try {
-                    UUID.fromString(uuid);
-                    return true;
-                } catch (IllegalArgumentException exception) {
-                    log.warn("Invalid UUID in linked accounts: {}", uuid);
-                    return false;
-                }
-            })
-            .toList();
+                .filter(uuid -> {
+                    try {
+                        UUID.fromString(uuid);
+                        return true;
+                    } catch (IllegalArgumentException exception) {
+                        log.warn("Invalid UUID in linked accounts: {}", uuid);
+                        return false;
+                    }
+                })
+                .toList();
 
         if (validUuids.isEmpty()) {
             return new ArrayList<>();
@@ -59,8 +54,8 @@ public class AccountLinkingService {
         List<Player> linkedPlayers = playerRepository.findByMinecraftUuids(server, validUuids);
 
         return linkedPlayers.stream()
-            .map(playerEntry -> buildLinkedAccountResponse(server, playerEntry))
-            .toList();
+                .map(playerEntry -> buildLinkedAccountResponse(server, playerEntry))
+                .toList();
     }
 
     private Player findPlayerByUuid(Server server, UUID uuid) {
@@ -87,11 +82,11 @@ public class AccountLinkingService {
         Date lastLinkedUpdate = player.data().lastLinkedUpdate();
 
         return new LinkedAccountResponse(
-            player.getMinecraftUuid().toString(),
-            username,
-            activeBans,
-            activeMutes,
-            lastLinkedUpdate
+                player.getMinecraftUuid().toString(),
+                username,
+                activeBans,
+                activeMutes,
+                lastLinkedUpdate
         );
     }
 
@@ -159,7 +154,7 @@ public class AccountLinkingService {
 
             for (Player linkedPlayer : linkedPlayers) {
                 playerRepository.addLinkedAccounts(
-                    server, linkedPlayer.getMinecraftUuid().toString(), Set.of(playerUuid.toString()), now);
+                        server, linkedPlayer.getMinecraftUuid().toString(), Set.of(playerUuid.toString()), now);
             }
         }
 
@@ -176,13 +171,13 @@ public class AccountLinkingService {
 
     private boolean hasRecentMatchingLogin(Player player1, Player player2, String ipAddress) {
         Optional<IPEntry> ip1 = player1.getIpAddresses()
-            .stream()
-            .filter(ip -> ip.getIpAddress().equals(ipAddress))
-            .findFirst();
+                .stream()
+                .filter(ip -> ip.getIpAddress().equals(ipAddress))
+                .findFirst();
         Optional<IPEntry> ip2 = player2.getIpAddresses()
-            .stream()
-            .filter(ip -> ip.getIpAddress().equals(ipAddress))
-            .findFirst();
+                .stream()
+                .filter(ip -> ip.getIpAddress().equals(ipAddress))
+                .findFirst();
 
         if (ip1.isEmpty() || ip2.isEmpty()) {
             return false;

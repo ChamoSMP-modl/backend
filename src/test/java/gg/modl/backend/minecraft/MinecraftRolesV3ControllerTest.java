@@ -1,27 +1,9 @@
 package gg.modl.backend.minecraft;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.same;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.infrastructure.exception.GlobalExceptionHandler;
-import gg.modl.backend.infrastructure.proto.ProtoBinaryHttpMessageConverter;
-import gg.modl.backend.infrastructure.proto.ProtoJsonHttpMessageConverter;
-import gg.modl.backend.infrastructure.proto.ProtoValidationAdvice;
-import gg.modl.backend.infrastructure.proto.ProtobufErrorResponseWriter;
-import gg.modl.backend.infrastructure.proto.ProtobufMediaTypes;
+import gg.modl.backend.infrastructure.proto.*;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RESTMappingV3;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
@@ -32,20 +14,25 @@ import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.role.service.RoleService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
-import gg.modl.proto.modl.v1.ApiError;
-import gg.modl.proto.modl.v1.MinecraftRoleDetailResponse;
-import gg.modl.proto.modl.v1.MinecraftRoleListResponse;
-import gg.modl.proto.modl.v1.MinecraftRoleMutationResponse;
-import gg.modl.proto.modl.v1.UpdateRolePermissionsRequest;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import gg.modl.proto.modl.v1.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class MinecraftRolesV3ControllerTest {
     private RoleService roleService;
@@ -59,53 +46,53 @@ class MinecraftRolesV3ControllerTest {
         roleService = mock(RoleService.class);
         roleAuthorization = mock(RoleAuthorization.class);
         when(roleAuthorization.minecraftPerformer(any(), any()))
-            .thenReturn(RoleAuthorization.PerformerAuthority.unidentified());
-        server = new Server("Demo", "demo", "server_demo", "admin@example.com", true, ServerPlan.FREE);
+                .thenReturn(RoleAuthorization.PerformerAuthority.unidentified());
+        server = new Server("Demo", "demo", "server_demo", "admin@example.com", true, ServerPlan.PREMIUM);
 
         v3MockMvc = MockMvcBuilders.standaloneSetup(new MinecraftRolesV3Controller(roleService, roleAuthorization))
-            .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()), new ProtoValidationAdvice())
-            .setMessageConverters(new ProtoBinaryHttpMessageConverter(), new ProtoJsonHttpMessageConverter())
-            .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
-            .build();
+                .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()), new ProtoValidationAdvice())
+                .setMessageConverters(new ProtoBinaryHttpMessageConverter(), new ProtoJsonHttpMessageConverter())
+                .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
+                .build();
 
         v1MockMvc = MockMvcBuilders.standaloneSetup(new MinecraftRolesController(roleService, roleAuthorization))
-            .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()))
-            .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
-            .build();
+                .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()))
+                .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
+                .build();
     }
 
     @Test
     void v3RoleListReturnsBinaryResponseMappedFromRoleService() throws Exception {
         when(roleService.getAllRoles(server)).thenReturn(List.of(
-            new RoleResponse(
-                "admin",
-                "Admin",
-                "Full access",
-                List.of("modl.roles.view", "modl.roles.edit"),
-                true,
-                1,
-                3,
-                new Date(1_700_000_000_123L),
-                new Date(1_700_100_000_456L)
-            ),
-            new RoleResponse(
-                "helper",
-                "Helper",
-                null,
-                null,
-                false,
-                2,
-                0,
-                null,
-                null
-            )
+                new RoleResponse(
+                        "admin",
+                        "Admin",
+                        "Full access",
+                        List.of("modl.roles.view", "modl.roles.edit"),
+                        true,
+                        1,
+                        3,
+                        new Date(1_700_000_000_123L),
+                        new Date(1_700_100_000_456L)
+                ),
+                new RoleResponse(
+                        "helper",
+                        "Helper",
+                        null,
+                        null,
+                        false,
+                        2,
+                        0,
+                        null,
+                        null
+                )
         ));
 
         MvcResult result = v3MockMvc.perform(get(RESTMappingV3.PREFIX_MINECRAFT + "/roles")
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftRoleListResponse response = MinecraftRoleListResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -131,22 +118,22 @@ class MinecraftRolesV3ControllerTest {
     @Test
     void v3RoleDetailReturnsBinaryResponseMappedFromRoleService() throws Exception {
         when(roleService.getRoleById(server, "admin")).thenReturn(Optional.of(new RoleResponse(
-            "admin",
-            "Admin",
-            "Full access",
-            List.of("first", "second"),
-            true,
-            1,
-            3,
-            new Date(1_700_000_000_000L),
-            new Date(1_700_100_000_000L)
+                "admin",
+                "Admin",
+                "Full access",
+                List.of("first", "second"),
+                true,
+                1,
+                3,
+                new Date(1_700_000_000_000L),
+                new Date(1_700_100_000_000L)
         )));
 
         MvcResult result = v3MockMvc.perform(get(RESTMappingV3.PREFIX_MINECRAFT + "/roles/admin")
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftRoleDetailResponse response = MinecraftRoleDetailResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -166,10 +153,10 @@ class MinecraftRolesV3ControllerTest {
         when(roleService.getRoleById(server, "missing")).thenReturn(Optional.empty());
 
         MvcResult result = v3MockMvc.perform(get(RESTMappingV3.PREFIX_MINECRAFT + "/roles/missing")
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andExpect(status().isNotFound())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(404, error.getStatusCode());
@@ -181,16 +168,16 @@ class MinecraftRolesV3ControllerTest {
     void v3UpdateRolePermissionsCallsServiceAndReturnsBinarySuccess() throws Exception {
         when(roleService.updateRolePermissions(eq(server), eq("admin"), eq(List.of("first", "second")), any())).thenReturn(true);
         UpdateRolePermissionsRequest request = UpdateRolePermissionsRequest.newBuilder()
-            .addAllPermissions(List.of("first", "second"))
-            .build();
+                .addAllPermissions(List.of("first", "second"))
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/roles/admin/permissions")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftRoleMutationResponse response = MinecraftRoleMutationResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -203,16 +190,16 @@ class MinecraftRolesV3ControllerTest {
     void v3UpdateRolePermissionsMissingRoleReturnsBinaryNotFound() throws Exception {
         when(roleService.updateRolePermissions(eq(server), eq("missing"), eq(List.of("first")), any())).thenReturn(false);
         UpdateRolePermissionsRequest request = UpdateRolePermissionsRequest.newBuilder()
-            .addPermissions("first")
-            .build();
+                .addPermissions("first")
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/roles/missing/permissions")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isNotFound())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftRoleMutationResponse response = MinecraftRoleMutationResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(404, response.getStatus());
@@ -227,12 +214,12 @@ class MinecraftRolesV3ControllerTest {
         UpdateRolePermissionsRequest request = UpdateRolePermissionsRequest.newBuilder().build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/roles/admin/permissions")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftRoleMutationResponse response = MinecraftRoleMutationResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -244,54 +231,54 @@ class MinecraftRolesV3ControllerTest {
     @Test
     void v3UpdateRolePermissionsRejectsWhitespacePermissionWithBinaryApiError() throws Exception {
         UpdateRolePermissionsRequest request = UpdateRolePermissionsRequest.newBuilder()
-            .addPermissions("   ")
-            .build();
+                .addPermissions("   ")
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/roles/admin/permissions")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isBadRequest())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(400, error.getStatusCode());
         assertEquals("INVALID_ARGUMENT", error.getCode());
         assertTrue(error.getFieldViolationsList().stream()
-            .anyMatch(violation -> violation.getField().contains("permissions")));
+                .anyMatch(violation -> violation.getField().contains("permissions")));
     }
 
     @Test
     void v3UpdateRolePermissionsRejectsOversizedPermissionWithBinaryApiError() throws Exception {
         UpdateRolePermissionsRequest request = UpdateRolePermissionsRequest.newBuilder()
-            .addPermissions("a".repeat(129))
-            .build();
+                .addPermissions("a".repeat(129))
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/roles/admin/permissions")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isBadRequest())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(400, error.getStatusCode());
         assertEquals("INVALID_ARGUMENT", error.getCode());
         assertTrue(error.getFieldViolationsList().stream()
-            .anyMatch(violation -> violation.getField().contains("permissions")));
+                .anyMatch(violation -> violation.getField().contains("permissions")));
     }
 
     @Test
     void v3UpdateRolePermissionsRejectsJsonContentTypeWithBinaryApiError() throws Exception {
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/roles/admin/permissions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content("{\"permissions\":[\"first\"]}"))
-            .andExpect(status().isUnsupportedMediaType())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content("{\"permissions\":[\"first\"]}"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(415, error.getStatusCode());
@@ -301,10 +288,10 @@ class MinecraftRolesV3ControllerTest {
     @Test
     void v3RoleListRejectsJsonAcceptWithBinaryApiError() throws Exception {
         MvcResult result = v3MockMvc.perform(get(RESTMappingV3.PREFIX_MINECRAFT + "/roles")
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNotAcceptable())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(406, error.getStatusCode());
@@ -314,22 +301,22 @@ class MinecraftRolesV3ControllerTest {
     @Test
     void v1RoleListStillReturnsJsonEnvelope() throws Exception {
         when(roleService.getAllRoles(server)).thenReturn(List.of(new RoleResponse(
-            "admin",
-            "Admin",
-            "Full access",
-            List.of("modl.roles.view"),
-            true,
-            1,
-            3,
-            new Date(1_700_000_000_000L),
-            new Date(1_700_100_000_000L)
+                "admin",
+                "Admin",
+                "Full access",
+                List.of("modl.roles.view"),
+                true,
+                1,
+                3,
+                new Date(1_700_000_000_000L),
+                new Date(1_700_100_000_000L)
         )));
 
         MvcResult result = v1MockMvc.perform(get(RESTMappingV1.MINECRAFT_ROLES)
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andReturn();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn();
 
         JsonNode json = new ObjectMapper().readTree(result.getResponse().getContentAsByteArray());
         assertEquals(200, json.get("status").asInt());
@@ -340,22 +327,22 @@ class MinecraftRolesV3ControllerTest {
     @Test
     void v1RoleDetailStillReturnsJsonEnvelope() throws Exception {
         when(roleService.getRoleById(server, "admin")).thenReturn(Optional.of(new RoleResponse(
-            "admin",
-            "Admin",
-            "Full access",
-            List.of("modl.roles.view"),
-            true,
-            1,
-            3,
-            new Date(1_700_000_000_000L),
-            new Date(1_700_100_000_000L)
+                "admin",
+                "Admin",
+                "Full access",
+                List.of("modl.roles.view"),
+                true,
+                1,
+                3,
+                new Date(1_700_000_000_000L),
+                new Date(1_700_100_000_000L)
         )));
 
         MvcResult result = v1MockMvc.perform(get(RESTMappingV1.MINECRAFT_ROLES + "/admin")
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andReturn();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn();
 
         JsonNode json = new ObjectMapper().readTree(result.getResponse().getContentAsByteArray());
         assertEquals(200, json.get("status").asInt());
@@ -368,14 +355,14 @@ class MinecraftRolesV3ControllerTest {
         when(roleService.updateRolePermissions(eq(server), eq("admin"), eq(List.of("first")), any())).thenReturn(true);
 
         MvcResult result = v1MockMvc.perform(patch(RESTMappingV1.MINECRAFT_ROLES + "/admin/permissions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"permissions":["first"]}
-                    """))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andReturn();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"permissions":["first"]}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn();
 
         JsonNode json = new ObjectMapper().readTree(result.getResponse().getContentAsByteArray());
         assertEquals(200, json.get("status").asInt());

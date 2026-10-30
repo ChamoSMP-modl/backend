@@ -1,24 +1,21 @@
 package gg.modl.backend.storage.service;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.ServerUsageRepository;
 import gg.modl.backend.database.mongo.repository.StorageFileMongoRepository;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.storage.data.StorageFileDocument;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 class StorageMetadataServiceTest {
     private static final String KEY = "db/replays/r1.modlreplay";
@@ -39,7 +36,7 @@ class StorageMetadataServiceTest {
         storageSyncService = mock(StorageSyncService.class);
         StorageUsageAccountant storageUsageAccountant = new StorageUsageAccountant(serverRepository);
         service = new StorageMetadataService(storageFileRepository, storageUsageAccountant, s3StorageService, storageSyncService);
-        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId(SERVER_ID);
     }
 
@@ -55,8 +52,8 @@ class StorageMetadataServiceTest {
     @Test
     void removeFileDecrementsUsageOnlyOnceAcrossRepeatedRemovals() {
         when(storageFileRepository.findAndRemoveByKey(server, KEY))
-            .thenReturn(Optional.of(file(KEY, 100L)))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.of(file(KEY, 100L)))
+                .thenReturn(Optional.empty());
 
         assertTrue(service.removeFile(server, KEY));
         assertTrue(service.removeFile(server, KEY));
@@ -86,7 +83,7 @@ class StorageMetadataServiceTest {
     void removeFilesDecrementsUsageBySummedSizeOfRemovedDocumentsOnce() {
         List<String> keys = List.of("db/replays/a.modlreplay", "db/replays/b.modlreplay");
         when(storageFileRepository.findAndRemoveByKeys(server, keys))
-            .thenReturn(List.of(file("db/replays/a.modlreplay", 100L), file("db/replays/b.modlreplay", 50L)));
+                .thenReturn(List.of(file("db/replays/a.modlreplay", 100L), file("db/replays/b.modlreplay", 50L)));
 
         service.removeFiles(server, keys);
 

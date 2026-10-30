@@ -3,13 +3,13 @@ package gg.modl.backend.player.dto.response;
 import java.util.List;
 
 public sealed interface PaginatedPunishmentsResult
-    permits PaginatedPunishmentsResult.Found, PaginatedPunishmentsResult.NotFound {
+        permits PaginatedPunishmentsResult.Found, PaginatedPunishmentsResult.NotFound {
 
     record Found(
-        List<PunishmentView> punishments,
-        int totalCount,
-        int page,
-        boolean hasMore
+            List<PunishmentView> punishments,
+            int totalCount,
+            int page,
+            boolean hasMore
     ) implements PaginatedPunishmentsResult {
     }
 

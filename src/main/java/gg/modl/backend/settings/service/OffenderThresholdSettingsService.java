@@ -5,10 +5,11 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.OffenderThresholdSettings;
+import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.springframework.stereotype.Service;
 
 @Service
 public class OffenderThresholdSettingsService {
@@ -22,14 +23,14 @@ public class OffenderThresholdSettingsService {
     private final VersionedSettingsSupport<OffenderThresholdSettings> support;
 
     private final Cache<String, OffenderThresholdSettings> thresholdCache = Caffeine.newBuilder()
-        .expireAfterWrite(Duration.ofSeconds(45))
-        .maximumSize(500)
-        .build();
+            .expireAfterWrite(Duration.ofSeconds(45))
+            .maximumSize(500)
+            .build();
 
     public OffenderThresholdSettingsService(SettingsDocumentService settingsDocumentService, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.support = VersionedSettingsSupport.of(
-            settingsDocumentService, SETTINGS_TYPE_STATUS_THRESHOLDS, this::mapToThresholdSettings);
+                settingsDocumentService, SETTINGS_TYPE_STATUS_THRESHOLDS, this::mapToThresholdSettings);
     }
 
     public OffenderThresholdSettings getThresholdSettings(Server server) {
@@ -41,9 +42,9 @@ public class OffenderThresholdSettingsService {
     }
 
     public VersionedSettings<OffenderThresholdSettings> patchThresholdSettings(
-        Server server,
-        long expectedVersion,
-        OffenderThresholdSettings patch
+            Server server,
+            long expectedVersion,
+            OffenderThresholdSettings patch
     ) {
         OffenderThresholdSettings current = support.state(server).data();
         if (patch != null) {
@@ -92,7 +93,7 @@ public class OffenderThresholdSettingsService {
     }
 
     private OffenderThresholdSettings.CategoryThresholds sanitizeCategoryThresholds(
-        OffenderThresholdSettings.CategoryThresholds thresholds
+            OffenderThresholdSettings.CategoryThresholds thresholds
     ) {
         int medium = sanitizeThresholdValue(thresholds.getMedium());
         int habitual = sanitizeThresholdValue(thresholds.getHabitual());

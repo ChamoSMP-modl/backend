@@ -8,31 +8,25 @@ import gg.modl.backend.auth.session.SessionService;
 import gg.modl.backend.infrastructure.exception.UnauthorizedException;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
+import gg.modl.backend.infrastructure.util.CookieUtil;
+import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
 import gg.modl.backend.role.service.PermissionService;
 import gg.modl.backend.server.data.Server;
-import gg.modl.backend.infrastructure.util.CookieUtil;
 import gg.modl.proto.modl.v1.RenameWebAuthnCredentialRequest;
 import gg.modl.proto.modl.v1.WebAuthnCredentialMutationResponse;
 import gg.modl.proto.modl.v1.WebAuthnCredentialsResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotBlank;
-import java.util.List;
-import java.util.Map;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_AUTH + "/webauthn")
@@ -56,8 +50,8 @@ public class WebAuthnController {
 
     @PostMapping("/register/verify")
     public ResponseEntity<?> registerVerify(
-        HttpServletRequest request,
-        @RequestBody @Valid RegisterVerifyRequest body) throws Exception {
+            HttpServletRequest request,
+            @RequestBody @Valid RegisterVerifyRequest body) throws Exception {
         String email = requireSessionEmail(request);
 
         Server server = RequestUtil.getRequestServer(request);
@@ -76,9 +70,9 @@ public class WebAuthnController {
 
     @PatchMapping("/credentials/{id}")
     public ResponseEntity<WebAuthnCredentialMutationResponse> renameCredential(
-        HttpServletRequest request,
-        @PathVariable String id,
-        @RequestBody RenameWebAuthnCredentialRequest body) {
+            HttpServletRequest request,
+            @PathVariable String id,
+            @RequestBody RenameWebAuthnCredentialRequest body) {
         String email = requireSessionEmail(request);
 
         Server server = RequestUtil.getRequestServer(request);
@@ -91,8 +85,8 @@ public class WebAuthnController {
 
     @DeleteMapping("/credentials/{id}")
     public ResponseEntity<WebAuthnCredentialMutationResponse> deleteCredential(
-        HttpServletRequest request,
-        @PathVariable String id) {
+            HttpServletRequest request,
+            @PathVariable String id) {
         String email = requireSessionEmail(request);
 
         Server server = RequestUtil.getRequestServer(request);
@@ -113,8 +107,8 @@ public class WebAuthnController {
 
     @PostMapping("/login/options")
     public ResponseEntity<?> loginOptions(
-        HttpServletRequest request,
-        @RequestBody @Valid LoginOptionsRequest body) throws JsonProcessingException {
+            HttpServletRequest request,
+            @RequestBody @Valid LoginOptionsRequest body) throws JsonProcessingException {
         Server server = RequestUtil.getRequestServer(request);
 
         if (!permissionService.isAuthorizedEmail(server, body.email())) {
@@ -129,21 +123,21 @@ public class WebAuthnController {
         WebAuthnService.StartAuthenticationResult result = webAuthnService.startAuthentication(server, body.email());
         Object options = objectMapper.readValue(result.optionsJson(), Object.class);
         return ResponseEntity.ok(Map.of(
-            "hasPasskeys", true,
-            "challengeId", result.challengeId(),
-            "options", options
+                "hasPasskeys", true,
+                "challengeId", result.challengeId(),
+                "options", options
         ));
     }
 
     @PostMapping("/login/verify")
     public ResponseEntity<?> loginVerify(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        @RequestBody @Valid LoginVerifyRequest body) throws Exception {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @RequestBody @Valid LoginVerifyRequest body) throws Exception {
         Server server = RequestUtil.getRequestServer(request);
 
         String email = webAuthnService.finishAuthentication(server, body.challengeId(), body.response(),
-            candidateEmail -> permissionService.isAuthorizedEmail(server, candidateEmail));
+                candidateEmail -> permissionService.isAuthorizedEmail(server, candidateEmail));
 
         AuthSessionData session = sessionService.createSession(server, email, RequestUtil.getClientIp(request), request.getHeader("User-Agent"));
         response.addCookie(cookieUtil.createSessionCookie(session.getId()));
@@ -160,15 +154,19 @@ public class WebAuthnController {
     }
 
     public record RegisterVerifyRequest(
-        @NotBlank @Size(max = 256) String challengeId,
-        @NotBlank @Size(max = 10_000) String response,
-        @Size(max = 128) String name
-    ) {}
+            @NotBlank @Size(max = 256) String challengeId,
+            @NotBlank @Size(max = 10_000) String response,
+            @Size(max = 128) String name
+    ) {
+    }
 
-    public record LoginOptionsRequest(@Email @NotBlank @Size(max = RequestValidationLimits.EMAIL_MAX_LENGTH) String email) {}
+    public record LoginOptionsRequest(
+            @Email @NotBlank @Size(max = RequestValidationLimits.EMAIL_MAX_LENGTH) String email) {
+    }
 
     public record LoginVerifyRequest(
-        @NotBlank @Size(max = 256) String challengeId,
-        @NotBlank @Size(max = 10_000) String response
-    ) {}
+            @NotBlank @Size(max = 256) String challengeId,
+            @NotBlank @Size(max = 10_000) String response
+    ) {
+    }
 }

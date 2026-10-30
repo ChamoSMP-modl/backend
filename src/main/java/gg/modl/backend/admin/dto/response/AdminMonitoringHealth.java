@@ -4,17 +4,17 @@ import java.util.Date;
 import java.util.List;
 
 public record AdminMonitoringHealth(
-    String status,
-    List<HealthCheck> checks,
-    Date timestamp
+        String status,
+        List<HealthCheck> checks,
+        Date timestamp
 ) {
     public record HealthCheck(
-        String name,
-        String status,
-        String message,
-        Long responseTime,
-        String error,
-        Long count
+            String name,
+            String status,
+            String message,
+            Long responseTime,
+            String error,
+            Long count
     ) {
         public static HealthCheck responsive(String name, String status, String message, long responseTime) {
             return new HealthCheck(name, status, message, responseTime, null, null);

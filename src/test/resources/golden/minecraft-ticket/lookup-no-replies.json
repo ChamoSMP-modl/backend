@@ -1,1 +1,8 @@
-{"id":"TICKET-MIN","type":"support","category":"support","subject":"Need help","status":"open","createdAt":1700000000000}
+{
+  "id": "TICKET-MIN",
+  "type": "support",
+  "category": "support",
+  "subject": "Need help",
+  "status": "open",
+  "createdAt": 1700000000000
+}

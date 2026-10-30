@@ -2,10 +2,11 @@ package gg.modl.backend.beta;
 
 import gg.modl.backend.beta.data.BetaAudit;
 import gg.modl.backend.database.mongo.repository.BetaAuditMongoRepository;
-import java.util.Date;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,12 +18,12 @@ public class BetaAuditService {
 
     public void record(BetaAuditAction action, String serverId, String adminEmail, String details) {
         BetaAudit audit = BetaAudit.builder()
-            .action(action.name())
-            .serverId(serverId)
-            .adminEmail(adminEmail)
-            .timestamp(new Date())
-            .details(details)
-            .build();
+                .action(action.name())
+                .serverId(serverId)
+                .adminEmail(adminEmail)
+                .timestamp(new Date())
+                .details(details)
+                .build();
         auditRepository.saveEntity(audit);
     }
 

@@ -1,8 +1,5 @@
 package gg.modl.backend.validation;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.admin.dto.request.CreateSystemLogRequest;
 import gg.modl.backend.admin.dto.request.UpdateSystemConfigRequest;
 import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
@@ -14,12 +11,16 @@ import gg.modl.backend.replaylite.dto.ReplayLiteUploadInitRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RequestDtoValidationTest {
     private static Validator validator;
@@ -32,12 +33,12 @@ class RequestDtoValidationTest {
     @Test
     void createSystemLogRequestRejectsInvalidLevel() {
         CreateSystemLogRequest request = new CreateSystemLogRequest(
-            "fatal",
-            "message",
-            "monitor",
-            "infra",
-            "server-1",
-            Map.of("cpu", 95)
+                "fatal",
+                "message",
+                "monitor",
+                "infra",
+                "server-1",
+                Map.of("cpu", 95)
         );
 
         assertHasViolation(validator.validate(request), "level");
@@ -46,28 +47,28 @@ class RequestDtoValidationTest {
     private void assertHasViolation(Set<? extends ConstraintViolation<?>> violations, String propertyPath) {
         assertFalse(violations.isEmpty(), "Expected validation to fail");
         assertTrue(
-            violations.stream().anyMatch(violation -> propertyPath.equals(violation.getPropertyPath().toString())),
-            () -> "Expected violation for property '" + propertyPath + "' but got " +
-                  violations.stream().map(v -> v.getPropertyPath() + ": " + v.getMessage()).toList()
+                violations.stream().anyMatch(violation -> propertyPath.equals(violation.getPropertyPath().toString())),
+                () -> "Expected violation for property '" + propertyPath + "' but got " +
+                        violations.stream().map(v -> v.getPropertyPath() + ": " + v.getMessage()).toList()
         );
     }
 
     @Test
     void updateSystemConfigRequestRejectsOutOfRangePerformanceValues() {
         UpdateSystemConfigRequest request = new UpdateSystemConfigRequest(
-            null,
-            null,
-            null,
-            null,
-            new UpdateSystemConfigRequest.PerformanceConfigRequest(
-                null,
-                RequestValidationLimits.RATE_LIMIT_REQUESTS_MAX + 1,
                 null,
                 null,
                 null,
+                null,
+                new UpdateSystemConfigRequest.PerformanceConfigRequest(
+                        null,
+                        RequestValidationLimits.RATE_LIMIT_REQUESTS_MAX + 1,
+                        null,
+                        null,
+                        null,
+                        null
+                ),
                 null
-            ),
-            null
         );
 
         assertHasViolation(validator.validate(request), "performance.rateLimitRequests");
@@ -76,8 +77,8 @@ class RequestDtoValidationTest {
     @Test
     void replayLiteUploadRejectsInvalidMinecraftVersion() {
         ReplayLiteUploadInitRequest request = new ReplayLiteUploadInitRequest(
-            1024,
-            "../1.21.4"
+                1024,
+                "../1.21.4"
         );
 
         assertHasViolation(validator.validate(request), "mcVersion");
@@ -86,8 +87,8 @@ class RequestDtoValidationTest {
     @Test
     void replayLiteUploadRejectsOversizedRequest() {
         ReplayLiteUploadInitRequest request = new ReplayLiteUploadInitRequest(
-            RequestValidationLimits.REPLAY_LITE_MAX_REQUESTED_SIZE_BYTES + 1,
-            "1.21.4"
+                RequestValidationLimits.REPLAY_LITE_MAX_REQUESTED_SIZE_BYTES + 1,
+                "1.21.4"
         );
 
         assertHasViolation(validator.validate(request), "requestedSize");
@@ -96,10 +97,10 @@ class RequestDtoValidationTest {
     @Test
     void legacyReplayUploadRejectsInvalidTargetUuid() {
         InitReplayUploadRequest request = new InitReplayUploadRequest(
-            "1.21.4",
-            1024,
-            "not-a-uuid",
-            "byteful"
+                "1.21.4",
+                1024,
+                "not-a-uuid",
+                "byteful"
         );
 
         assertHasViolation(validator.validate(request), "targetUuid");
@@ -108,10 +109,10 @@ class RequestDtoValidationTest {
     @Test
     void legacyReplayUploadRejectsLongTargetName() {
         InitReplayUploadRequest request = new InitReplayUploadRequest(
-            "1.21.4",
-            1024,
-            "3f8c9c5a-6b6e-4f2c-9b7f-1a2b3c4d5e6f",
-            "x".repeat(RequestValidationLimits.LOG_USERNAME_MAX_LENGTH + 1)
+                "1.21.4",
+                1024,
+                "3f8c9c5a-6b6e-4f2c-9b7f-1a2b3c4d5e6f",
+                "x".repeat(RequestValidationLimits.LOG_USERNAME_MAX_LENGTH + 1)
         );
 
         assertHasViolation(validator.validate(request), "targetName");
@@ -130,10 +131,10 @@ class RequestDtoValidationTest {
     @Test
     void replayLiteLabelRequestRejectsInvalidNestedRange() {
         ReplayLiteLabel label = new ReplayLiteLabel(
-            "player",
-            "aimbot",
-            List.of(new ReplayLiteLabelRange(5000, 1000)),
-            "notes"
+                "player",
+                "aimbot",
+                List.of(new ReplayLiteLabelRange(5000, 1000)),
+                "notes"
         );
 
         assertFalse(validator.validate(new ReplayLiteLabelRequest(List.of(label))).isEmpty());
@@ -142,10 +143,10 @@ class RequestDtoValidationTest {
     @Test
     void replayLiteLabelRequestAcceptsZeroLengthRange() {
         ReplayLiteLabel label = new ReplayLiteLabel(
-            "player",
-            "aimbot",
-            List.of(new ReplayLiteLabelRange(1000, 1000)),
-            "notes"
+                "player",
+                "aimbot",
+                List.of(new ReplayLiteLabelRange(1000, 1000)),
+                "notes"
         );
 
         assertTrue(validator.validate(new ReplayLiteLabelRequest(List.of(label))).isEmpty());
@@ -154,10 +155,10 @@ class RequestDtoValidationTest {
     @Test
     void replayLiteLabelRequestRejectsUnsupportedVerdict() {
         ReplayLiteLabel label = new ReplayLiteLabel(
-            "player",
-            "cheating",
-            List.of(),
-            "notes"
+                "player",
+                "cheating",
+                List.of(),
+                "notes"
         );
 
         assertHasViolation(validator.validate(new ReplayLiteLabelRequest(List.of(label))), "labels[0].verdict");

@@ -1,16 +1,10 @@
 package gg.modl.backend.database.mongo.repository;
 
-import static gg.modl.backend.database.mongo.MongoAggregationResults.extractFacetCount;
-
 import gg.modl.backend.admin.data.SystemLog;
 import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.AbstractGlobalMongoRepository;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.SystemLogFields;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Pattern;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -21,6 +15,13 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static gg.modl.backend.database.mongo.MongoAggregationResults.extractFacetCount;
 
 @Repository
 public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<SystemLog> {
@@ -52,39 +53,39 @@ public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<Syst
 
     public long countByLevelSince(String level, Date startDate) {
         return count(Query.query(new Criteria().andOperator(
-            Criteria.where(SystemLogFields.LEVEL).is(level),
-            Criteria.where(SystemLogFields.TIMESTAMP).gte(startDate)
+                Criteria.where(SystemLogFields.LEVEL).is(level),
+                Criteria.where(SystemLogFields.TIMESTAMP).gte(startDate)
         )));
     }
 
     public long countUnresolvedByLevel(String level) {
         return count(Query.query(new Criteria().andOperator(
-            Criteria.where(SystemLogFields.LEVEL).is(level),
-            Criteria.where(SystemLogFields.RESOLVED).is(false)
+                Criteria.where(SystemLogFields.LEVEL).is(level),
+                Criteria.where(SystemLogFields.RESOLVED).is(false)
         )));
     }
 
     public long countUnresolvedByLevelSince(String level, Date startDate) {
         return count(Query.query(new Criteria().andOperator(
-            Criteria.where(SystemLogFields.LEVEL).is(level),
-            Criteria.where(SystemLogFields.RESOLVED).is(false),
-            Criteria.where(SystemLogFields.TIMESTAMP).gte(startDate)
+                Criteria.where(SystemLogFields.LEVEL).is(level),
+                Criteria.where(SystemLogFields.RESOLVED).is(false),
+                Criteria.where(SystemLogFields.TIMESTAMP).gte(startDate)
         )));
     }
 
     public List<SystemLog> findLogs(
-        String level,
-        String source,
-        String serverId,
-        String category,
-        String resolved,
-        String search,
-        Date startDate,
-        Date endDate,
-        String sort,
-        String order,
-        int skip,
-        int limit
+            String level,
+            String source,
+            String serverId,
+            String category,
+            String resolved,
+            String search,
+            Date startDate,
+            Date endDate,
+            String sort,
+            String order,
+            int skip,
+            int limit
     ) {
         Query query = buildLogsQuery(level, source, serverId, category, resolved, search, startDate, endDate);
         query.with(Sort.by(resolveDirection(order), resolveSortField(sort)));
@@ -93,14 +94,14 @@ public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<Syst
     }
 
     private Query buildLogsQuery(
-        String level,
-        String source,
-        String serverId,
-        String category,
-        String resolved,
-        String search,
-        Date startDate,
-        Date endDate
+            String level,
+            String source,
+            String serverId,
+            String category,
+            String resolved,
+            String search,
+            Date startDate,
+            Date endDate
     ) {
         Query query = new Query();
         List<Criteria> criteriaList = new ArrayList<>();
@@ -158,14 +159,14 @@ public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<Syst
     }
 
     public long countLogs(
-        String level,
-        String source,
-        String serverId,
-        String category,
-        String resolved,
-        String search,
-        Date startDate,
-        Date endDate
+            String level,
+            String source,
+            String serverId,
+            String category,
+            String resolved,
+            String search,
+            Date startDate,
+            Date endDate
     ) {
         return count(buildLogsQuery(level, source, serverId, category, resolved, search, startDate, endDate));
     }
@@ -181,9 +182,9 @@ public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<Syst
     public SystemLog resolveById(String id, String resolvedBy, Date resolvedAt) {
         Query query = Query.query(Criteria.where(SystemLogFields.ID).is(id));
         Update update = new Update()
-            .set(SystemLogFields.RESOLVED, true)
-            .set(SystemLogFields.RESOLVED_BY, resolvedBy)
-            .set(SystemLogFields.RESOLVED_AT, resolvedAt);
+                .set(SystemLogFields.RESOLVED, true)
+                .set(SystemLogFields.RESOLVED_BY, resolvedBy)
+                .set(SystemLogFields.RESOLVED_AT, resolvedAt);
         return findAndModify(query, update, FindAndModifyOptions.options().returnNew(true));
     }
 
@@ -196,15 +197,15 @@ public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<Syst
     }
 
     public List<SystemLog> findLogsForExport(
-        String level,
-        String source,
-        String serverId,
-        String category,
-        String resolved,
-        String search,
-        Date startDate,
-        Date endDate,
-        int limit
+            String level,
+            String source,
+            String serverId,
+            String category,
+            String resolved,
+            String search,
+            Date startDate,
+            Date endDate,
+            int limit
     ) {
         Query query = buildLogsQuery(level, source, serverId, category, resolved, search, startDate, endDate);
         query.with(Sort.by(Sort.Direction.DESC, SystemLogFields.TIMESTAMP));
@@ -214,40 +215,40 @@ public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<Syst
 
     public MonitoringLogStats aggregateMonitoringLogStats(Date oneDayAgo) {
         Document facet = new Document()
-            .append("critical24h", List.of(
-                new Document("$match", new Document(SystemLogFields.LEVEL, "critical")
-                    .append(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
-                new Document("$count", "n")
-            ))
-            .append("error24h", List.of(
-                new Document("$match", new Document(SystemLogFields.LEVEL, "error")
-                    .append(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
-                new Document("$count", "n")
-            ))
-            .append("warning24h", List.of(
-                new Document("$match", new Document(SystemLogFields.LEVEL, "warning")
-                    .append(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
-                new Document("$count", "n")
-            ))
-            .append("total24h", List.of(
-                new Document("$match", new Document(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
-                new Document("$count", "n")
-            ))
-            .append("unresolvedCritical", List.of(
-                new Document("$match", new Document(SystemLogFields.LEVEL, "critical")
-                    .append(SystemLogFields.RESOLVED, false)),
-                new Document("$count", "n")
-            ))
-            .append("unresolvedError", List.of(
-                new Document("$match", new Document(SystemLogFields.LEVEL, "error")
-                    .append(SystemLogFields.RESOLVED, false)),
-                new Document("$count", "n")
-            ));
+                .append("critical24h", List.of(
+                        new Document("$match", new Document(SystemLogFields.LEVEL, "critical")
+                                .append(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
+                        new Document("$count", "n")
+                ))
+                .append("error24h", List.of(
+                        new Document("$match", new Document(SystemLogFields.LEVEL, "error")
+                                .append(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
+                        new Document("$count", "n")
+                ))
+                .append("warning24h", List.of(
+                        new Document("$match", new Document(SystemLogFields.LEVEL, "warning")
+                                .append(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
+                        new Document("$count", "n")
+                ))
+                .append("total24h", List.of(
+                        new Document("$match", new Document(SystemLogFields.TIMESTAMP, new Document("$gte", oneDayAgo))),
+                        new Document("$count", "n")
+                ))
+                .append("unresolvedCritical", List.of(
+                        new Document("$match", new Document(SystemLogFields.LEVEL, "critical")
+                                .append(SystemLogFields.RESOLVED, false)),
+                        new Document("$count", "n")
+                ))
+                .append("unresolvedError", List.of(
+                        new Document("$match", new Document(SystemLogFields.LEVEL, "error")
+                                .append(SystemLogFields.RESOLVED, false)),
+                        new Document("$count", "n")
+                ));
 
         List<Document> pipeline = List.of(new Document("$facet", facet));
         List<Document> results = globalTemplate().getCollection(CollectionName.SYSTEM_LOGS)
-            .aggregate(pipeline)
-            .into(new ArrayList<>());
+                .aggregate(pipeline)
+                .into(new ArrayList<>());
 
         if (results.isEmpty()) {
             return new MonitoringLogStats(0, 0, 0, 0, 0, 0);
@@ -255,31 +256,32 @@ public class SystemLogMongoRepository extends AbstractGlobalMongoRepository<Syst
 
         Document doc = results.get(0);
         return new MonitoringLogStats(
-            extractFacetCount(doc, "critical24h"),
-            extractFacetCount(doc, "error24h"),
-            extractFacetCount(doc, "warning24h"),
-            extractFacetCount(doc, "total24h"),
-            extractFacetCount(doc, "unresolvedCritical"),
-            extractFacetCount(doc, "unresolvedError")
+                extractFacetCount(doc, "critical24h"),
+                extractFacetCount(doc, "error24h"),
+                extractFacetCount(doc, "warning24h"),
+                extractFacetCount(doc, "total24h"),
+                extractFacetCount(doc, "unresolvedCritical"),
+                extractFacetCount(doc, "unresolvedError")
         );
     }
 
-    public record MonitoringLogStats(long critical24h, long error24h, long warning24h,
-                                      long total24h, long unresolvedCritical, long unresolvedError) {}
-
     public List<Document> findLogTrends(Date startDate) {
         Aggregation aggregation = Aggregation.newAggregation(
-            Aggregation.match(Criteria.where(SystemLogFields.TIMESTAMP).gte(startDate)),
-            Aggregation.project()
-                .and(DateOperators.DateToString.dateOf(SystemLogFields.TIMESTAMP).toString("%Y-%m-%d")).as(ALIAS_DATE)
-                .and(SystemLogFields.LEVEL).as(ALIAS_LEVEL),
-            Aggregation.group(ALIAS_DATE, ALIAS_LEVEL).count().as(ALIAS_COUNT),
-            Aggregation.group("_id." + ALIAS_DATE)
-                .push(new Document(ALIAS_LEVEL, "$_id." + ALIAS_LEVEL).append(ALIAS_COUNT, "$" + ALIAS_COUNT)).as(ALIAS_LEVELS)
-                .sum(ALIAS_COUNT).as(ALIAS_TOTAL),
-            Aggregation.sort(Sort.Direction.ASC, "_id")
+                Aggregation.match(Criteria.where(SystemLogFields.TIMESTAMP).gte(startDate)),
+                Aggregation.project()
+                        .and(DateOperators.DateToString.dateOf(SystemLogFields.TIMESTAMP).toString("%Y-%m-%d")).as(ALIAS_DATE)
+                        .and(SystemLogFields.LEVEL).as(ALIAS_LEVEL),
+                Aggregation.group(ALIAS_DATE, ALIAS_LEVEL).count().as(ALIAS_COUNT),
+                Aggregation.group("_id." + ALIAS_DATE)
+                        .push(new Document(ALIAS_LEVEL, "$_id." + ALIAS_LEVEL).append(ALIAS_COUNT, "$" + ALIAS_COUNT)).as(ALIAS_LEVELS)
+                        .sum(ALIAS_COUNT).as(ALIAS_TOTAL),
+                Aggregation.sort(Sort.Direction.ASC, "_id")
         );
         return aggregate(aggregation, Document.class).getMappedResults();
+    }
+
+    public record MonitoringLogStats(long critical24h, long error24h, long warning24h,
+                                     long total24h, long unresolvedCritical, long unresolvedError) {
     }
 }
 

@@ -3,6 +3,7 @@ package gg.modl.backend.player.service;
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
 import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
+import gg.modl.backend.infrastructure.util.IdGenerator;
 import gg.modl.backend.infrastructure.validation.SafeUrls;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.punishment.Punishment;
@@ -14,13 +15,13 @@ import gg.modl.backend.player.service.PunishmentQueryService.PunishmentOperation
 import gg.modl.backend.player.service.PunishmentQueryService.PunishmentOperationStatus;
 import gg.modl.backend.player.service.PunishmentQueryService.UploadedEvidenceItem;
 import gg.modl.backend.server.data.Server;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import gg.modl.backend.infrastructure.util.IdGenerator;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -40,27 +41,27 @@ public class PunishmentEvidenceService {
         String resolvedIssuerName = PunishmentMapper.storedName(issuerId, issuerName);
         Date now = new Date();
         PunishmentEvidence evidence = new PunishmentEvidence(
-            null,
-            evidenceUrl,
-            "url",
-            resolvedIssuerName,
-            issuerId,
-            now,
-            null,
-            null,
-            null
+                null,
+                evidenceUrl,
+                "url",
+                resolvedIssuerName,
+                issuerId,
+                now,
+                null,
+                null,
+                null
         );
         PunishmentNote note = new PunishmentNote(
-            IdGenerator.generateShortId(),
-            "added evidence",
-            now,
-            resolvedIssuerName,
-            issuerId
+                IdGenerator.generateShortId(),
+                "added evidence",
+                now,
+                resolvedIssuerName,
+                issuerId
         );
         context.punishment().getEvidence().add(evidence);
         context.punishment().getNotes().add(note);
         punishmentRepository.appendEvidence(server, context.player().getMinecraftUuid().toString(), punishmentId,
-            List.of(evidence), note);
+                List.of(evidence), note);
 
         return new PunishmentOperationResult(PunishmentOperationStatus.SUCCESS, "Evidence added", true, 1);
     }
@@ -68,7 +69,7 @@ public class PunishmentEvidenceService {
     public Player addEvidence(Server server, UUID playerUuid, String punishmentId, AddEvidenceRequest request) {
         SafeUrls.requireSafe(request.url(), "Invalid evidence URL");
         Player player = playerRepository.findByMinecraftUuid(server, playerUuid.toString())
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
 
         Punishment punishment = PunishmentQueryService.findPunishment(player, punishmentId);
         if (punishment == null) {
@@ -79,15 +80,15 @@ public class PunishmentEvidenceService {
         String evIssuerName = PunishmentMapper.storedName(evIssuerId, request.issuerName() != null ? request.issuerName() : "System");
 
         PunishmentEvidence evidence = new PunishmentEvidence(
-            request.text(),
-            request.url(),
-            request.type(),
-            evIssuerName,
-            evIssuerId,
-            new Date(),
-            request.fileName(),
-            request.fileType(),
-            request.fileSize()
+                request.text(),
+                request.url(),
+                request.type(),
+                evIssuerName,
+                evIssuerId,
+                new Date(),
+                request.fileName(),
+                request.fileType(),
+                request.fileSize()
         );
         punishment.getEvidence().add(evidence);
         punishmentRepository.appendEvidence(server, player.getMinecraftUuid().toString(), punishmentId, List.of(evidence), null);
@@ -106,25 +107,25 @@ public class PunishmentEvidenceService {
         List<PunishmentEvidence> evidenceList = new ArrayList<>();
         for (UploadedEvidenceItem evidenceItem : evidenceItems) {
             PunishmentEvidence evidence = new PunishmentEvidence(
-                null,
-                evidenceItem.url(),
-                "file",
-                resolvedIssuerName,
-                issuerId,
-                now,
-                evidenceItem.fileName(),
-                evidenceItem.fileType(),
-                evidenceItem.fileSize()
+                    null,
+                    evidenceItem.url(),
+                    "file",
+                    resolvedIssuerName,
+                    issuerId,
+                    now,
+                    evidenceItem.fileName(),
+                    evidenceItem.fileType(),
+                    evidenceItem.fileSize()
             );
             evidenceList.add(evidence);
             context.punishment().getEvidence().add(evidence);
         }
         PunishmentNote note = new PunishmentNote(
-            IdGenerator.generateShortId(),
-            "uploaded " + evidenceItems.size() + " evidence file(s)",
-            now,
-            resolvedIssuerName,
-            issuerId
+                IdGenerator.generateShortId(),
+                "uploaded " + evidenceItems.size() + " evidence file(s)",
+                now,
+                resolvedIssuerName,
+                issuerId
         );
         context.punishment().getNotes().add(note);
         punishmentRepository.appendEvidence(server, context.player().getMinecraftUuid().toString(), punishmentId, evidenceList, note);
@@ -148,7 +149,7 @@ public class PunishmentEvidenceService {
 
     public Player addPunishmentNote(Server server, UUID playerUuid, String punishmentId, String text, String issuerName, String issuerId) {
         Player player = playerRepository.findByMinecraftUuid(server, playerUuid.toString())
-            .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Player not found"));
 
         Punishment punishment = PunishmentQueryService.findPunishment(player, punishmentId);
         if (punishment == null) {

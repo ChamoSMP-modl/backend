@@ -2,10 +2,11 @@ package gg.modl.backend.email;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import java.io.UnsupportedEncodingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+
+import java.io.UnsupportedEncodingException;
 
 @RequiredArgsConstructor
 public class SmtpEmailSender implements EmailSender {

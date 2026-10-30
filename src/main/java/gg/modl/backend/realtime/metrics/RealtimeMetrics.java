@@ -19,6 +19,17 @@ public class RealtimeMetrics {
 
     private final MeterRegistry meterRegistry;
 
+    private static String closeReason(CloseStatus status) {
+        if (status == null) {
+            return UNSET;
+        }
+        return switch (status.getCode()) {
+            case 1000 -> "normal";
+            case 1001 -> "going_away";
+            default -> "abnormal";
+        };
+    }
+
     public void recordConnect() {
         increment("connect");
     }
@@ -35,11 +46,11 @@ public class RealtimeMetrics {
     public void recordTopicAuthorizationFailure(RealtimeConnectionState state, Topic topic, String phase) {
         incrementPhase("topic_auth_failure", phase);
         log.warn(
-            "Realtime topic authorization failed connectionId={} serverId={} topic={} phase={}",
-            state.getConnectionId(),
-            state.getServerId(),
-            topic,
-            phase
+                "Realtime topic authorization failed connectionId={} serverId={} topic={} phase={}",
+                state.getConnectionId(),
+                state.getServerId(),
+                topic,
+                phase
         );
     }
 
@@ -61,41 +72,41 @@ public class RealtimeMetrics {
     public void recordSendAttempt(RealtimeConnectionState state, RealtimeOutboundEvent event) {
         incrementTopic("send_attempt", event.topic().name());
         log.debug(
-            "Realtime send attempt connectionId={} serverId={} topic={}",
-            state.getConnectionId(),
-            event.serverId(),
-            event.topic()
+                "Realtime send attempt connectionId={} serverId={} topic={}",
+                state.getConnectionId(),
+                event.serverId(),
+                event.topic()
         );
     }
 
     public void recordSendSuccess(RealtimeConnectionState state, RealtimeOutboundEvent event) {
         incrementTopic("send_success", event.topic().name());
         log.debug(
-            "Realtime send success connectionId={} serverId={} topic={}",
-            state.getConnectionId(),
-            event.serverId(),
-            event.topic()
+                "Realtime send success connectionId={} serverId={} topic={}",
+                state.getConnectionId(),
+                event.serverId(),
+                event.topic()
         );
     }
 
     public void recordSendFailure(RealtimeConnectionState state, RealtimeOutboundEvent event, Throwable exception) {
         incrementTopic("send_failure", event.topic().name());
         log.warn(
-            "Realtime send failed connectionId={} serverId={} topic={}",
-            state.getConnectionId(),
-            event.serverId(),
-            event.topic(),
-            exception
+                "Realtime send failed connectionId={} serverId={} topic={}",
+                state.getConnectionId(),
+                event.serverId(),
+                event.topic(),
+                exception
         );
     }
 
     public void recordInvalidOutboundPayload(RealtimeOutboundEvent event, Object payloadCase) {
         incrementTopic("invalid_outbound_payload", event.topic().name());
         log.warn(
-            "Realtime outbound event rejected due to invalid topic/payload combination serverId={} topic={} payloadCase={}",
-            event.serverId(),
-            event.topic(),
-            payloadCase
+                "Realtime outbound event rejected due to invalid topic/payload combination serverId={} topic={} payloadCase={}",
+                event.serverId(),
+                event.topic(),
+                payloadCase
         );
     }
 
@@ -142,16 +153,5 @@ public class RealtimeMetrics {
 
     private void record(String event, String topic, String reason, String phase) {
         meterRegistry.counter(EVENTS_COUNTER, "event", event, "topic", topic, "reason", reason, "phase", phase).increment();
-    }
-
-    private static String closeReason(CloseStatus status) {
-        if (status == null) {
-            return UNSET;
-        }
-        return switch (status.getCode()) {
-            case 1000 -> "normal";
-            case 1001 -> "going_away";
-            default -> "abnormal";
-        };
     }
 }

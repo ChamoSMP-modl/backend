@@ -1,12 +1,13 @@
 package gg.modl.backend.migration.validation;
 
 import gg.modl.backend.infrastructure.validation.RegExpConstants;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
@@ -15,6 +16,88 @@ public class MigrationValidator {
 
     private static final Pattern UUID_PATTERN = Pattern.compile(RegExpConstants.UUID);
     private static final Pattern UUID_NO_DASHES_PATTERN = Pattern.compile("^[0-9a-fA-F]{32}$");
+
+    private static boolean isValidIpv4(String value) {
+        String[] octets = value.split("\\.", -1);
+        if (octets.length != 4) {
+            return false;
+        }
+        for (String octet : octets) {
+            if (!isValidIpv4Octet(octet)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isValidIpv4Octet(String octet) {
+        int length = octet.length();
+        if (length < 1 || length > 3) {
+            return false;
+        }
+        for (int i = 0; i < length; i++) {
+            char c = octet.charAt(i);
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        if (length > 1 && octet.charAt(0) == '0') {
+            return false;
+        }
+        return Integer.parseInt(octet) <= 255;
+    }
+
+    private static boolean isValidIpv6(String value) {
+        int compressionIndex = value.indexOf("::");
+        boolean compressed = compressionIndex >= 0;
+        if (compressed && value.indexOf("::", compressionIndex + 1) >= 0) {
+            return false;
+        }
+
+        String[] sides = compressed
+                ? new String[]{value.substring(0, compressionIndex), value.substring(compressionIndex + 2)}
+                : new String[]{value};
+
+        int groupCount = 0;
+        for (int side = 0; side < sides.length; side++) {
+            if (sides[side].isEmpty()) {
+                continue;
+            }
+            String[] groups = sides[side].split(":", -1);
+            for (int i = 0; i < groups.length; i++) {
+                boolean lastGroup = side == sides.length - 1 && i == groups.length - 1;
+                String group = groups[i];
+                if (group.indexOf('.') >= 0) {
+                    if (!lastGroup || !isValidIpv4(group)) {
+                        return false;
+                    }
+                    groupCount += 2;
+                } else {
+                    if (!isValidHextet(group)) {
+                        return false;
+                    }
+                    groupCount += 1;
+                }
+            }
+        }
+
+        return compressed ? groupCount < 8 : groupCount == 8;
+    }
+
+    private static boolean isValidHextet(String group) {
+        int length = group.length();
+        if (length < 1 || length > 4) {
+            return false;
+        }
+        for (int i = 0; i < length; i++) {
+            char c = group.charAt(i);
+            boolean hex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+            if (!hex) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     public ValidationResult validateHeader(boolean playersPresent, boolean playersIsArray,
                                            Integer declaredPlayerCount) {
@@ -55,10 +138,10 @@ public class MigrationValidator {
         }
 
         return cleaned.substring(0, 8) + "-" +
-               cleaned.substring(8, 12) + "-" +
-               cleaned.substring(12, 16) + "-" +
-               cleaned.substring(16, 20) + "-" +
-               cleaned.substring(20);
+                cleaned.substring(8, 12) + "-" +
+                cleaned.substring(12, 16) + "-" +
+                cleaned.substring(16, 20) + "-" +
+                cleaned.substring(20);
     }
 
     public String sanitizeString(String input, int maxLength) {
@@ -72,8 +155,8 @@ public class MigrationValidator {
         }
 
         return trimmed
-            .replace("\u0000", "")
-            .replace("\r", "");
+                .replace("\u0000", "")
+                .replace("\r", "");
     }
 
     public Date parseDate(Object dateObj) {
@@ -118,88 +201,6 @@ public class MigrationValidator {
         }
 
         return ip.indexOf(':') >= 0 ? isValidIpv6(ip) : isValidIpv4(ip);
-    }
-
-    private static boolean isValidIpv4(String value) {
-        String[] octets = value.split("\\.", -1);
-        if (octets.length != 4) {
-            return false;
-        }
-        for (String octet : octets) {
-            if (!isValidIpv4Octet(octet)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private static boolean isValidIpv4Octet(String octet) {
-        int length = octet.length();
-        if (length < 1 || length > 3) {
-            return false;
-        }
-        for (int i = 0; i < length; i++) {
-            char c = octet.charAt(i);
-            if (c < '0' || c > '9') {
-                return false;
-            }
-        }
-        if (length > 1 && octet.charAt(0) == '0') {
-            return false;
-        }
-        return Integer.parseInt(octet) <= 255;
-    }
-
-    private static boolean isValidIpv6(String value) {
-        int compressionIndex = value.indexOf("::");
-        boolean compressed = compressionIndex >= 0;
-        if (compressed && value.indexOf("::", compressionIndex + 1) >= 0) {
-            return false;
-        }
-
-        String[] sides = compressed
-                         ? new String[]{value.substring(0, compressionIndex), value.substring(compressionIndex + 2)}
-                         : new String[]{value};
-
-        int groupCount = 0;
-        for (int side = 0; side < sides.length; side++) {
-            if (sides[side].isEmpty()) {
-                continue;
-            }
-            String[] groups = sides[side].split(":", -1);
-            for (int i = 0; i < groups.length; i++) {
-                boolean lastGroup = side == sides.length - 1 && i == groups.length - 1;
-                String group = groups[i];
-                if (group.indexOf('.') >= 0) {
-                    if (!lastGroup || !isValidIpv4(group)) {
-                        return false;
-                    }
-                    groupCount += 2;
-                } else {
-                    if (!isValidHextet(group)) {
-                        return false;
-                    }
-                    groupCount += 1;
-                }
-            }
-        }
-
-        return compressed ? groupCount < 8 : groupCount == 8;
-    }
-
-    private static boolean isValidHextet(String group) {
-        int length = group.length();
-        if (length < 1 || length > 4) {
-            return false;
-        }
-        for (int i = 0; i < length; i++) {
-            char c = group.charAt(i);
-            boolean hex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-            if (!hex) {
-                return false;
-            }
-        }
-        return true;
     }
 
     public record ValidationResult(boolean valid, String error, int playerCount) {

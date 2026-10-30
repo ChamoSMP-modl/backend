@@ -3,24 +3,25 @@ package gg.modl.backend.infrastructure.rest;
 import gg.modl.backend.auth.session.AuthSessionData;
 import gg.modl.backend.server.data.Server;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.regex.Pattern;
-import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @Slf4j
 public final class RequestUtil {
-    private static volatile boolean warnedAboutProxy = false;
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final boolean TRUST_PROXY_HEADERS = resolveTrustProxyHeaders();
     private static final String CLIENT_IP_HEADER = resolveClientIpHeaderName();
     private static final int TRUSTED_PROXY_COUNT = resolveTrustedProxyCount();
     private static final Pattern IPV6_LITERAL_CHARS = Pattern.compile("[0-9A-Fa-f:.%]+");
+    private static volatile boolean warnedAboutProxy = false;
 
     private RequestUtil() {
     }
@@ -128,8 +129,8 @@ public final class RequestUtil {
             return;
         }
         log.warn("Request has X-Forwarded-For header ({}) but MODL_TRUST_PROXY_HEADERS is not set. "
-            + "Client IP will be reported as {}. Set MODL_TRUST_PROXY_HEADERS=true if running behind a proxy.",
-            xForwardedFor, request.getRemoteAddr());
+                        + "Client IP will be reported as {}. Set MODL_TRUST_PROXY_HEADERS=true if running behind a proxy.",
+                xForwardedFor, request.getRemoteAddr());
         warnedAboutProxy = true;
     }
 

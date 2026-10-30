@@ -1,24 +1,19 @@
 package gg.modl.backend.settings.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.data.AIModerationSettings;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class AIModerationSettingsServiceTest {
     private static final String SETTINGS_TYPE = "aiModerationSettings";
@@ -33,7 +28,7 @@ class AIModerationSettingsServiceTest {
         settingsDocumentService = mock(SettingsDocumentService.class);
         objectMapper = new ObjectMapper();
         service = new AIModerationSettingsService(settingsDocumentService, objectMapper);
-        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     }
 
     private Map<String, Object> storedSettings(String... configIds) {
@@ -55,11 +50,11 @@ class AIModerationSettingsServiceTest {
 
     private AIModerationSettings.AIPunishmentConfig config(String id) {
         return AIModerationSettings.AIPunishmentConfig.builder()
-            .id(id)
-            .name("Config " + id)
-            .aiDescription("Description " + id)
-            .enabled(true)
-            .build();
+                .id(id)
+                .name("Config " + id)
+                .aiDescription("Description " + id)
+                .enabled(true)
+                .build();
     }
 
     @SuppressWarnings("unchecked")
@@ -77,15 +72,15 @@ class AIModerationSettingsServiceTest {
     @Test
     void updateDeletesConfigsAbsentFromRequest() {
         when(settingsDocumentService.getRawState(server, SETTINGS_TYPE))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(storedSettings("6", "7"), 3L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(storedSettings("6", "7"), 3L, null, true));
         when(settingsDocumentService.saveRawState(eq(server), eq(SETTINGS_TYPE), anyLong(), anyMap()))
-            .thenAnswer(invocation -> new SettingsDocumentService.RawSettingsState(invocation.getArgument(3), 4L, null, true));
+                .thenAnswer(invocation -> new SettingsDocumentService.RawSettingsState(invocation.getArgument(3), 4L, null, true));
 
         AIModerationSettings result = service.updateAIModerationSettings(server, AIModerationSettings.builder()
-            .enableAIReview(true)
-            .enableAutomatedActions(true)
-            .aiPunishmentConfigs(Map.of("6", config("6")))
-            .build());
+                .enableAIReview(true)
+                .enableAutomatedActions(true)
+                .aiPunishmentConfigs(Map.of("6", config("6")))
+                .build());
 
         Map<String, Object> persisted = capturePersistedData(3L);
         Map<String, Object> persistedConfigs = persistedConfigs(persisted);
@@ -101,15 +96,15 @@ class AIModerationSettingsServiceTest {
     @Test
     void updateWithEmptyConfigsDeletesAllConfigs() {
         when(settingsDocumentService.getRawState(server, SETTINGS_TYPE))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(storedSettings("6", "7"), 5L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(storedSettings("6", "7"), 5L, null, true));
         when(settingsDocumentService.saveRawState(eq(server), eq(SETTINGS_TYPE), anyLong(), anyMap()))
-            .thenAnswer(invocation -> new SettingsDocumentService.RawSettingsState(invocation.getArgument(3), 6L, null, true));
+                .thenAnswer(invocation -> new SettingsDocumentService.RawSettingsState(invocation.getArgument(3), 6L, null, true));
 
         AIModerationSettings result = service.updateAIModerationSettings(server, AIModerationSettings.builder()
-            .enableAIReview(true)
-            .enableAutomatedActions(false)
-            .aiPunishmentConfigs(Map.of())
-            .build());
+                .enableAIReview(true)
+                .enableAutomatedActions(false)
+                .aiPunishmentConfigs(Map.of())
+                .build());
 
         Map<String, Object> persisted = capturePersistedData(5L);
         assertTrue(persistedConfigs(persisted).isEmpty());
@@ -121,15 +116,15 @@ class AIModerationSettingsServiceTest {
     @Test
     void updatePersistsTogglesAlongsideReplacedConfigs() {
         when(settingsDocumentService.getRawState(server, SETTINGS_TYPE))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(storedSettings("6"), 1L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(storedSettings("6"), 1L, null, true));
         when(settingsDocumentService.saveRawState(eq(server), eq(SETTINGS_TYPE), anyLong(), anyMap()))
-            .thenAnswer(invocation -> new SettingsDocumentService.RawSettingsState(invocation.getArgument(3), 2L, null, true));
+                .thenAnswer(invocation -> new SettingsDocumentService.RawSettingsState(invocation.getArgument(3), 2L, null, true));
 
         AIModerationSettings result = service.updateAIModerationSettings(server, AIModerationSettings.builder()
-            .enableAIReview(false)
-            .enableAutomatedActions(true)
-            .aiPunishmentConfigs(Map.of("6", config("6"), "9", config("9")))
-            .build());
+                .enableAIReview(false)
+                .enableAutomatedActions(true)
+                .aiPunishmentConfigs(Map.of("6", config("6"), "9", config("9")))
+                .build());
 
         Map<String, Object> persisted = capturePersistedData(1L);
         Map<String, Object> persistedConfigs = persistedConfigs(persisted);

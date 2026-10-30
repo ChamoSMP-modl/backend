@@ -6,18 +6,19 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import java.util.List;
 
 public record AcknowledgeNotificationsRequest(
-    @NotBlank
-    @Pattern(regexp = RegExpConstants.UUID)
-    String playerUuid,
+        @NotBlank
+        @Pattern(regexp = RegExpConstants.UUID)
+        String playerUuid,
 
-    @NotEmpty
-    @Size(max = RequestValidationLimits.NOTIFICATION_ACK_MAX_IDS)
-    List<@NotBlank @Size(max = RequestValidationLimits.ID_MAX_LENGTH) String> notificationIds,
+        @NotEmpty
+        @Size(max = RequestValidationLimits.NOTIFICATION_ACK_MAX_IDS)
+        List<@NotBlank @Size(max = RequestValidationLimits.ID_MAX_LENGTH) String> notificationIds,
 
-    @Size(max = RequestValidationLimits.TIMESTAMP_MAX_LENGTH)
-    String acknowledgedAt
+        @Size(max = RequestValidationLimits.TIMESTAMP_MAX_LENGTH)
+        String acknowledgedAt
 ) {
 }

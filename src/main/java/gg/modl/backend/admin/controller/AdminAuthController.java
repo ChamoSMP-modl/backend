@@ -14,24 +14,21 @@ import gg.modl.proto.modl.v1.AdminRequestCodeRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping(RESTMappingV1.ADMIN_AUTH)
 @RequiredArgsConstructor
 public class AdminAuthController {
+    private static final long SESSION_MAX_AGE = 24 * 60 * 60;
     private final AdminAuthService adminAuthService;
     private final AuthService authService;
     private final SessionService sessionService;
     private final CookieUtil cookieUtil;
-    private static final long SESSION_MAX_AGE = 24 * 60 * 60;
 
     @PostMapping("/request-code")
     public ResponseEntity<?> requestCode(@RequestBody AdminRequestCodeRequest request) throws Exception {
@@ -46,9 +43,9 @@ public class AdminAuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(
-        HttpServletRequest request,
-        HttpServletResponse response,
-        @RequestBody AdminLoginRequest loginRequest) {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @RequestBody AdminLoginRequest loginRequest) {
 
         boolean codeValid = authService.verifyAdminCode(loginRequest.getEmail(), loginRequest.getCode());
         Optional<AdminUser> adminOpt = adminAuthService.findByEmail(loginRequest.getEmail());

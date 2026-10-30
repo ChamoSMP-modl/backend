@@ -15,8 +15,8 @@ public class ReplayRetentionSettings {
 
     public static ReplayRetentionSettings defaults() {
         return ReplayRetentionSettings.builder()
-            .enabled(true)
-            .days(10)
-            .build();
+                .enabled(true)
+                .days(10)
+                .build();
     }
 }

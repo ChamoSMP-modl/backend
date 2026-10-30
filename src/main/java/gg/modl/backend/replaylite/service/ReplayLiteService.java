@@ -16,17 +16,14 @@ import gg.modl.backend.replaylite.repository.ReplayLiteQuotaMongoRepository;
 import gg.modl.backend.replaylite.repository.ReplayLiteQuotaMongoRepository.QuotaReservationResult;
 import gg.modl.backend.replaylite.storage.ReplayLiteStorageService;
 import gg.modl.backend.server.data.Server;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
+import org.springframework.stereotype.Service;
+
 import java.nio.charset.StandardCharsets;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.stereotype.Service;
 
 @Service
 public class ReplayLiteService {
@@ -46,11 +43,11 @@ public class ReplayLiteService {
     private final Clock clock;
 
     public ReplayLiteService(
-        ReplayLiteMongoRepository repository,
-        ReplayLiteQuotaMongoRepository quotaRepository,
-        ReplayLiteStorageService storageService,
-        ReplayLiteAbuseGuard abuseGuard,
-        Clock clock
+            ReplayLiteMongoRepository repository,
+            ReplayLiteQuotaMongoRepository quotaRepository,
+            ReplayLiteStorageService storageService,
+            ReplayLiteAbuseGuard abuseGuard,
+            Clock clock
     ) {
         this.repository = repository;
         this.quotaRepository = quotaRepository;
@@ -87,16 +84,16 @@ public class ReplayLiteService {
         repository.saveEntity(document);
 
         ReplayLiteStorageService.PresignedUpload presignedUpload = storageService.createPresignedUpload(
-            objectKey,
-            request.requestedSize()
+                objectKey,
+                request.requestedSize()
         );
 
         return new ReplayLiteUploadInitResponse(
-            replayId,
-            presignedUpload.uploadUrl(),
-            presignedUpload.method(),
-            presignedUpload.requiredHeaders(),
-            presignedUpload.expiresAt()
+                replayId,
+                presignedUpload.uploadUrl(),
+                presignedUpload.method(),
+                presignedUpload.requiredHeaders(),
+                presignedUpload.expiresAt()
         );
     }
 
@@ -105,7 +102,7 @@ public class ReplayLiteService {
         UUID pluginServerUuid = authenticatedServerUuid(server);
 
         ReplayLiteDocument document = repository.findByReplayId(replayId)
-            .orElseThrow(() -> new ResourceNotFoundException(REPLAY_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(REPLAY_NOT_FOUND));
 
         if (!pluginServerUuid.equals(document.getPluginServerUuid())) {
             throw new ResourceNotFoundException(REPLAY_NOT_FOUND);
@@ -116,7 +113,7 @@ public class ReplayLiteService {
         requireNotStale(document);
 
         ReplayLiteStorageService.ObjectMetadata metadata = storageService.headObject(document.getObjectKey())
-            .orElseThrow(() -> new ResourceNotFoundException("Replay upload object was not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Replay upload object was not found"));
 
         long actualSize = metadata.size();
         if (actualSize > MAX_REPLAY_SIZE_BYTES) {
@@ -148,39 +145,39 @@ public class ReplayLiteService {
     private void releaseQuotaOnFailedConfirmation(ReplayLiteDocument document, QuotaReservationResult quotaReservation, LocalDate quotaDay) {
         if (quotaReservation == QuotaReservationResult.RESERVED && shouldReleaseFailedConfirmation(document.getId())) {
             quotaRepository.releaseConfirmedUpload(
-                document.getPluginServerUuid(),
-                quotaDay,
-                document.getId(),
-                clock.instant()
+                    document.getPluginServerUuid(),
+                    quotaDay,
+                    document.getId(),
+                    clock.instant()
             );
         }
     }
 
     public Optional<ReplayLitePublicResponse> getPublicReplay(String replayId) {
         return findAvailablePublicReplay(replayId)
-            .map(document -> new ReplayLitePublicResponse(
-                document.getId(),
-                document.getMcVersion(),
-                document.getConfirmedSize() == null ? 0 : document.getConfirmedSize(),
-                document.getConfirmedAt() == null ? document.getCreatedAt().toEpochMilli() : document.getConfirmedAt().toEpochMilli(),
-                RESTMappingV1.PUBLIC_REPLAY_LITE_REPLAYS + "/" + document.getId() + "/download",
-                document.getStatus().name(),
-                document.getLabels() != null && !document.getLabels().isEmpty()
-            ));
+                .map(document -> new ReplayLitePublicResponse(
+                        document.getId(),
+                        document.getMcVersion(),
+                        document.getConfirmedSize() == null ? 0 : document.getConfirmedSize(),
+                        document.getConfirmedAt() == null ? document.getCreatedAt().toEpochMilli() : document.getConfirmedAt().toEpochMilli(),
+                        RESTMappingV1.PUBLIC_REPLAY_LITE_REPLAYS + "/" + document.getId() + "/download",
+                        document.getStatus().name(),
+                        document.getLabels() != null && !document.getLabels().isEmpty()
+                ));
     }
 
     public Optional<ReplayLiteDownload> getPublicReplayDownload(String replayId, String clientIp) {
         abuseGuard.checkIp(clientIp);
         abuseGuard.checkDownload(replayId);
         return findAvailablePublicReplay(replayId)
-            .map(document -> {
-                ReplayLiteStorageService.PresignedDownload presigned = storageService.createPresignedDownload(
-                    document.getObjectKey(),
-                    document.getId() + ".modlreplay",
-                    DOWNLOAD_PRESIGN_TTL
-                );
-                return new ReplayLiteDownload(presigned.url(), presigned.expiresAt());
-            });
+                .map(document -> {
+                    ReplayLiteStorageService.PresignedDownload presigned = storageService.createPresignedDownload(
+                            document.getObjectKey(),
+                            document.getId() + ".modlreplay",
+                            DOWNLOAD_PRESIGN_TTL
+                    );
+                    return new ReplayLiteDownload(presigned.url(), presigned.expiresAt());
+                });
     }
 
     public void submitLabels(String replayId, List<ReplayLiteLabel> labels, String clientIp) {
@@ -188,7 +185,7 @@ public class ReplayLiteService {
         abuseGuard.checkLabel(replayId);
 
         ReplayLiteDocument document = repository.findByReplayId(replayId)
-            .orElseThrow(() -> new ResourceNotFoundException(REPLAY_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(REPLAY_NOT_FOUND));
 
         Instant now = clock.instant();
         if (!isConfirmedAndUnexpired(document, now)) {
@@ -220,26 +217,26 @@ public class ReplayLiteService {
     private Optional<ReplayLiteDocument> findAvailablePublicReplay(String replayId) {
         Instant now = clock.instant();
         return repository.findByReplayId(replayId)
-            .filter(document -> isConfirmedAndUnexpired(document, now));
+                .filter(document -> isConfirmedAndUnexpired(document, now));
     }
 
     private boolean isConfirmedAndUnexpired(ReplayLiteDocument document, Instant now) {
         return document.getStatus() == ReplayLiteStatus.CONFIRMED
-            && document.getExpiresAt() != null
-            && document.getExpiresAt().isAfter(now);
+                && document.getExpiresAt() != null
+                && document.getExpiresAt().isAfter(now);
     }
 
     private List<ReplayLiteLabel> normalizeLabels(List<ReplayLiteLabel> labels) {
         return labels.stream()
-            .map(label -> new ReplayLiteLabel(
-                label.playerName(),
-                ReplayLiteLabelVerdict.from(label.verdict())
-                    .orElseThrow(() -> new ValidationException("Replay Lite label verdict is invalid"))
-                    .name(),
-                label.ranges(),
-                label.notes()
-            ))
-            .toList();
+                .map(label -> new ReplayLiteLabel(
+                        label.playerName(),
+                        ReplayLiteLabelVerdict.from(label.verdict())
+                                .orElseThrow(() -> new ValidationException("Replay Lite label verdict is invalid"))
+                                .name(),
+                        label.ranges(),
+                        label.notes()
+                ))
+                .toList();
     }
 
     private String buildObjectKey(UUID replayUuid, Instant now) {
@@ -274,11 +271,11 @@ public class ReplayLiteService {
 
     private QuotaReservationResult reserveDailyQuota(UUID pluginServerUuid, String replayId, LocalDate utcDate) {
         QuotaReservationResult result = quotaRepository.reserveConfirmedUpload(
-            pluginServerUuid,
-            utcDate,
-            replayId,
-            DAILY_CONFIRMED_LIMIT,
-            clock.instant()
+                pluginServerUuid,
+                utcDate,
+                replayId,
+                DAILY_CONFIRMED_LIMIT,
+                clock.instant()
         );
         if (result == QuotaReservationResult.LIMIT_REACHED) {
             throw new ValidationException("Replay Lite daily upload limit reached");
@@ -297,20 +294,21 @@ public class ReplayLiteService {
         Instant expiresAt = confirmedAt.plus(CONFIRMED_REPLAY_TTL);
         Instant freshCreatedAfter = confirmedAt.minus(PENDING_UPLOAD_TTL);
         return repository.confirmPendingUpload(
-            document.getId(),
-            actualSize,
-            confirmedAt,
-            expiresAt,
-            clientIp,
-            freshCreatedAfter
+                document.getId(),
+                actualSize,
+                confirmedAt,
+                expiresAt,
+                clientIp,
+                freshCreatedAfter
         );
     }
 
     private boolean shouldReleaseFailedConfirmation(String replayId) {
         return repository.findByReplayId(replayId)
-            .map(document -> document.getStatus() != ReplayLiteStatus.CONFIRMED)
-            .orElse(true);
+                .map(document -> document.getStatus() != ReplayLiteStatus.CONFIRMED)
+                .orElse(true);
     }
 
-    public record ReplayLiteDownload(String url, Instant expiresAt) {}
+    public record ReplayLiteDownload(String url, Instant expiresAt) {
+    }
 }

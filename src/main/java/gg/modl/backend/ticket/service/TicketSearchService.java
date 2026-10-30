@@ -1,22 +1,23 @@
 package gg.modl.backend.ticket.service;
 
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
+import gg.modl.backend.infrastructure.util.PaginationHelper;
+import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.ticket.data.Ticket;
 import gg.modl.backend.ticket.data.TicketCategory;
 import gg.modl.backend.ticket.data.TicketReply;
 import gg.modl.backend.ticket.data.TicketStatus;
 import gg.modl.backend.ticket.dto.response.PaginatedTicketsResponse;
-import gg.modl.backend.infrastructure.util.PaginationHelper;
-import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.ticket.dto.response.PlayerTicketResponse;
 import gg.modl.backend.ticket.dto.response.TicketListItemResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -26,39 +27,39 @@ public class TicketSearchService {
     public PaginatedTicketsResponse searchTickets(Server server, int page, int limit, String search, String status, List<String> types,
                                                   String author, List<String> labels, List<String> assignees, String sort) {
         TicketMongoRepository.TicketSearchFilter filter = new TicketMongoRepository.TicketSearchFilter(
-            search,
-            status,
-            types,
-            author,
-            labels,
-            assignees
+                search,
+                status,
+                types,
+                author,
+                labels,
+                assignees
         );
         TicketMongoRepository.TicketSearchPage searchPage = ticketRepository.searchTickets(
-            server,
-            filter,
-            TicketMongoRepository.TicketSortOption.from(sort),
-            page,
-            limit
+                server,
+                filter,
+                TicketMongoRepository.TicketSortOption.from(sort),
+                page,
+                limit
         );
 
         List<TicketListItemResponse> ticketItems = searchPage.tickets()
-            .stream()
-            .map(this::toListItemResponse)
-            .toList();
+                .stream()
+                .map(this::toListItemResponse)
+                .toList();
 
         int totalPages = PaginationHelper.calculateTotalPages(searchPage.total(), limit);
 
         return new PaginatedTicketsResponse(
-            ticketItems,
-            new PaginatedTicketsResponse.PaginationInfo(
-                page,
-                totalPages,
-                limit,
-                searchPage.total(),
-                page < totalPages,
-                page > 1
-            ),
-            new PaginatedTicketsResponse.FiltersInfo(search, status, types)
+                ticketItems,
+                new PaginatedTicketsResponse.PaginationInfo(
+                        page,
+                        totalPages,
+                        limit,
+                        searchPage.total(),
+                        page < totalPages,
+                        page > 1
+                ),
+                new PaginatedTicketsResponse.FiltersInfo(search, status, types)
         );
     }
 
@@ -73,27 +74,27 @@ public class TicketSearchService {
         }
 
         return new TicketListItemResponse(
-            ticket.getId(),
-            ticket.getSubject() != null ? ticket.getSubject() : "No Subject",
-            ticket.getStatus() != null ? ticket.getStatus().getId() : TicketStatus.OPEN.getId(),
-            creatorName,
-            creatorName,
-            ticket.getCreated(),
-            ticket.getType() != null ? ticket.getType().getDisplayName() : TicketCategory.SUPPORT.getDisplayName(),
-            ticket.isLocked(),
-            ticket.getType() != null ? ticket.getType().getId() : TicketCategory.SUPPORT.getId(),
-            lastReply,
-            replyCount,
-            ticket.getTags() != null ? ticket.getTags() : new ArrayList<>(),
-            ticket.getAssignedTo() != null ? ticket.getAssignedTo() : List.of(),
-            ticket.isHidden()
+                ticket.getId(),
+                ticket.getSubject() != null ? ticket.getSubject() : "No Subject",
+                ticket.getStatus() != null ? ticket.getStatus().getId() : TicketStatus.OPEN.getId(),
+                creatorName,
+                creatorName,
+                ticket.getCreated(),
+                ticket.getType() != null ? ticket.getType().getDisplayName() : TicketCategory.SUPPORT.getDisplayName(),
+                ticket.isLocked(),
+                ticket.getType() != null ? ticket.getType().getId() : TicketCategory.SUPPORT.getId(),
+                lastReply,
+                replyCount,
+                ticket.getTags() != null ? ticket.getTags() : new ArrayList<>(),
+                ticket.getAssignedTo() != null ? ticket.getAssignedTo() : List.of(),
+                ticket.isHidden()
         );
     }
 
     public Map<String, Long> getTicketCounts(Server server, String search, List<String> types, String author, List<String> labels, List<String> assignees) {
         TicketMongoRepository.TicketCounts ticketCounts = ticketRepository.countTickets(
-            server,
-            new TicketMongoRepository.TicketSearchFilter(search, null, types, author, labels, assignees)
+                server,
+                new TicketMongoRepository.TicketSearchFilter(search, null, types, author, labels, assignees)
         );
 
         Map<String, Long> result = new HashMap<>();
@@ -104,32 +105,32 @@ public class TicketSearchService {
 
     public List<PlayerTicketResponse> getTicketsByPlayer(Server server, String playerUuid) {
         return ticketRepository.findByPlayer(server, UuidUtils.normalize(playerUuid))
-            .stream()
-            .map(this::toPlayerTicketResponse)
-            .toList();
+                .stream()
+                .map(this::toPlayerTicketResponse)
+                .toList();
     }
 
     private PlayerTicketResponse toPlayerTicketResponse(Ticket ticket) {
         return new PlayerTicketResponse(
-            ticket.getId(),
-            ticket.getSubject(),
-            ticket.getStatus() != null ? ticket.getStatus().getId() : TicketStatus.OPEN.getId(),
-            ticket.getType() != null ? ticket.getType().getId() : TicketCategory.SUPPORT.getId(),
-            ticket.getCreated(),
-            ticket.getCreatorName(),
-            ticket.getCreatorUuid(),
-            ticket.getReportedPlayer(),
-            ticket.getReportedPlayerUuid(),
-            ticket.isLocked(),
-            ticket.getTags() != null ? ticket.getTags() : List.of(),
-            ticket.getAssignedTo() != null ? ticket.getAssignedTo() : List.of()
+                ticket.getId(),
+                ticket.getSubject(),
+                ticket.getStatus() != null ? ticket.getStatus().getId() : TicketStatus.OPEN.getId(),
+                ticket.getType() != null ? ticket.getType().getId() : TicketCategory.SUPPORT.getId(),
+                ticket.getCreated(),
+                ticket.getCreatorName(),
+                ticket.getCreatorUuid(),
+                ticket.getReportedPlayer(),
+                ticket.getReportedPlayerUuid(),
+                ticket.isLocked(),
+                ticket.getTags() != null ? ticket.getTags() : List.of(),
+                ticket.getAssignedTo() != null ? ticket.getAssignedTo() : List.of()
         );
     }
 
     public List<PlayerTicketResponse> getTicketsByTag(Server server, String tag) {
         return ticketRepository.findByTag(server, tag)
-            .stream()
-            .map(this::toPlayerTicketResponse)
-            .toList();
+                .stream()
+                .map(this::toPlayerTicketResponse)
+                .toList();
     }
 }

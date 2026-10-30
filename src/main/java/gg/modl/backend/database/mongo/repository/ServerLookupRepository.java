@@ -5,13 +5,12 @@ import gg.modl.backend.database.mongo.AbstractGlobalMongoRepository;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.ServerFields;
 import gg.modl.backend.server.data.Server;
-import gg.modl.backend.server.data.SubscriptionStatus;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Repository
 public class ServerLookupRepository extends AbstractGlobalMongoRepository<Server> {
@@ -27,17 +26,17 @@ public class ServerLookupRepository extends AbstractGlobalMongoRepository<Server
 
     public Optional<Server> findByActiveCustomDomainOverride(String domain) {
         Criteria criteria = new Criteria().andOperator(
-            Criteria.where(ServerFields.CUSTOM_DOMAIN_OVERRIDE).is(domain),
-            Criteria.where(ServerFields.CUSTOM_DOMAIN_STATUS).is(DOMAIN_STATUS_ACTIVE)
+                Criteria.where(ServerFields.CUSTOM_DOMAIN_OVERRIDE).is(domain),
+                Criteria.where(ServerFields.CUSTOM_DOMAIN_STATUS).is(DOMAIN_STATUS_ACTIVE)
         );
         return findOne(new Query(criteria));
     }
 
     public Optional<Server> findMatchingIdentity(String email, String serverName, String subdomain) {
         Criteria criteria = new Criteria().orOperator(
-            Criteria.where(ServerFields.ADMIN_EMAIL).is(email),
-            Criteria.where(ServerFields.SERVER_NAME).is(serverName),
-            Criteria.where(ServerFields.CUSTOM_DOMAIN).is(subdomain)
+                Criteria.where(ServerFields.ADMIN_EMAIL).is(email),
+                Criteria.where(ServerFields.SERVER_NAME).is(serverName),
+                Criteria.where(ServerFields.CUSTOM_DOMAIN).is(subdomain)
         );
         return findOne(new Query(criteria));
     }
@@ -52,8 +51,8 @@ public class ServerLookupRepository extends AbstractGlobalMongoRepository<Server
 
     public boolean existsByAdminEmailExcludingId(String adminEmail, String excludedServerId) {
         Criteria criteria = Criteria.where(ServerFields.ADMIN_EMAIL)
-            .regex("^" + Pattern.quote(adminEmail) + "$", "i")
-            .and(ServerFields.ID).ne(excludedServerId);
+                .regex("^" + Pattern.quote(adminEmail) + "$", "i")
+                .and(ServerFields.ID).ne(excludedServerId);
         return exists(Query.query(criteria));
     }
 
@@ -67,24 +66,5 @@ public class ServerLookupRepository extends AbstractGlobalMongoRepository<Server
 
     public Optional<Server> findByCliSetupToken(String token) {
         return findOne(Query.query(Criteria.where(ServerFields.CLI_SETUP_TOKEN).is(token)));
-    }
-
-    public Optional<Server> findByStripeCustomerId(String customerId) {
-        if (customerId == null) {
-            return Optional.empty();
-        }
-        return findOne(Query.query(Criteria.where(ServerFields.STRIPE_CUSTOMER_ID).is(customerId)));
-    }
-
-    public Optional<Server> findByStripeSubscriptionId(String subscriptionId) {
-        return findOne(Query.query(Criteria.where(ServerFields.STRIPE_SUBSCRIPTION_ID).is(subscriptionId)));
-    }
-
-    public List<Server> findCancelledWithPeriodEnd() {
-        Criteria criteria = new Criteria().andOperator(
-            Criteria.where(ServerFields.SUBSCRIPTION_STATUS).is(SubscriptionStatus.CANCELED),
-            Criteria.where(ServerFields.CURRENT_PERIOD_END).exists(true).ne(null)
-        );
-        return find(new Query(criteria));
     }
 }

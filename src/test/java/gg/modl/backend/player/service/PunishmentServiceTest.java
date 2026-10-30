@@ -1,19 +1,8 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
-import gg.modl.backend.ticket.service.AppealWorkflowTransitionService;
-import gg.modl.backend.ticket.service.TicketService;
+import gg.modl.backend.log.service.LogService;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.UsernameEntry;
 import gg.modl.backend.player.data.punishment.Punishment;
@@ -22,26 +11,26 @@ import gg.modl.backend.player.data.punishment.PunishmentStatus;
 import gg.modl.backend.player.dto.request.CreatePunishmentRequest;
 import gg.modl.backend.player.service.PunishmentQueryService.PunishmentOperationResult;
 import gg.modl.backend.player.service.PunishmentQueryService.PunishmentOperationStatus;
+import gg.modl.backend.role.service.PermissionService;
+import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.service.OffenderThresholdSettingsService;
-import gg.modl.backend.role.service.PermissionService;
-import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.settings.service.WebhookSettingsService;
-import gg.modl.backend.log.service.LogService;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import gg.modl.backend.ticket.service.AppealWorkflowTransitionService;
+import gg.modl.backend.ticket.service.TicketService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class PunishmentServiceTest {
@@ -98,63 +87,63 @@ class PunishmentServiceTest {
     @BeforeEach
     void setUp() {
         punishmentLifecycleService = new PunishmentLifecycleService(
-            playerRepository,
-            punishmentRepository,
-            ticketService,
-            statusCalculator,
-            punishmentTypeService,
-            thresholdSettingsService,
-            durationCalculator,
-            issuerNameResolver,
-            punishmentQueryService,
-            permissionService,
-            roleAuthorization,
-            webhookSettingsService,
-            realtimePublisher,
-            logService
+                playerRepository,
+                punishmentRepository,
+                ticketService,
+                statusCalculator,
+                punishmentTypeService,
+                thresholdSettingsService,
+                durationCalculator,
+                issuerNameResolver,
+                punishmentQueryService,
+                permissionService,
+                roleAuthorization,
+                webhookSettingsService,
+                realtimePublisher,
+                logService
         );
         punishmentMutationService = new PunishmentMutationService(
-            playerRepository,
-            punishmentRepository,
-            ticketService,
-            appealWorkflowTransitionService,
-            issuerNameResolver,
-            punishmentQueryService,
-            punishmentLifecycleService,
-            realtimePublisher
+                playerRepository,
+                punishmentRepository,
+                ticketService,
+                appealWorkflowTransitionService,
+                issuerNameResolver,
+                punishmentQueryService,
+                punishmentLifecycleService,
+                realtimePublisher
         );
     }
 
     @Test
     void acknowledgePunishmentStartsPunishmentAndClearsQueuedStatus() {
         UUID playerUuid = UUID.randomUUID();
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Punishment punishment = new Punishment(
-            "punish-1",
-            1,
-            "Mod",
-            null,
-            new Date(),
-            null,
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            new HashMap<>(Map.of("status", "Unstarted"))
+                "punish-1",
+                1,
+                "Mod",
+                null,
+                new Date(),
+                null,
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                new HashMap<>(Map.of("status", "Unstarted"))
         );
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .punishments(new ArrayList<>(List.of(punishment)))
-            .build();
+                .minecraftUuid(playerUuid)
+                .punishments(new ArrayList<>(List.of(punishment)))
+                .build();
 
         when(playerRepository.findByMinecraftUuid(server, playerUuid.toString())).thenReturn(Optional.of(player));
         when(punishmentRepository.acknowledgePunishmentStart(eq(server), eq(playerUuid.toString()), eq("punish-1"), any(Date.class)))
-            .thenReturn(true);
+                .thenReturn(true);
 
         PunishmentOperationResult result = punishmentLifecycleService.acknowledgePunishment(
-            server,
-            playerUuid,
-            "punish-1"
+                server,
+                playerUuid,
+                "punish-1"
         );
 
         assertEquals(PunishmentOperationStatus.SUCCESS, result.status());
@@ -165,33 +154,33 @@ class PunishmentServiceTest {
     @Test
     void acknowledgePunishmentReturnsNoOpWhenRepositoryReportsNoChange() {
         UUID playerUuid = UUID.randomUUID();
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Punishment punishment = new Punishment(
-            "punish-1",
-            1,
-            "Mod",
-            null,
-            new Date(),
-            new Date(),
-            List.of(),
-            List.of(),
-            List.of(),
-            List.of(),
-            new HashMap<>()
+                "punish-1",
+                1,
+                "Mod",
+                null,
+                new Date(),
+                new Date(),
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                new HashMap<>()
         );
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .punishments(new ArrayList<>(List.of(punishment)))
-            .build();
+                .minecraftUuid(playerUuid)
+                .punishments(new ArrayList<>(List.of(punishment)))
+                .build();
 
         when(playerRepository.findByMinecraftUuid(server, playerUuid.toString())).thenReturn(Optional.of(player));
         when(punishmentRepository.acknowledgePunishmentStart(eq(server), eq(playerUuid.toString()), eq("punish-1"), any(Date.class)))
-            .thenReturn(false);
+                .thenReturn(false);
 
         PunishmentOperationResult result = punishmentLifecycleService.acknowledgePunishment(
-            server,
-            playerUuid,
-            "punish-1"
+                server,
+                playerUuid,
+                "punish-1"
         );
 
         assertEquals(PunishmentOperationStatus.NO_OP, result.status());
@@ -200,15 +189,15 @@ class PunishmentServiceTest {
 
     @Test
     void toggleOptionRejectsUnknownOption() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
 
         PunishmentOperationResult result = punishmentMutationService.toggleOption(
-            server,
-            "punish-1",
-            "UNKNOWN_OPTION",
-            true,
-            "Mod",
-            null
+                server,
+                "punish-1",
+                "UNKNOWN_OPTION",
+                true,
+                "Mod",
+                null
         );
 
         assertEquals(PunishmentOperationStatus.INVALID_REQUEST, result.status());
@@ -218,26 +207,26 @@ class PunishmentServiceTest {
     @Test
     void createPunishmentMutatesPlayerAggregateAndPersistsThroughRepository() {
         UUID playerUuid = UUID.randomUUID();
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .usernames(new ArrayList<>(List.of(new UsernameEntry("CurrentName", new Date()))))
-            .punishments(new ArrayList<>())
-            .data(new HashMap<>(Map.of("lastSkinHash", "skin-hash")))
-            .build();
+                .minecraftUuid(playerUuid)
+                .usernames(new ArrayList<>(List.of(new UsernameEntry("CurrentName", new Date()))))
+                .punishments(new ArrayList<>())
+                .data(new HashMap<>(Map.of("lastSkinHash", "skin-hash")))
+                .build();
 
         CreatePunishmentRequest request = new CreatePunishmentRequest(
-            "Mod",
-            null,
-            4,
-            null,
-            null,
-            null,
-            null,
-            null,
-            new HashMap<>(Map.of("status", "Queued")),
-            "Reason text",
-            null
+                "Mod",
+                null,
+                4,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new HashMap<>(Map.of("status", "Queued")),
+                "Reason text",
+                null
         );
 
         when(playerRepository.findByMinecraftUuid(server, playerUuid.toString())).thenReturn(Optional.of(player));
@@ -257,23 +246,23 @@ class PunishmentServiceTest {
     @Test
     void createPunishmentPersistsInternalOffenseLevelThatSurvivesStatusWipe() {
         UUID playerUuid = UUID.randomUUID();
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .usernames(new ArrayList<>(List.of(new UsernameEntry("CurrentName", new Date()))))
-            .punishments(new ArrayList<>())
-            .data(new HashMap<>())
-            .build();
+                .minecraftUuid(playerUuid)
+                .usernames(new ArrayList<>(List.of(new UsernameEntry("CurrentName", new Date()))))
+                .punishments(new ArrayList<>())
+                .data(new HashMap<>())
+                .build();
 
         CreatePunishmentRequest request = new CreatePunishmentRequest(
-            "Mod", null, 6, null, null, null,
-            "regular", null, new HashMap<>(), "Reason text", null
+                "Mod", null, 6, null, null, null,
+                "regular", null, new HashMap<>(), "Reason text", null
         );
 
         when(playerRepository.findByMinecraftUuid(server, playerUuid.toString())).thenReturn(Optional.of(player));
         when(issuerNameResolver.resolve(any(), any(), any(Server.class))).thenReturn("Mod");
         when(durationCalculator.calculate(eq(server), any(), eq(6), eq("regular")))
-            .thenReturn(new PunishmentDurationCalculator.DurationResult(3600_000L, "habitual", "habitual"));
+                .thenReturn(new PunishmentDurationCalculator.DurationResult(3600_000L, "habitual", "habitual"));
 
         punishmentLifecycleService.createPunishment(server, playerUuid, request);
 
@@ -287,17 +276,17 @@ class PunishmentServiceTest {
     @Test
     void createMinecraftPunishmentForcesUnstartedForNonStackingPluginPunishment() {
         UUID playerUuid = UUID.randomUUID();
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .usernames(new ArrayList<>(List.of(new UsernameEntry("CurrentName", new Date()))))
-            .punishments(new ArrayList<>())
-            .data(new HashMap<>())
-            .build();
+                .minecraftUuid(playerUuid)
+                .usernames(new ArrayList<>(List.of(new UsernameEntry("CurrentName", new Date()))))
+                .punishments(new ArrayList<>())
+                .data(new HashMap<>())
+                .build();
 
         CreatePunishmentRequest request = new CreatePunishmentRequest(
-            "Mod", null, 2, null, null, null, null, null,
-            new HashMap<>(Map.of("pendingAcknowledgement", true)), "Reason text", null
+                "Mod", null, 2, null, null, null, null, null,
+                new HashMap<>(Map.of("pendingAcknowledgement", true)), "Reason text", null
         );
 
         when(playerRepository.findByMinecraftUuid(server, playerUuid.toString())).thenReturn(Optional.of(player));
@@ -313,24 +302,24 @@ class PunishmentServiceTest {
     @Test
     void systemPardonPunishmentAddsSystemPardonThroughRepositorySave() {
         UUID playerUuid = UUID.randomUUID();
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Punishment punishment = new Punishment(
-            "punish-1",
-            1,
-            "Mod",
-            null,
-            new Date(),
-            new Date(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new HashMap<>()
+                "punish-1",
+                1,
+                "Mod",
+                null,
+                new Date(),
+                new Date(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new HashMap<>()
         );
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .punishments(new ArrayList<>(List.of(punishment)))
-            .build();
+                .minecraftUuid(playerUuid)
+                .punishments(new ArrayList<>(List.of(punishment)))
+                .build();
 
         when(playerRepository.findByMinecraftUuid(server, playerUuid.toString())).thenReturn(Optional.of(player));
 
@@ -350,24 +339,24 @@ class PunishmentServiceTest {
     void cascadePardonLinkedBansUsesDatabaseScopedRepositorySaves() {
         UUID playerUuid = UUID.randomUUID();
         Punishment linkedBan = new Punishment(
-            "linked-1",
-            4,
-            "System",
-            null,
-            new Date(),
-            new Date(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new HashMap<>(Map.of("linkedBanId", "parent-1"))
+                "linked-1",
+                4,
+                "System",
+                null,
+                new Date(),
+                new Date(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new HashMap<>(Map.of("linkedBanId", "parent-1"))
         );
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .punishments(new ArrayList<>(List.of(linkedBan)))
-            .build();
+                .minecraftUuid(playerUuid)
+                .punishments(new ArrayList<>(List.of(linkedBan)))
+                .build();
 
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(punishmentRepository.findByLinkedBanId(server, "parent-1")).thenReturn(List.of(player));
         when(statusCalculator.isPunishmentActive(linkedBan)).thenReturn(true);
 
@@ -383,24 +372,24 @@ class PunishmentServiceTest {
     void cascadePardonLinkedBansSkipsInactiveLinkedBan() {
         UUID playerUuid = UUID.randomUUID();
         Punishment linkedBan = new Punishment(
-            "linked-1",
-            4,
-            "System",
-            null,
-            new Date(),
-            new Date(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            new HashMap<>(Map.of("linkedBanId", "parent-1"))
+                "linked-1",
+                4,
+                "System",
+                null,
+                new Date(),
+                new Date(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new HashMap<>(Map.of("linkedBanId", "parent-1"))
         );
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .punishments(new ArrayList<>(List.of(linkedBan)))
-            .build();
+                .minecraftUuid(playerUuid)
+                .punishments(new ArrayList<>(List.of(linkedBan)))
+                .build();
 
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(punishmentRepository.findByLinkedBanId(server, "parent-1")).thenReturn(List.of(player));
         when(statusCalculator.isPunishmentActive(linkedBan)).thenReturn(false);
 

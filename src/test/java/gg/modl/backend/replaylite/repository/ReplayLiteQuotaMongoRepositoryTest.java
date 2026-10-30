@@ -1,22 +1,9 @@
 package gg.modl.backend.replaylite.repository;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.replaylite.data.ReplayLiteDailyQuotaDocument;
 import gg.modl.backend.replaylite.repository.ReplayLiteQuotaMongoRepository.QuotaReservationResult;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +12,17 @@ import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 class ReplayLiteQuotaMongoRepositoryTest {
     private static final UUID SERVER_UUID = UUID.fromString("1f5065ba-8f4a-4d6b-bd04-632f88d0be27");
@@ -37,26 +35,26 @@ class ReplayLiteQuotaMongoRepositoryTest {
         MongoTemplate template = mock(MongoTemplate.class);
         ReplayLiteQuotaMongoRepository repository = repository(template);
         when(template.findAndModify(
-            any(Query.class),
-            any(Update.class),
-            any(FindAndModifyOptions.class),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                any(Query.class),
+                any(Update.class),
+                any(FindAndModifyOptions.class),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         )).thenReturn(new ReplayLiteDailyQuotaDocument());
 
         assertEquals(
-            QuotaReservationResult.RESERVED,
-            repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
+                QuotaReservationResult.RESERVED,
+                repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
         );
 
         ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
         ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
         verify(template).findAndModify(
-            queryCaptor.capture(),
-            updateCaptor.capture(),
-            any(FindAndModifyOptions.class),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                queryCaptor.capture(),
+                updateCaptor.capture(),
+                any(FindAndModifyOptions.class),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         );
         Document query = queryCaptor.getValue().getQueryObject();
         assertTrue(query.get("_id").toString().contains(SERVER_UUID.toString()));
@@ -73,25 +71,25 @@ class ReplayLiteQuotaMongoRepositoryTest {
         MongoTemplate template = mock(MongoTemplate.class);
         ReplayLiteQuotaMongoRepository repository = repository(template);
         when(template.findAndModify(
-            any(Query.class),
-            any(Update.class),
-            any(FindAndModifyOptions.class),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                any(Query.class),
+                any(Update.class),
+                any(FindAndModifyOptions.class),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         ))
-            .thenThrow(new DuplicateKeyException("quota already exists"))
-            .thenReturn(new ReplayLiteDailyQuotaDocument());
+                .thenThrow(new DuplicateKeyException("quota already exists"))
+                .thenReturn(new ReplayLiteDailyQuotaDocument());
 
         assertEquals(
-            QuotaReservationResult.RESERVED,
-            repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
+                QuotaReservationResult.RESERVED,
+                repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
         );
         verify(template, times(2)).findAndModify(
-            any(Query.class),
-            any(Update.class),
-            any(FindAndModifyOptions.class),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                any(Query.class),
+                any(Update.class),
+                any(FindAndModifyOptions.class),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         );
     }
 
@@ -100,18 +98,18 @@ class ReplayLiteQuotaMongoRepositoryTest {
         MongoTemplate template = mock(MongoTemplate.class);
         ReplayLiteQuotaMongoRepository repository = repository(template);
         when(template.findAndModify(
-            any(Query.class),
-            any(Update.class),
-            any(FindAndModifyOptions.class),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                any(Query.class),
+                any(Update.class),
+                any(FindAndModifyOptions.class),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         ))
-            .thenThrow(new DuplicateKeyException("quota already exists"))
-            .thenReturn(null);
+                .thenThrow(new DuplicateKeyException("quota already exists"))
+                .thenReturn(null);
 
         assertEquals(
-            QuotaReservationResult.LIMIT_REACHED,
-            repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
+                QuotaReservationResult.LIMIT_REACHED,
+                repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
         );
     }
 
@@ -122,21 +120,21 @@ class ReplayLiteQuotaMongoRepositoryTest {
         ReplayLiteDailyQuotaDocument existing = new ReplayLiteDailyQuotaDocument();
         existing.setReplayIds(List.of(REPLAY_ID));
         when(template.findAndModify(
-            any(Query.class),
-            any(Update.class),
-            any(FindAndModifyOptions.class),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                any(Query.class),
+                any(Update.class),
+                any(FindAndModifyOptions.class),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         )).thenReturn(null);
         when(template.findById(
-            any(String.class),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                any(String.class),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         )).thenReturn(existing);
 
         assertEquals(
-            QuotaReservationResult.ALREADY_RESERVED,
-            repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
+                QuotaReservationResult.ALREADY_RESERVED,
+                repository.reserveConfirmedUpload(SERVER_UUID, DAY, REPLAY_ID, 100, NOW)
         );
     }
 
@@ -150,10 +148,10 @@ class ReplayLiteQuotaMongoRepositoryTest {
         ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
         ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
         verify(template).updateFirst(
-            queryCaptor.capture(),
-            updateCaptor.capture(),
-            eq(ReplayLiteDailyQuotaDocument.class),
-            eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
+                queryCaptor.capture(),
+                updateCaptor.capture(),
+                eq(ReplayLiteDailyQuotaDocument.class),
+                eq(CollectionName.REPLAY_LITE_DAILY_QUOTAS)
         );
         Document query = queryCaptor.getValue().getQueryObject();
         assertTrue(REPLAY_ID.equals(query.get("replayIds")));

@@ -1,13 +1,14 @@
 package gg.modl.backend.email;
 
 import gg.modl.backend.infrastructure.config.ModlProperties;
-import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+
+import java.util.Properties;
 
 @Configuration
 @Slf4j
@@ -16,9 +17,9 @@ public class EmailSenderConfig {
 
     @Bean
     public EmailSender emailSender(
-        ObjectProvider<JavaMailSender> mailSenderProvider,
-        EmailConfiguration emailConfiguration,
-        ModlProperties modlProperties
+            ObjectProvider<JavaMailSender> mailSenderProvider,
+            EmailConfiguration emailConfiguration,
+            ModlProperties modlProperties
     ) {
         if (modlProperties.isDevelopmentMode()) {
             log.warn("Development mode is on; emails will be logged to the console instead of delivered.");

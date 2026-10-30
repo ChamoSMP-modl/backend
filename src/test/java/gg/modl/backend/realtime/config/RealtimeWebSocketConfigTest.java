@@ -1,11 +1,11 @@
 package gg.modl.backend.realtime.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-
 import gg.modl.backend.realtime.transport.RealtimeWebSocketHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 class RealtimeWebSocketConfigTest {
 
@@ -17,9 +17,9 @@ class RealtimeWebSocketConfigTest {
         properties.setIdleTimeoutMs(70_000);
         properties.setAsyncSendTimeoutMs(8_000);
         RealtimeWebSocketConfig config = new RealtimeWebSocketConfig(
-            mock(RealtimeWebSocketHandler.class),
-            mock(RealtimeConnectionLimitHandshakeInterceptor.class),
-            properties
+                mock(RealtimeWebSocketHandler.class),
+                mock(RealtimeConnectionLimitHandshakeInterceptor.class),
+                properties
         );
 
         ServletServerContainerFactoryBean container = config.realtimeWebSocketContainer();

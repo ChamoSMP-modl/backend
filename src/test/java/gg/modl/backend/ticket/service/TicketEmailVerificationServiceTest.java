@@ -1,21 +1,20 @@
 package gg.modl.backend.ticket.service;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.TicketVerificationMongoRepository;
 import gg.modl.backend.email.EmailService;
 import gg.modl.backend.infrastructure.onetimecode.OneTimeCodeCodec;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.ticket.config.TicketEmailVerificationConfiguration;
+import org.junit.jupiter.api.Test;
+
 import java.util.Date;
 import java.util.Optional;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 class TicketEmailVerificationServiceTest {
     @Test
@@ -24,14 +23,14 @@ class TicketEmailVerificationServiceTest {
         TicketEmailVerificationConfiguration config = new TicketEmailVerificationConfiguration();
         config.setCodeHashSecret("test-secret");
         TicketEmailVerificationService service = new TicketEmailVerificationService(
-            repository,
-            mock(EmailService.class),
-            config,
-            new OneTimeCodeCodec()
+                repository,
+                mock(EmailService.class),
+                config,
+                new OneTimeCodeCodec()
         );
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(repository.consumeMatchingCode(eq(server), eq("ticket-1"), any(), any(Date.class)))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         String token = service.verifyCode(server, "ticket-1", "123456");
 

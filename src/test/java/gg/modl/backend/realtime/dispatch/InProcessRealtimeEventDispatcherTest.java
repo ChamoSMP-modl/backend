@@ -1,41 +1,33 @@
 package gg.modl.backend.realtime.dispatch;
 
-import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
-import static org.mockito.ArgumentMatchers.any;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.realtime.auth.RealtimePrincipal;
 import gg.modl.backend.realtime.config.RealtimeProperties;
-import gg.modl.backend.realtime.metrics.RealtimeMetrics;
 import gg.modl.backend.realtime.lifecycle.RealtimeConnectionCleanup;
+import gg.modl.backend.realtime.metrics.RealtimeMetrics;
 import gg.modl.backend.realtime.rate.RealtimeMessageRateLimiter;
 import gg.modl.backend.realtime.state.RealtimeConnectionRegistry;
 import gg.modl.backend.realtime.state.RealtimeConnectionState;
-import gg.modl.backend.realtime.transport.RealtimeSessionOperations;
 import gg.modl.backend.realtime.transport.RealtimeCodec;
+import gg.modl.backend.realtime.transport.RealtimeSessionOperations;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
-import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import gg.modl.proto.modl.v1.PermissionInvalidatedEvent;
+import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import gg.modl.proto.modl.v1.TicketChangedEvent;
 import gg.modl.proto.modl.v1.Topic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class InProcessRealtimeEventDispatcherTest {
 
@@ -48,12 +40,12 @@ class InProcessRealtimeEventDispatcherTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         InProcessRealtimeEventDispatcher dispatcher = new InProcessRealtimeEventDispatcher(
-            registry,
-            codec,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeTopicPayloadValidator(),
-            inlineExecutor()
+                registry,
+                codec,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeTopicPayloadValidator(),
+                inlineExecutor()
         );
 
         WebSocketSession matchingSession = openSession("matching");
@@ -71,8 +63,8 @@ class InProcessRealtimeEventDispatcherTest {
         registry.get(wrongServerSession).orElseThrow().subscribe(Topic.TOPIC_PANEL_TICKETS);
 
         RealtimeEnvelope envelope = RealtimeEnvelope.newBuilder()
-            .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
-            .build();
+                .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
+                .build();
 
         dispatcher.publish(new RealtimeOutboundEvent("server-a", Topic.TOPIC_PANEL_TICKETS, envelope));
 
@@ -90,12 +82,12 @@ class InProcessRealtimeEventDispatcherTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         InProcessRealtimeEventDispatcher dispatcher = new InProcessRealtimeEventDispatcher(
-            registry,
-            codec,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeTopicPayloadValidator(),
-            inlineExecutor()
+                registry,
+                codec,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeTopicPayloadValidator(),
+                inlineExecutor()
         );
         WebSocketSession session = openSession("slow-client");
         when(session.isOpen()).thenReturn(true, true, true, false);
@@ -107,8 +99,8 @@ class InProcessRealtimeEventDispatcherTest {
         state.subscribe(Topic.TOPIC_PANEL_TICKETS);
 
         RealtimeEnvelope envelope = RealtimeEnvelope.newBuilder()
-            .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
-            .build();
+                .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
+                .build();
 
         dispatcher.publish(new RealtimeOutboundEvent("server-a", Topic.TOPIC_PANEL_TICKETS, envelope));
 
@@ -126,12 +118,12 @@ class InProcessRealtimeEventDispatcherTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         InProcessRealtimeEventDispatcher dispatcher = new InProcessRealtimeEventDispatcher(
-            registry,
-            codec,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeTopicPayloadValidator(),
-            inlineExecutor()
+                registry,
+                codec,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeTopicPayloadValidator(),
+                inlineExecutor()
         );
         WebSocketSession session = openSession("close-throws-open");
         doThrow(new java.io.IOException("stalled send")).when(session).sendMessage(any(BinaryMessage.class));
@@ -142,8 +134,8 @@ class InProcessRealtimeEventDispatcherTest {
         state.subscribe(Topic.TOPIC_PANEL_TICKETS);
 
         RealtimeEnvelope envelope = RealtimeEnvelope.newBuilder()
-            .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
-            .build();
+                .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
+                .build();
 
         dispatcher.publish(new RealtimeOutboundEvent("server-a", Topic.TOPIC_PANEL_TICKETS, envelope));
 
@@ -169,12 +161,12 @@ class InProcessRealtimeEventDispatcherTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         InProcessRealtimeEventDispatcher dispatcher = new InProcessRealtimeEventDispatcher(
-            registry,
-            codec,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeTopicPayloadValidator(),
-            inlineExecutor()
+                registry,
+                codec,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeTopicPayloadValidator(),
+                inlineExecutor()
         );
 
         WebSocketSession firstSession = openSession("first");
@@ -190,8 +182,8 @@ class InProcessRealtimeEventDispatcherTest {
         secondState.subscribe(Topic.TOPIC_PANEL_TICKETS);
 
         RealtimeEnvelope envelope = RealtimeEnvelope.newBuilder()
-            .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
-            .build();
+                .setTicketChanged(TicketChangedEvent.newBuilder().setTicketId("ticket-1").build())
+                .build();
 
         dispatcher.publish(new RealtimeOutboundEvent("server-a", Topic.TOPIC_PANEL_TICKETS, envelope));
 
@@ -217,12 +209,12 @@ class InProcessRealtimeEventDispatcherTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         InProcessRealtimeEventDispatcher dispatcher = new InProcessRealtimeEventDispatcher(
-            registry,
-            codec,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeTopicPayloadValidator(),
-            inlineExecutor()
+                registry,
+                codec,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeTopicPayloadValidator(),
+                inlineExecutor()
         );
         WebSocketSession session = openSession("matching");
         RealtimeConnectionState state = registry.register(session);
@@ -231,8 +223,8 @@ class InProcessRealtimeEventDispatcherTest {
         state.subscribe(Topic.TOPIC_PANEL_TICKETS);
 
         RealtimeEnvelope envelope = RealtimeEnvelope.newBuilder()
-            .setPermissionInvalidated(PermissionInvalidatedEvent.newBuilder().build())
-            .build();
+                .setPermissionInvalidated(PermissionInvalidatedEvent.newBuilder().build())
+                .build();
 
         dispatcher.publish(new RealtimeOutboundEvent("server-a", Topic.TOPIC_PANEL_TICKETS, envelope));
 
@@ -249,12 +241,12 @@ class InProcessRealtimeEventDispatcherTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         InProcessRealtimeEventDispatcher dispatcher = new InProcessRealtimeEventDispatcher(
-            registry,
-            codec,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeTopicPayloadValidator(),
-            inlineExecutor()
+                registry,
+                codec,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeTopicPayloadValidator(),
+                inlineExecutor()
         );
         WebSocketSession session = openSession("minecraft");
         RealtimeConnectionState state = registry.register(session);
@@ -263,8 +255,8 @@ class InProcessRealtimeEventDispatcherTest {
         state.subscribe(Topic.TOPIC_MINECRAFT_PERMISSIONS);
 
         RealtimeEnvelope envelope = RealtimeEnvelope.newBuilder()
-            .setPermissionInvalidated(PermissionInvalidatedEvent.newBuilder().build())
-            .build();
+                .setPermissionInvalidated(PermissionInvalidatedEvent.newBuilder().build())
+                .build();
 
         dispatcher.publish(new RealtimeOutboundEvent("server-a", Topic.TOPIC_MINECRAFT_PERMISSIONS, envelope));
 
@@ -295,7 +287,7 @@ class InProcessRealtimeEventDispatcherTest {
     }
 
     private Server server(String id) {
-        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId(id);
         return server;
     }

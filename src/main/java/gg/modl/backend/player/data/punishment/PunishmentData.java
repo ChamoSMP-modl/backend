@@ -16,5 +16,6 @@ public final class PunishmentData {
     public static final String BLOCKED_NAME = "blockedName";
     public static final String BLOCKED_SKIN = "blockedSkin";
 
-    private PunishmentData() {}
+    private PunishmentData() {
+    }
 }

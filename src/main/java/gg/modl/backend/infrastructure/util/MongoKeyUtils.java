@@ -1,13 +1,15 @@
 package gg.modl.backend.infrastructure.util;
 
 import gg.modl.backend.infrastructure.exception.ValidationException;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class MongoKeyUtils {
-    private MongoKeyUtils() {}
+    private MongoKeyUtils() {
+    }
 
     @SuppressWarnings("unchecked")
     public static Map<String, Object> sanitizeKeys(Map<String, Object> map) {

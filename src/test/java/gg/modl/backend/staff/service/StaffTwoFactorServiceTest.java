@@ -1,25 +1,34 @@
 package gg.modl.backend.staff.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.server.data.Server;
-import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.backend.server.data.ServerPlan;
+import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.backend.staff.data.Staff;
-import java.time.Instant;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 class StaffTwoFactorServiceTest {
+
+    private static Server server() {
+        return new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
+    }
+
+    private static Staff staff() {
+        return Staff.builder()
+                .id("staff-1")
+                .email("staff@example.com")
+                .twoFactorTokenCreatedAt(Instant.now().toEpochMilli())
+                .twoFactorTokenIp("127.0.0.1")
+                .build();
+    }
 
     @Test
     void generateTokenLowercasesUuidBeforeQueryingRepository() {
@@ -28,12 +37,12 @@ class StaffTwoFactorServiceTest {
         StaffTwoFactorService service = new StaffTwoFactorService(staffRepository, panelDomainResolver);
         Server server = server();
         when(staffRepository.createTwoFactorToken(eq(server), eq("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            anyString(), anyString(), anyLong())).thenReturn(true);
+                anyString(), anyString(), anyLong())).thenReturn(true);
 
         service.generateToken(server, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "127.0.0.1");
 
         verify(staffRepository).createTwoFactorToken(eq(server), eq("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-            anyString(), eq("127.0.0.1"), anyLong());
+                anyString(), eq("127.0.0.1"), anyLong());
     }
 
     @Test
@@ -86,18 +95,5 @@ class StaffTwoFactorServiceTest {
 
         assertTrue(service.verifyToken(server, "token", null).isEmpty());
         verify(staffRepository, never()).activateTwoFactorSession(server, "staff-1", "token", "127.0.0.1", 0L);
-    }
-
-    private static Server server() {
-        return new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
-    }
-
-    private static Staff staff() {
-        return Staff.builder()
-            .id("staff-1")
-            .email("staff@example.com")
-            .twoFactorTokenCreatedAt(Instant.now().toEpochMilli())
-            .twoFactorTokenIp("127.0.0.1")
-            .build();
     }
 }

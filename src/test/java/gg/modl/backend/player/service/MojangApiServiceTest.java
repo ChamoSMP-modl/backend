@@ -1,13 +1,12 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.player.service.MojangApiService.MojangProfile;
+import org.junit.jupiter.api.Test;
+
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class MojangApiServiceTest {
 
@@ -25,7 +24,7 @@ class MojangApiServiceTest {
     @Test
     void readsTopLevelNameNotNestedPropertyName() {
         String json = "{\"id\":\"853c80ef3c3749fdaa49938b674adae6\",\"name\":\"Notch\","
-            + "\"properties\":[{\"name\":\"textures\",\"value\":\"eyJ0ZXh0dXJlcyI6e319\"}]}";
+                + "\"properties\":[{\"name\":\"textures\",\"value\":\"eyJ0ZXh0dXJlcyI6e319\"}]}";
 
         Optional<MojangProfile> profile = MojangApiService.parseProfile(json);
 

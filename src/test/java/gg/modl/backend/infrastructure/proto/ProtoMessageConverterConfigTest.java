@@ -1,16 +1,7 @@
 package gg.modl.backend.infrastructure.proto;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import gg.modl.proto.modl.v1.ConfigureDomainRequest;
 import gg.modl.proto.modl.v1.PublicSettingsResponse;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +26,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 @SpringJUnitWebConfig(ProtoMessageConverterConfigTest.BootAssembledMvcContext.class)
 class ProtoMessageConverterConfigTest {
 
@@ -49,82 +48,6 @@ class ProtoMessageConverterConfigTest {
 
     private MockMvc mvc;
 
-    @BeforeEach
-    void setUp() {
-        mvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
-
-    @Test
-    void protoConvertersAreRegisteredOnceAheadOfJackson() {
-        List<HttpMessageConverter<?>> converters = handlerAdapter.getMessageConverters();
-
-        assertEquals(1, count(converters, ProtoJsonHttpMessageConverter.class), "proto JSON converter registered once");
-        assertEquals(1, count(converters, ProtoBinaryHttpMessageConverter.class), "proto binary converter registered once");
-        assertEquals(1, count(converters, JacksonJsonHttpMessageConverter.class), "Jackson JSON converter still registered");
-        assertTrue(indexOf(converters, ProtoJsonHttpMessageConverter.class)
-            < indexOf(converters, ProtoBinaryHttpMessageConverter.class), "proto JSON converter must precede proto binary");
-        assertTrue(indexOf(converters, ProtoJsonHttpMessageConverter.class)
-            < indexOf(converters, JacksonJsonHttpMessageConverter.class), "proto JSON converter must precede Jackson");
-    }
-
-    @Test
-    void acceptAnyNegotiatesJson() throws Exception {
-        mvc.perform(get("/settings").accept(MediaType.ALL))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.serverDisplayName").value(DISPLAY_NAME));
-    }
-
-    @Test
-    void acceptJsonNegotiatesJson() throws Exception {
-        mvc.perform(get("/settings").accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.serverDisplayName").value(DISPLAY_NAME));
-    }
-
-    @Test
-    void acceptProtobufNegotiatesBinaryProto() throws Exception {
-        byte[] body = mvc.perform(get("/settings").accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn().getResponse().getContentAsByteArray();
-
-        assertEquals(DISPLAY_NAME, PublicSettingsResponse.parseFrom(body).getServerDisplayName());
-    }
-
-    @Test
-    void binaryProtoRequestBodyIsDeserialized() throws Exception {
-        byte[] request = ConfigureDomainRequest.newBuilder().setCustomDomain(CUSTOM_DOMAIN).build().toByteArray();
-
-        byte[] body = mvc.perform(post("/settings/domain")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsByteArray();
-
-        assertEquals(CUSTOM_DOMAIN, PublicSettingsResponse.parseFrom(body).getServerDisplayName());
-    }
-
-    @Test
-    void jsonProtoRequestBodyIsDeserialized() throws Exception {
-        mvc.perform(post("/settings/domain")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"customDomain\":\"" + CUSTOM_DOMAIN + "\"}"))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.serverDisplayName").value(CUSTOM_DOMAIN));
-    }
-
-    @Test
-    void nonProtoTypesStillNegotiateJacksonJson() throws Exception {
-        mvc.perform(get("/plain").accept(MediaType.ALL))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.name").value(DISPLAY_NAME));
-    }
-
     private static long count(List<HttpMessageConverter<?>> converters, Class<?> type) {
         return converters.stream().filter(type::isInstance).count();
     }
@@ -138,14 +61,90 @@ class ProtoMessageConverterConfigTest {
         return -1;
     }
 
+    @BeforeEach
+    void setUp() {
+        mvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    }
+
+    @Test
+    void protoConvertersAreRegisteredOnceAheadOfJackson() {
+        List<HttpMessageConverter<?>> converters = handlerAdapter.getMessageConverters();
+
+        assertEquals(1, count(converters, ProtoJsonHttpMessageConverter.class), "proto JSON converter registered once");
+        assertEquals(1, count(converters, ProtoBinaryHttpMessageConverter.class), "proto binary converter registered once");
+        assertEquals(1, count(converters, JacksonJsonHttpMessageConverter.class), "Jackson JSON converter still registered");
+        assertTrue(indexOf(converters, ProtoJsonHttpMessageConverter.class)
+                < indexOf(converters, ProtoBinaryHttpMessageConverter.class), "proto JSON converter must precede proto binary");
+        assertTrue(indexOf(converters, ProtoJsonHttpMessageConverter.class)
+                < indexOf(converters, JacksonJsonHttpMessageConverter.class), "proto JSON converter must precede Jackson");
+    }
+
+    @Test
+    void acceptAnyNegotiatesJson() throws Exception {
+        mvc.perform(get("/settings").accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.serverDisplayName").value(DISPLAY_NAME));
+    }
+
+    @Test
+    void acceptJsonNegotiatesJson() throws Exception {
+        mvc.perform(get("/settings").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.serverDisplayName").value(DISPLAY_NAME));
+    }
+
+    @Test
+    void acceptProtobufNegotiatesBinaryProto() throws Exception {
+        byte[] body = mvc.perform(get("/settings").accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertEquals(DISPLAY_NAME, PublicSettingsResponse.parseFrom(body).getServerDisplayName());
+    }
+
+    @Test
+    void binaryProtoRequestBodyIsDeserialized() throws Exception {
+        byte[] request = ConfigureDomainRequest.newBuilder().setCustomDomain(CUSTOM_DOMAIN).build().toByteArray();
+
+        byte[] body = mvc.perform(post("/settings/domain")
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        assertEquals(CUSTOM_DOMAIN, PublicSettingsResponse.parseFrom(body).getServerDisplayName());
+    }
+
+    @Test
+    void jsonProtoRequestBodyIsDeserialized() throws Exception {
+        mvc.perform(post("/settings/domain")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"customDomain\":\"" + CUSTOM_DOMAIN + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.serverDisplayName").value(CUSTOM_DOMAIN));
+    }
+
+    @Test
+    void nonProtoTypesStillNegotiateJacksonJson() throws Exception {
+        mvc.perform(get("/plain").accept(MediaType.ALL))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value(DISPLAY_NAME));
+    }
+
     @Configuration
     @ImportAutoConfiguration({
-        JacksonAutoConfiguration.class,
-        HttpMessageConvertersAutoConfiguration.class,
-        WebMvcAutoConfiguration.class
+            JacksonAutoConfiguration.class,
+            HttpMessageConvertersAutoConfiguration.class,
+            WebMvcAutoConfiguration.class
     })
     @ComponentScan(basePackageClasses = ProtoMessageConverterConfig.class,
-        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SettingsEndpoint.class))
+            excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SettingsEndpoint.class))
     @Import(SettingsEndpoint.class)
     static class BootAssembledMvcContext {
     }

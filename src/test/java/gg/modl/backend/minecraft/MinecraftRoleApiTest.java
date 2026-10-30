@@ -1,15 +1,16 @@
 package gg.modl.backend.minecraft;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.support.ApiClient;
 import gg.modl.backend.support.JsonHelper;
 import gg.modl.backend.support.StagingCredentials;
-import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MinecraftRoleApiTest {
 
@@ -77,7 +78,7 @@ class MinecraftRoleApiTest {
         permissions.forEach(p -> permList.add(p.getAsString()));
 
         var response = api.minecraftPatch("/v1/minecraft/roles/" + roleId + "/permissions", Map.of(
-            "permissions", permList
+                "permissions", permList
         ));
         JsonHelper.assertStatus(response, 200);
     }

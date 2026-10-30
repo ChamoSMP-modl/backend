@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record MinecraftClaimTicketRequest(
-    @NotBlank @Pattern(regexp = RegExpConstants.UUID) String playerUuid,
-    @NotBlank @Pattern(regexp = RegExpConstants.MINECRAFT_USERNAME) @Size(max = RequestValidationLimits.LOG_USERNAME_MAX_LENGTH) String playerName
+        @NotBlank @Pattern(regexp = RegExpConstants.UUID) String playerUuid,
+        @NotBlank @Pattern(regexp = RegExpConstants.MINECRAFT_USERNAME) @Size(max = RequestValidationLimits.LOG_USERNAME_MAX_LENGTH) String playerName
 ) {
 }

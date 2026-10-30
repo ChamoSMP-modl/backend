@@ -3,11 +3,12 @@ package gg.modl.backend.storage.service;
 import gg.modl.backend.infrastructure.exception.ForbiddenException;
 import gg.modl.backend.infrastructure.util.ByteFormatUtil;
 import gg.modl.backend.server.data.Server;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
@@ -15,39 +16,39 @@ public class MediaValidationService {
     private static final long DEFAULT_MAX_FILE_SIZE = 10L * 1024 * 1024;
 
     private static final Set<String> DANGEROUS_EXTENSIONS = Set.of(
-        ".exe", ".bat", ".cmd", ".com", ".msi", ".scr", ".pif",
-        ".js", ".vbs", ".wsf", ".jar", ".sh", ".ps1", ".php",
-        ".asp", ".aspx", ".jsp", ".cgi", ".pl", ".py", ".rb"
+            ".exe", ".bat", ".cmd", ".com", ".msi", ".scr", ".pif",
+            ".js", ".vbs", ".wsf", ".jar", ".sh", ".ps1", ".php",
+            ".asp", ".aspx", ".jsp", ".cgi", ".pl", ".py", ".rb"
     );
 
     private static final Map<String, Set<String>> ALLOWED_TYPES = Map.of(
-        "evidence", Set.of("image/png", "image/jpeg", "image/gif", "image/apng", "image/webp", "video/mp4", "video/webm", "video/quicktime",
-            "video/x-matroska", "application/pdf", "text/plain", "text/markdown"),
-        "ticket", Set.of("image/png", "image/jpeg", "image/gif", "image/apng", "image/webp", "video/mp4", "video/webm", "video/quicktime",
-            "video/x-matroska", "application/pdf", "text/plain", "text/markdown"),
-        "appeal", Set.of("image/png", "image/jpeg", "image/gif", "image/apng", "image/webp", "video/mp4", "video/webm", "video/quicktime",
-            "video/x-matroska", "application/pdf", "text/plain", "text/markdown"),
-        "article", Set.of("image/png", "image/jpeg", "image/gif", "image/webp", "image/apng", "text/plain", "text/markdown"),
-        "server-icon", Set.of("image/png", "image/jpeg", "image/webp", "image/gif", "image/apng"),
-        "replay", Set.of("application/octet-stream")
+            "evidence", Set.of("image/png", "image/jpeg", "image/gif", "image/apng", "image/webp", "video/mp4", "video/webm", "video/quicktime",
+                    "video/x-matroska", "application/pdf", "text/plain", "text/markdown"),
+            "ticket", Set.of("image/png", "image/jpeg", "image/gif", "image/apng", "image/webp", "video/mp4", "video/webm", "video/quicktime",
+                    "video/x-matroska", "application/pdf", "text/plain", "text/markdown"),
+            "appeal", Set.of("image/png", "image/jpeg", "image/gif", "image/apng", "image/webp", "video/mp4", "video/webm", "video/quicktime",
+                    "video/x-matroska", "application/pdf", "text/plain", "text/markdown"),
+            "article", Set.of("image/png", "image/jpeg", "image/gif", "image/webp", "image/apng", "text/plain", "text/markdown"),
+            "server-icon", Set.of("image/png", "image/jpeg", "image/webp", "image/gif", "image/apng"),
+            "replay", Set.of("application/octet-stream")
     );
 
     private static final Map<String, Long> MAX_SIZES = Map.of(
-        "evidence", 100L * 1024 * 1024,
-        "ticket", 100L * 1024 * 1024,
-        "appeal", 100L * 1024 * 1024,
-        "article", 50L * 1024 * 1024,
-        "server-icon", 10L * 1024 * 1024,
-        "replay", 10L * 1024 * 1024
+            "evidence", 100L * 1024 * 1024,
+            "ticket", 100L * 1024 * 1024,
+            "appeal", 100L * 1024 * 1024,
+            "article", 50L * 1024 * 1024,
+            "server-icon", 10L * 1024 * 1024,
+            "replay", 10L * 1024 * 1024
     );
 
     private static final Map<String, Long> PREMIUM_MAX_SIZES = Map.of(
-        "evidence", 1L * 1024 * 1024 * 1024,
-        "ticket", 1L * 1024 * 1024 * 1024,
-        "appeal", 1L * 1024 * 1024 * 1024,
-        "article", 50L * 1024 * 1024,
-        "server-icon", 10L * 1024 * 1024,
-        "replay", 10L * 1024 * 1024
+            "evidence", 1L * 1024 * 1024 * 1024,
+            "ticket", 1L * 1024 * 1024 * 1024,
+            "appeal", 1L * 1024 * 1024 * 1024,
+            "article", 50L * 1024 * 1024,
+            "server-icon", 10L * 1024 * 1024,
+            "replay", 10L * 1024 * 1024
     );
 
     public ValidationResult validateMetadata(String fileName, String contentType, long fileSize, String uploadType, boolean isPremium) {
@@ -99,24 +100,24 @@ public class MediaValidationService {
 
     public Map<String, Object> getAllSupportedTypes() {
         return Map.of(
-            "evidence", List.copyOf(ALLOWED_TYPES.get("evidence")),
-            "tickets", List.copyOf(ALLOWED_TYPES.get("ticket")),
-            "appeals", List.copyOf(ALLOWED_TYPES.get("appeal")),
-            "articles", List.copyOf(ALLOWED_TYPES.get("article")),
-            "server-icons", List.copyOf(ALLOWED_TYPES.get("server-icon")),
-            "replays", List.copyOf(ALLOWED_TYPES.get("replay"))
+                "evidence", List.copyOf(ALLOWED_TYPES.get("evidence")),
+                "tickets", List.copyOf(ALLOWED_TYPES.get("ticket")),
+                "appeals", List.copyOf(ALLOWED_TYPES.get("appeal")),
+                "articles", List.copyOf(ALLOWED_TYPES.get("article")),
+                "server-icons", List.copyOf(ALLOWED_TYPES.get("server-icon")),
+                "replays", List.copyOf(ALLOWED_TYPES.get("replay"))
         );
     }
 
     public Map<String, Object> getAllSizeLimits(boolean isPremium) {
         Map<String, Long> sizes = isPremium ? PREMIUM_MAX_SIZES : MAX_SIZES;
         return Map.of(
-            "evidence", sizes.get("evidence"),
-            "tickets", sizes.get("ticket"),
-            "appeals", sizes.get("appeal"),
-            "articles", sizes.get("article"),
-            "server-icons", sizes.get("server-icon"),
-            "replays", sizes.get("replay")
+                "evidence", sizes.get("evidence"),
+                "tickets", sizes.get("ticket"),
+                "appeals", sizes.get("appeal"),
+                "articles", sizes.get("article"),
+                "server-icons", sizes.get("server-icon"),
+                "replays", sizes.get("replay")
         );
     }
 
@@ -152,5 +153,6 @@ public class MediaValidationService {
         return parts.length >= 4 ? parts[2] : null;
     }
 
-    public record ValidationResult(boolean valid, String error) {}
+    public record ValidationResult(boolean valid, String error) {
+    }
 }

@@ -3,6 +3,7 @@ package gg.modl.backend.punishment.controller;
 import gg.modl.backend.infrastructure.proto.ProtoMapperSupport;
 import gg.modl.backend.player.dto.response.AppealInfoView;
 import gg.modl.proto.modl.v1.PublicPunishmentAppealInfoResponse;
+
 import java.util.Date;
 
 final class PublicPunishmentProtoMapper {
@@ -12,11 +13,11 @@ final class PublicPunishmentProtoMapper {
 
     static PublicPunishmentAppealInfoResponse toAppealInfo(AppealInfoView appealInfo) {
         PublicPunishmentAppealInfoResponse.Builder builder = PublicPunishmentAppealInfoResponse.newBuilder()
-            .setId(ProtoMapperSupport.stringValue(appealInfo.id()))
-            .setType(ProtoMapperSupport.stringValue(appealInfo.type()))
-            .setActive(appealInfo.active())
-            .setAppealable(appealInfo.appealable())
-            .setPlayerUuid(ProtoMapperSupport.stringValue(appealInfo.playerUuid()));
+                .setId(ProtoMapperSupport.stringValue(appealInfo.id()))
+                .setType(ProtoMapperSupport.stringValue(appealInfo.type()))
+                .setActive(appealInfo.active())
+                .setAppealable(appealInfo.appealable())
+                .setPlayerUuid(ProtoMapperSupport.stringValue(appealInfo.playerUuid()));
 
         Long issued = epochMillis(appealInfo.issued());
         if (issued != null) {

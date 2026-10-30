@@ -1,12 +1,5 @@
 package gg.modl.backend.registration.cleanup;
 
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.ServerDatabaseMongoRepository;
 import gg.modl.backend.database.mongo.repository.ServerRegistrationCleanupRepository;
 import gg.modl.backend.registration.config.RegistrationCleanupProperties;
@@ -16,6 +9,10 @@ import gg.modl.backend.server.data.ProvisioningStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.staff.service.StaffLookupCache;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -23,9 +20,8 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InOrder;
+
+import static org.mockito.Mockito.*;
 
 class RegistrationCleanupServiceTest {
     private static final Instant NOW = Instant.parse("2026-05-01T12:00:00Z");
@@ -52,13 +48,13 @@ class RegistrationCleanupServiceTest {
         properties.setBatchSize(100);
 
         cleanupService = new RegistrationCleanupService(
-            properties,
-            serverRepository,
-            serverDatabaseRepository,
-            serverService,
-            permissionService,
-            staffLookupCache,
-            Clock.fixed(NOW, ZoneOffset.UTC)
+                properties,
+                serverRepository,
+                serverDatabaseRepository,
+                serverService,
+                permissionService,
+                staffLookupCache,
+                Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
 
@@ -69,18 +65,18 @@ class RegistrationCleanupServiceTest {
         claimed.setCleanupClaimId("claim-1");
 
         when(serverRepository.findExpiredRegistrationCleanupCandidates(Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), 100))
-            .thenReturn(List.of(candidate));
+                .thenReturn(List.of(candidate));
         when(serverDatabaseRepository.inspectPlayersCollection(candidate))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeMissing());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeMissing());
         when(serverRepository.claimExpiredRegistrationForCleanup(candidate.getId(), Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), NOW))
-            .thenReturn(Optional.of(claimed));
+                .thenReturn(Optional.of(claimed));
         when(serverDatabaseRepository.inspectPlayersCollection(claimed))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
         when(serverRepository.confirmRegistrationCleanupClaim(claimed.getId(), claimed.getCleanupClaimId(), Date.from(NOW.minus(Duration.ofHours(24))), NOW))
-            .thenReturn(Optional.of(claimed));
+                .thenReturn(Optional.of(claimed));
         when(serverDatabaseRepository.dropDatabase(claimed)).thenReturn(true);
         when(serverRepository.deleteClaimedExpiredRegistration(claimed.getId(), claimed.getCleanupClaimId(), Date.from(NOW.minus(Duration.ofHours(24)))))
-            .thenReturn(true);
+                .thenReturn(true);
 
         cleanupService.runCleanupOnce();
 
@@ -101,15 +97,15 @@ class RegistrationCleanupServiceTest {
         claimed.setCleanupClaimId("claim-1");
 
         when(serverRepository.findExpiredRegistrationCleanupCandidates(Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), 100))
-            .thenReturn(List.of(candidate));
+                .thenReturn(List.of(candidate));
         when(serverDatabaseRepository.inspectPlayersCollection(candidate))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
         when(serverRepository.claimExpiredRegistrationForCleanup(candidate.getId(), Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), NOW))
-            .thenReturn(Optional.of(claimed));
+                .thenReturn(Optional.of(claimed));
         when(serverDatabaseRepository.inspectPlayersCollection(claimed))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
         when(serverRepository.confirmRegistrationCleanupClaim(claimed.getId(), claimed.getCleanupClaimId(), Date.from(NOW.minus(Duration.ofHours(24))), NOW))
-            .thenReturn(Optional.of(claimed));
+                .thenReturn(Optional.of(claimed));
         when(serverDatabaseRepository.dropDatabase(claimed)).thenReturn(false);
 
         cleanupService.runCleanupOnce();
@@ -123,11 +119,11 @@ class RegistrationCleanupServiceTest {
         Server candidate = expiredCandidate();
 
         when(serverRepository.findExpiredRegistrationCleanupCandidates(Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), 100))
-            .thenReturn(List.of(candidate));
+                .thenReturn(List.of(candidate));
         when(serverDatabaseRepository.inspectPlayersCollection(candidate))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
         when(serverRepository.claimExpiredRegistrationForCleanup(candidate.getId(), Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), NOW))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         cleanupService.runCleanupOnce();
 
@@ -140,9 +136,9 @@ class RegistrationCleanupServiceTest {
         Server candidate = expiredCandidate();
 
         when(serverRepository.findExpiredRegistrationCleanupCandidates(Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), 100))
-            .thenReturn(List.of(candidate));
+                .thenReturn(List.of(candidate));
         when(serverDatabaseRepository.inspectPlayersCollection(candidate))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.blockedNonEmpty(3));
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.blockedNonEmpty(3));
 
         cleanupService.runCleanupOnce();
 
@@ -157,13 +153,13 @@ class RegistrationCleanupServiceTest {
         claimed.setCleanupClaimId("claim-1");
 
         when(serverRepository.findExpiredRegistrationCleanupCandidates(Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), 100))
-            .thenReturn(List.of(candidate));
+                .thenReturn(List.of(candidate));
         when(serverDatabaseRepository.inspectPlayersCollection(candidate))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
         when(serverRepository.claimExpiredRegistrationForCleanup(candidate.getId(), Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), NOW))
-            .thenReturn(Optional.of(claimed));
+                .thenReturn(Optional.of(claimed));
         when(serverDatabaseRepository.inspectPlayersCollection(claimed))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.blockedNonEmpty(1));
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.blockedNonEmpty(1));
 
         cleanupService.runCleanupOnce();
 
@@ -178,15 +174,15 @@ class RegistrationCleanupServiceTest {
         claimed.setCleanupClaimId("claim-1");
 
         when(serverRepository.findExpiredRegistrationCleanupCandidates(Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), 100))
-            .thenReturn(List.of(candidate));
+                .thenReturn(List.of(candidate));
         when(serverDatabaseRepository.inspectPlayersCollection(candidate))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
         when(serverRepository.claimExpiredRegistrationForCleanup(candidate.getId(), Date.from(NOW.minus(Duration.ofHours(24))), Date.from(NOW.minus(Duration.ofHours(6))), NOW))
-            .thenReturn(Optional.of(claimed));
+                .thenReturn(Optional.of(claimed));
         when(serverDatabaseRepository.inspectPlayersCollection(claimed))
-            .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
+                .thenReturn(ServerDatabaseMongoRepository.PlayerCollectionInspection.safeEmpty());
         when(serverRepository.confirmRegistrationCleanupClaim(claimed.getId(), claimed.getCleanupClaimId(), Date.from(NOW.minus(Duration.ofHours(24))), NOW))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         cleanupService.runCleanupOnce();
 
@@ -196,7 +192,7 @@ class RegistrationCleanupServiceTest {
     }
 
     private Server expiredCandidate() {
-        Server server = new Server("Demo", "demo", "server_demo", "admin@example.com", false, ServerPlan.FREE);
+        Server server = new Server("Demo", "demo", "server_demo", "admin@example.com", false, ServerPlan.PREMIUM);
         server.setId("server-id");
         server.setProvisioningStatus(ProvisioningStatus.PENDING);
         server.setEmailVerificationToken("token");

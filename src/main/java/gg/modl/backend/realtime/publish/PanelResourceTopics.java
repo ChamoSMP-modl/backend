@@ -2,6 +2,7 @@ package gg.modl.backend.realtime.publish;
 
 import gg.modl.proto.modl.v1.PanelResource;
 import gg.modl.proto.modl.v1.Topic;
+
 import java.util.EnumMap;
 import java.util.Map;
 

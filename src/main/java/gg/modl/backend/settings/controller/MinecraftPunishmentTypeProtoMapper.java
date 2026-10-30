@@ -1,17 +1,14 @@
 package gg.modl.backend.settings.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.intValue;
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
-
 import com.google.protobuf.Struct;
 import com.google.protobuf.Value;
-import gg.modl.backend.settings.data.DurationDetail;
-import gg.modl.backend.settings.data.OffenseLevelDurations;
-import gg.modl.backend.settings.data.PunishmentDurations;
-import gg.modl.backend.settings.data.PunishmentPoints;
-import gg.modl.backend.settings.data.PunishmentType;
+import gg.modl.backend.settings.data.*;
 import gg.modl.proto.modl.v1.PunishmentTypesResponse;
+
 import java.util.List;
+
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.intValue;
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
 
 final class MinecraftPunishmentTypeProtoMapper {
     private MinecraftPunishmentTypeProtoMapper() {
@@ -19,25 +16,25 @@ final class MinecraftPunishmentTypeProtoMapper {
 
     static PunishmentTypesResponse toPunishmentTypesResponse(int status, List<PunishmentType> types) {
         PunishmentTypesResponse.Builder response = PunishmentTypesResponse.newBuilder()
-            .setStatus(status);
+                .setStatus(status);
         types.stream()
-            .map(MinecraftPunishmentTypeProtoMapper::toPunishmentTypeData)
-            .forEach(response::addData);
+                .map(MinecraftPunishmentTypeProtoMapper::toPunishmentTypeData)
+                .forEach(response::addData);
         return response.build();
     }
 
     private static PunishmentTypesResponse.PunishmentTypeData toPunishmentTypeData(PunishmentType type) {
         PunishmentTypesResponse.PunishmentTypeData.Builder builder = PunishmentTypesResponse.PunishmentTypeData
-            .newBuilder()
-            .setName(stringValue(type.getName()))
-            .setCategory(stringValue(type.getCategory()))
-            .setStaffDescription(stringValue(type.getStaffDescription()))
-            .setPlayerDescription(stringValue(type.getPlayerDescription()))
-            .setDurations(toDurations(type.getDurations()))
-            .setPoints(toPoints(type.getPoints()))
-            .setId(intValue(type.getId()))
-            .setOrdinal(intValue(type.getOrdinal()))
-            .setIsCustomizable(type.isCustomizable());
+                .newBuilder()
+                .setName(stringValue(type.getName()))
+                .setCategory(stringValue(type.getCategory()))
+                .setStaffDescription(stringValue(type.getStaffDescription()))
+                .setPlayerDescription(stringValue(type.getPlayerDescription()))
+                .setDurations(toDurations(type.getDurations()))
+                .setPoints(toPoints(type.getPoints()))
+                .setId(intValue(type.getId()))
+                .setOrdinal(intValue(type.getOrdinal()))
+                .setIsCustomizable(type.isCustomizable());
 
         if (type.getCustomPoints() != null) {
             builder.setCustomPoints(type.getCustomPoints());

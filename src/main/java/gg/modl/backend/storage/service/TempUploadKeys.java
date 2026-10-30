@@ -1,6 +1,7 @@
 package gg.modl.backend.storage.service;
 
 import gg.modl.backend.server.data.Server;
+
 import java.util.List;
 
 public final class TempUploadKeys {
@@ -15,8 +16,8 @@ public final class TempUploadKeys {
 
     static List<String> prefixes(String databaseName) {
         return List.of(
-            databaseName + "/tickets/" + NEW_ENTITY_ID + "/",
-            databaseName + "/appeal/" + NEW_ENTITY_ID + "/"
+                databaseName + "/tickets/" + NEW_ENTITY_ID + "/",
+                databaseName + "/appeal/" + NEW_ENTITY_ID + "/"
         );
     }
 

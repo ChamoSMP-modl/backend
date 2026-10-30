@@ -5,26 +5,32 @@ import gg.modl.backend.player.data.NoteEntry;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.UsernameEntry;
 import gg.modl.backend.player.data.punishment.Punishment;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
 import org.springframework.stereotype.Component;
+
+import java.util.*;
+import java.util.function.Function;
 
 @Component
 public class DuplicatePlayerMerger {
     private static final Set<String> UNION_LIST_DATA_KEYS = Set.of("linkedAccounts", "pendingNotifications");
 
     private static final Comparator<Player> RICHNESS = Comparator
-        .comparingInt((Player player) -> size(player.getPunishments()) + size(player.getNotes()))
-        .thenComparingInt(player -> size(player.getIpAddresses()))
-        .thenComparingInt(player -> size(player.getUsernames()))
-        .thenComparing(Player::getId, Comparator.nullsFirst(Comparator.naturalOrder()));
+            .comparingInt((Player player) -> size(player.getPunishments()) + size(player.getNotes()))
+            .thenComparingInt(player -> size(player.getIpAddresses()))
+            .thenComparingInt(player -> size(player.getUsernames()))
+            .thenComparing(Player::getId, Comparator.nullsFirst(Comparator.naturalOrder()));
+
+    private static int size(List<?> list) {
+        return list == null ? 0 : list.size();
+    }
+
+    private static <T> List<T> nullSafe(List<T> list) {
+        return list == null ? List.of() : list;
+    }
+
+    private static <K, V> Map<K, V> nullSafe(Map<K, V> map) {
+        return map == null ? Map.of() : map;
+    }
 
     public Player merge(List<Player> duplicates) {
         Player primary = duplicates.stream().max(RICHNESS).orElseThrow();
@@ -89,17 +95,5 @@ public class DuplicatePlayerMerger {
         } else if (value != null) {
             target.add(value);
         }
-    }
-
-    private static int size(List<?> list) {
-        return list == null ? 0 : list.size();
-    }
-
-    private static <T> List<T> nullSafe(List<T> list) {
-        return list == null ? List.of() : list;
-    }
-
-    private static <K, V> Map<K, V> nullSafe(Map<K, V> map) {
-        return map == null ? Map.of() : map;
     }
 }

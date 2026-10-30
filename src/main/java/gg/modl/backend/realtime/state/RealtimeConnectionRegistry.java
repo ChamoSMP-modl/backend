@@ -1,15 +1,16 @@
 package gg.modl.backend.realtime.state;
 
 import gg.modl.backend.realtime.config.RealtimeProperties;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 @Component
 @RequiredArgsConstructor
@@ -19,6 +20,10 @@ public class RealtimeConnectionRegistry {
     private final RealtimeProperties properties;
     private final ConcurrentMap<String, ConnectionEntry> connections = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, ConcurrentMap<String, ConnectionEntry>> byServerId = new ConcurrentHashMap<>();
+
+    private static RealtimeConnectionSnapshot toSnapshot(String sessionId, ConnectionEntry entry) {
+        return new RealtimeConnectionSnapshot(sessionId, entry.session(), entry.state());
+    }
 
     public RealtimeConnectionState register(WebSocketSession session) {
         if (isTerminal(session)) {
@@ -46,7 +51,7 @@ public class RealtimeConnectionRegistry {
 
     public Optional<RealtimeConnectionState> get(WebSocketSession session) {
         return Optional.ofNullable(connections.get(session.getId()))
-            .map(ConnectionEntry::state);
+                .map(ConnectionEntry::state);
     }
 
     public Optional<RealtimeConnectionState> unregister(WebSocketSession session) {
@@ -60,7 +65,7 @@ public class RealtimeConnectionRegistry {
 
     public Optional<WebSocketSession> getSession(WebSocketSession session) {
         return Optional.ofNullable(connections.get(session.getId()))
-            .map(ConnectionEntry::session);
+                .map(ConnectionEntry::session);
     }
 
     public void markTerminal(WebSocketSession session) {
@@ -77,8 +82,8 @@ public class RealtimeConnectionRegistry {
 
     public List<RealtimeConnectionSnapshot> snapshot() {
         return connections.entrySet().stream()
-            .map(entry -> toSnapshot(entry.getKey(), entry.getValue()))
-            .toList();
+                .map(entry -> toSnapshot(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     public List<RealtimeConnectionSnapshot> snapshotByServer(String serverId) {
@@ -87,12 +92,8 @@ public class RealtimeConnectionRegistry {
             return List.of();
         }
         return serverConnections.entrySet().stream()
-            .map(entry -> toSnapshot(entry.getKey(), entry.getValue()))
-            .toList();
-    }
-
-    private static RealtimeConnectionSnapshot toSnapshot(String sessionId, ConnectionEntry entry) {
-        return new RealtimeConnectionSnapshot(sessionId, entry.session(), entry.state());
+                .map(entry -> toSnapshot(entry.getKey(), entry.getValue()))
+                .toList();
     }
 
     private void pruneServerIndex(String sessionId, ConnectionEntry entry) {
@@ -111,10 +112,10 @@ public class RealtimeConnectionRegistry {
             return session;
         }
         return new ConcurrentWebSocketSessionDecorator(
-            session,
-            properties.getSendTimeLimitMs(),
-            properties.getSendBufferSizeBytes(),
-            ConcurrentWebSocketSessionDecorator.OverflowStrategy.TERMINATE
+                session,
+                properties.getSendTimeLimitMs(),
+                properties.getSendBufferSizeBytes(),
+                ConcurrentWebSocketSessionDecorator.OverflowStrategy.TERMINATE
         );
     }
 
@@ -122,9 +123,9 @@ public class RealtimeConnectionRegistry {
     }
 
     public record RealtimeConnectionSnapshot(
-        String sessionId,
-        WebSocketSession session,
-        RealtimeConnectionState state
+            String sessionId,
+            WebSocketSession session,
+            RealtimeConnectionState state
     ) {
     }
 }

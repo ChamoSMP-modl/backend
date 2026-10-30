@@ -9,12 +9,13 @@ import gg.modl.backend.role.service.PermissionService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.proto.modl.v1.PanelSystemAlertsResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Date;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_DASHBOARD)
@@ -30,6 +31,6 @@ public class PanelSystemAlertController {
         String email = RequestUtil.getSessionEmail(request);
         boolean superAdmin = email != null && permissionService.isSuperAdmin(server, email);
         return ResponseEntity.ok(
-            AlertProtoMapper.toPanelAlerts(alertService.getVisibleAlerts(superAdmin, new Date())));
+                AlertProtoMapper.toPanelAlerts(alertService.getVisibleAlerts(superAdmin, new Date())));
     }
 }

@@ -1,18 +1,17 @@
 package gg.modl.backend.public_api;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.support.ApiClient;
 import gg.modl.backend.support.StagingCredentials;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 class PublicPlayerApiTest {
 
-    static ApiClient api;
-
     private static final String TEST_UUID = "069a79f4-44e9-4726-a5be-fca90e38aaf5";
+    static ApiClient api;
 
     @BeforeAll
     static void setUp() {

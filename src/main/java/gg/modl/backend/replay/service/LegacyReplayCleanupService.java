@@ -12,17 +12,14 @@ import gg.modl.backend.replay.service.ReplayDeletionService.ReplayBatchDeletionR
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.ReplayRetentionSettings;
 import gg.modl.backend.settings.service.ReplayRetentionSettingsService;
-import java.time.Clock;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -68,20 +65,20 @@ public class LegacyReplayCleanupService {
             } catch (Exception e) {
                 aggregate.failed++;
                 log.error("Legacy replay cleanup failed for server {} - skipping",
-                    server != null ? server.getId() : "null", e);
+                        server != null ? server.getId() : "null", e);
             }
         }
 
         log.info(
-            "Legacy replay cleanup servers={} scanned={} deleted={} deletedMissingStorageKey={} skippedTicketReferenced={} alreadyAbsent={} skippedRetentionDisabled={} failedServers={}",
-            servers.size(),
-            aggregate.scanned,
-            aggregate.deleted,
-            aggregate.deletedMissingStorageKey,
-            aggregate.skippedTicketReferenced,
-            aggregate.alreadyAbsent,
-            aggregate.skippedRetentionDisabled,
-            aggregate.failed
+                "Legacy replay cleanup servers={} scanned={} deleted={} deletedMissingStorageKey={} skippedTicketReferenced={} alreadyAbsent={} skippedRetentionDisabled={} failedServers={}",
+                servers.size(),
+                aggregate.scanned,
+                aggregate.deleted,
+                aggregate.deletedMissingStorageKey,
+                aggregate.skippedTicketReferenced,
+                aggregate.alreadyAbsent,
+                aggregate.skippedRetentionDisabled,
+                aggregate.failed
         );
     }
 
@@ -102,21 +99,21 @@ public class LegacyReplayCleanupService {
 
         result.deleted = drain(server, cutoff, pageSize, replayRepository::findExpiredWithStorageKey, result);
         result.deletedMissingStorageKey =
-            drain(server, cutoff, pageSize, replayRepository::findExpiredWithMissingStorageKey, result);
+                drain(server, cutoff, pageSize, replayRepository::findExpiredWithMissingStorageKey, result);
         return result;
     }
 
     private long drain(Server server, Date cutoff, int pageSize, ReplayPageFinder finder, ServerCleanupResult result) {
         return KeysetDrainer.<ReplayDocument, ReplayCursor>drain(MAX_PAGES_PER_RUN, pageSize,
-            (cursor, limit) -> finder.find(server, cutoff, cursor, limit),
-            this::cursorFrom,
-            page -> {
-                result.scanned += page.size();
-                List<ReplayDocument> deletable = selectDeletable(server, page, result);
-                ReplayBatchDeletionResult deletion = replayDeletionService.deleteReplaysWithStorage(server, deletable);
-                result.alreadyAbsent += deletion.alreadyAbsent();
-                return deletion.deleted();
-            });
+                (cursor, limit) -> finder.find(server, cutoff, cursor, limit),
+                this::cursorFrom,
+                page -> {
+                    result.scanned += page.size();
+                    List<ReplayDocument> deletable = selectDeletable(server, page, result);
+                    ReplayBatchDeletionResult deletion = replayDeletionService.deleteReplaysWithStorage(server, deletable);
+                    result.alreadyAbsent += deletion.alreadyAbsent();
+                    return deletion.deleted();
+                });
     }
 
     private List<ReplayDocument> selectDeletable(Server server, List<ReplayDocument> page, ServerCleanupResult result) {
@@ -144,9 +141,9 @@ public class LegacyReplayCleanupService {
     private void emitPerServerWarning(Server server, ServerCleanupResult result) {
         if (result.deletedMissingStorageKey > 0) {
             log.warn(
-                "Legacy replay cleanup deleted {} expired replays with missing storageKey server={}; storage sync will reconcile any orphaned objects",
-                result.deletedMissingStorageKey,
-                server.getId()
+                    "Legacy replay cleanup deleted {} expired replays with missing storageKey server={}; storage sync will reconcile any orphaned objects",
+                    result.deletedMissingStorageKey,
+                    server.getId()
             );
         }
     }

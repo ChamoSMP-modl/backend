@@ -1,11 +1,6 @@
 package gg.modl.backend.database;
 
-import gg.modl.backend.ticket.data.AppealWorkflowStatus;
-import gg.modl.backend.ticket.data.Ticket;
-import gg.modl.backend.ticket.data.TicketCategory;
-import gg.modl.backend.ticket.data.TicketPriority;
-import gg.modl.backend.ticket.data.TicketStatus;
-import java.util.List;
+import gg.modl.backend.ticket.data.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,21 +9,23 @@ import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
+import java.util.List;
+
 @Slf4j
 @Configuration
 public class TicketMongoEnumConfiguration {
     @Bean
     MongoCustomConversions ticketMongoCustomConversions() {
         return new MongoCustomConversions(List.of(
-            new TicketCategoryWriteConverter(),
-            new TicketCategoryReadConverter(),
-            new TicketPriorityWriteConverter(),
-            new TicketPriorityReadConverter(),
-            new TicketStatusWriteConverter(),
-            new TicketStatusReadConverter(),
-            new AppealWorkflowStatusWriteConverter(),
-            new AppealWorkflowStatusReadConverter(),
-            new ChatMessageReadConverter()
+                new TicketCategoryWriteConverter(),
+                new TicketCategoryReadConverter(),
+                new TicketPriorityWriteConverter(),
+                new TicketPriorityReadConverter(),
+                new TicketStatusWriteConverter(),
+                new TicketStatusReadConverter(),
+                new AppealWorkflowStatusWriteConverter(),
+                new AppealWorkflowStatusReadConverter(),
+                new ChatMessageReadConverter()
         ));
     }
 

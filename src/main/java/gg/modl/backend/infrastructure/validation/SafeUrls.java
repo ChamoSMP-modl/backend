@@ -1,6 +1,7 @@
 package gg.modl.backend.infrastructure.validation;
 
 import gg.modl.backend.infrastructure.exception.ValidationException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -10,6 +11,9 @@ public final class SafeUrls {
     private static final String PROTOCOL_RELATIVE_PREFIX = "//";
     private static final String BACKSLASH_RELATIVE_PREFIX = "/\\";
     private static final String ROOT_RELATIVE_PREFIX = "/";
+
+    private SafeUrls() {
+    }
 
     public static boolean isSafe(String url) {
         if (url == null) {
@@ -45,6 +49,4 @@ public final class SafeUrls {
     private static boolean containsControlCharacters(String value) {
         return value.indexOf('\t') >= 0 || value.indexOf('\n') >= 0 || value.indexOf('\r') >= 0;
     }
-
-    private SafeUrls() {}
 }

@@ -2,7 +2,6 @@ package gg.modl.backend.player.service;
 
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
-import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.punishment.EnforcementCategory;
 import gg.modl.backend.player.data.punishment.Punishment;
@@ -10,21 +9,17 @@ import gg.modl.backend.player.data.punishment.PunishmentModificationType;
 import gg.modl.backend.player.dto.response.SimplePunishmentView;
 import gg.modl.backend.player.dto.response.SyncPunishmentEntry;
 import gg.modl.backend.server.data.Server;
+import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.PunishmentTypeIndex;
 import gg.modl.backend.ticket.data.Ticket;
 import gg.modl.backend.ticket.data.TicketCategory;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -37,10 +32,10 @@ public class SyncStaffEventService {
     private final PlayerStatusCalculator statusCalculator;
 
     public List<Map<String, Object>> collectStaffEvents(
-        Server server,
-        Instant lastSync,
-        List<PunishmentType> types,
-        List<SyncPunishmentEntry> recentlyModifiedPunishments
+            Server server,
+            Instant lastSync,
+            List<PunishmentType> types,
+            List<SyncPunishmentEntry> recentlyModifiedPunishments
     ) {
         List<Map<String, Object>> notifications = new ArrayList<>();
         collectTicketNotifications(server, lastSync, notifications);
@@ -134,8 +129,8 @@ public class SyncStaffEventService {
                 }
             }
             Map<String, String> resolvedIssuers = issuerIds.isEmpty()
-                                                  ? Map.of()
-                                                  : issuerNameResolver.batchResolve(issuerIds, server);
+                    ? Map.of()
+                    : issuerNameResolver.batchResolve(issuerIds, server);
 
             for (Player player : playersWithNewPunishments) {
                 String playerName = PlayerDataUtils.extractLatestUsername(player.getUsernames());
@@ -148,16 +143,16 @@ public class SyncStaffEventService {
                     String typeName = punishmentType != null ? punishmentType.getName() : "Unknown";
                     String category = statusCalculator.getEffectiveCategory(punishment, typesByOrdinal);
                     String action = punishmentType != null && punishmentType.isKick() ? "kicked"
-                                  : EnforcementCategory.BAN.name().equals(category) ? "banned"
-                                  : EnforcementCategory.MUTE.name().equals(category) ? "muted"
-                                  : "punished";
+                            : EnforcementCategory.BAN.name().equals(category) ? "banned"
+                            : EnforcementCategory.MUTE.name().equals(category) ? "muted"
+                            : "punished";
 
                     String issuerName = PunishmentMapper.resolveIssuer(punishment.getIssuerId(), punishment.getIssuerName(), resolvedIssuers);
                     notifications.add(Map.of(
-                        "id", "punishment_" + punishment.getId(),
-                        "type", "PUNISHMENT_ISSUED",
-                        "message", issuerName + ": " + action + " " + playerName + " (" + typeName + ")",
-                        "timestamp", punishment.getIssued().getTime()
+                            "id", "punishment_" + punishment.getId(),
+                            "type", "PUNISHMENT_ISSUED",
+                            "message", issuerName + ": " + action + " " + playerName + " (" + typeName + ")",
+                            "timestamp", punishment.getIssued().getTime()
                     ));
                 }
             }

@@ -2,6 +2,7 @@ package gg.modl.backend.infrastructure.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+
 import java.net.Inet6Address;
 import java.net.InetAddress;
 
@@ -77,9 +78,9 @@ public class IpAddressValidator implements ConstraintValidator<ValidIpAddress, S
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
             boolean allowed = (c >= '0' && c <= '9')
-                || (c >= 'a' && c <= 'f')
-                || (c >= 'A' && c <= 'F')
-                || c == ':' || c == '.';
+                    || (c >= 'a' && c <= 'f')
+                    || (c >= 'A' && c <= 'F')
+                    || c == ':' || c == '.';
             if (!allowed) {
                 return false;
             }

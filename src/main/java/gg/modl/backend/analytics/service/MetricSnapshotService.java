@@ -3,13 +3,14 @@ package gg.modl.backend.analytics.service;
 import gg.modl.backend.database.mongo.repository.MetricSnapshotMongoRepository;
 import gg.modl.backend.database.mongo.repository.ServerInstanceSnapshotMongoRepository;
 import gg.modl.backend.database.mongo.repository.ServerMetricsRepository;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -28,15 +29,15 @@ public class MetricSnapshotService {
             Date now = Date.from(nowInstant);
             long epochSeconds = nowInstant.getEpochSecond();
             Date fiveTruncated = Date.from(Instant.ofEpochSecond(
-                (epochSeconds / FIVE_MINUTE_BOUNDARY_SECONDS) * FIVE_MINUTE_BOUNDARY_SECONDS));
+                    (epochSeconds / FIVE_MINUTE_BOUNDARY_SECONDS) * FIVE_MINUTE_BOUNDARY_SECONDS));
             Date fiveMinutesAgo = Date.from(nowInstant.minus(5, ChronoUnit.MINUTES));
 
             long activeServers = serverMetricsRepository.countActiveSince(fiveMinutesAgo);
 
             metricSnapshotRepository.upsertSnapshot(
-                fiveTruncated,
-                activeServers,
-                now
+                    fiveTruncated,
+                    activeServers,
+                    now
             );
         } catch (Exception e) {
             log.error("Failed to take metric snapshot", e);

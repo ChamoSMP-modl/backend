@@ -1,12 +1,5 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
 import gg.modl.backend.database.mongo.repository.PunishmentMongoRepository;
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
@@ -23,13 +16,14 @@ import gg.modl.backend.storage.service.EvidenceUploadTokenService;
 import gg.modl.backend.ticket.data.AppealWorkflowStatus;
 import gg.modl.backend.ticket.data.Ticket;
 import gg.modl.backend.ticket.data.TicketStatus;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 class PunishmentQueryServiceTest {
 
@@ -41,16 +35,16 @@ class PunishmentQueryServiceTest {
         PunishmentTypeService punishmentTypeService = mock(PunishmentTypeService.class);
         TicketMongoRepository ticketRepository = mock(TicketMongoRepository.class);
         PunishmentQueryService service = new PunishmentQueryService(
-            playerRepository,
-            punishmentRepository,
-            statusCalculator,
-            punishmentTypeService,
-            mock(OffenderThresholdSettingsService.class),
-            mock(EvidenceUploadTokenService.class),
-            mock(IssuerNameResolver.class),
-            ticketRepository
+                playerRepository,
+                punishmentRepository,
+                statusCalculator,
+                punishmentTypeService,
+                mock(OffenderThresholdSettingsService.class),
+                mock(EvidenceUploadTokenService.class),
+                mock(IssuerNameResolver.class),
+                ticketRepository
         );
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         UUID playerUuid = UUID.randomUUID();
         Date issued = new Date(1_700_000_000_000L);
         Date started = new Date(1_700_000_001_000L);
@@ -65,21 +59,21 @@ class PunishmentQueryServiceTest {
         punishment.setAttachedTicketIds(new ArrayList<>());
         punishment.replaceData(Map.of());
         Player player = Player.builder()
-            .minecraftUuid(playerUuid)
-            .punishments(new ArrayList<>(List.of(punishment)))
-            .build();
+                .minecraftUuid(playerUuid)
+                .punishments(new ArrayList<>(List.of(punishment)))
+                .build();
         Ticket olderAppeal = Ticket.builder()
-            .id("APPEAL-111111")
-            .created(new Date(1_700_000_002_000L))
-            .status(TicketStatus.OPEN)
-            .appealWorkflowStatus(AppealWorkflowStatus.OPEN)
-            .build();
+                .id("APPEAL-111111")
+                .created(new Date(1_700_000_002_000L))
+                .status(TicketStatus.OPEN)
+                .appealWorkflowStatus(AppealWorkflowStatus.OPEN)
+                .build();
         Ticket latestAppeal = Ticket.builder()
-            .id("APPEAL-222222")
-            .created(new Date(1_700_000_003_000L))
-            .status(TicketStatus.OPEN)
-            .appealWorkflowStatus(AppealWorkflowStatus.REJECTED)
-            .build();
+                .id("APPEAL-222222")
+                .created(new Date(1_700_000_003_000L))
+                .status(TicketStatus.OPEN)
+                .appealWorkflowStatus(AppealWorkflowStatus.REJECTED)
+                .build();
         PunishmentType punishmentType = new PunishmentType();
 
         when(punishmentRepository.findByPunishmentId(server, "punishment-1")).thenReturn(Optional.of(player));
@@ -108,18 +102,18 @@ class PunishmentQueryServiceTest {
     void previewPunishmentLowercasesUuidBeforeQueryingPlayerRepository() {
         PlayerMongoRepository playerRepository = mock(PlayerMongoRepository.class);
         PunishmentQueryService service = new PunishmentQueryService(
-            playerRepository,
-            mock(PunishmentMongoRepository.class),
-            mock(PlayerStatusCalculator.class),
-            mock(PunishmentTypeService.class),
-            mock(OffenderThresholdSettingsService.class),
-            mock(EvidenceUploadTokenService.class),
-            mock(IssuerNameResolver.class),
-            mock(TicketMongoRepository.class)
+                playerRepository,
+                mock(PunishmentMongoRepository.class),
+                mock(PlayerStatusCalculator.class),
+                mock(PunishmentTypeService.class),
+                mock(OffenderThresholdSettingsService.class),
+                mock(EvidenceUploadTokenService.class),
+                mock(IssuerNameResolver.class),
+                mock(TicketMongoRepository.class)
         );
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(playerRepository.findByMinecraftUuid(eq(server), eq("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee")))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         service.previewPunishment(server, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", 1);
 

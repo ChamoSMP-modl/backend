@@ -3,6 +3,7 @@ package gg.modl.backend.ticket.data;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import gg.modl.backend.infrastructure.util.CanonicalAliasIndex;
+
 import java.util.List;
 
 public enum TicketCategory {
@@ -13,20 +14,20 @@ public enum TicketCategory {
     APPLICATION("application", "Staff Application", "STAFF"),
     SUPPORT("support", "General Support", "SUPPORT");
 
+    private static final CanonicalAliasIndex<TicketCategory> INDEX = CanonicalAliasIndex
+            .of("ticket category", values(), TicketCategory::getId)
+            .alias(BUG, "bug_report")
+            .alias(PLAYER, "player_report")
+            .alias(CHAT, "chat_report")
+            .alias(APPEAL, "ban_appeal")
+            .alias(APPLICATION, "staff")
+            .alias(APPLICATION, "staff_application")
+            .alias(APPLICATION, "apply")
+            .alias(SUPPORT, "general_support")
+            .alias(PLAYER, "report");
     private final String id;
     private final String displayName;
     private final String ticketPrefix;
-    private static final CanonicalAliasIndex<TicketCategory> INDEX = CanonicalAliasIndex
-        .of("ticket category", values(), TicketCategory::getId)
-        .alias(BUG, "bug_report")
-        .alias(PLAYER, "player_report")
-        .alias(CHAT, "chat_report")
-        .alias(APPEAL, "ban_appeal")
-        .alias(APPLICATION, "staff")
-        .alias(APPLICATION, "staff_application")
-        .alias(APPLICATION, "apply")
-        .alias(SUPPORT, "general_support")
-        .alias(PLAYER, "report");
 
     TicketCategory(String id, String displayName, String ticketPrefix) {
         this.id = id;

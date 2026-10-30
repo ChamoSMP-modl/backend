@@ -1,10 +1,10 @@
 package gg.modl.backend.role.service;
 
+import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
+import gg.modl.backend.database.mongo.repository.StaffRoleMongoRepository;
 import gg.modl.backend.infrastructure.exception.ConflictException;
 import gg.modl.backend.infrastructure.exception.ForbiddenException;
 import gg.modl.backend.infrastructure.exception.ValidationException;
-import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
-import gg.modl.backend.database.mongo.repository.StaffRoleMongoRepository;
 import gg.modl.backend.role.data.Permission;
 import gg.modl.backend.role.data.StaffRole;
 import gg.modl.backend.role.dto.request.ReorderRolesRequest;
@@ -12,21 +12,13 @@ import gg.modl.backend.role.dto.request.RoleRequest;
 import gg.modl.backend.role.dto.response.RoleResponse;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.service.ServerTimestampService;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +31,10 @@ public class RoleService {
 
     private final Set<String> orderingRepairedServers = ConcurrentHashMap.newKeySet();
 
+    private static String generateCustomRoleId() {
+        return "custom-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8);
+    }
+
     public List<RoleResponse> getAllRoles(Server server) {
         repairCustomRoleOrderingOnce(server);
 
@@ -46,8 +42,8 @@ public class RoleService {
         Map<String, Integer> roleCounts = staffRepository.countByRoleId(server);
 
         return roles.stream()
-            .map(role -> toRoleResponse(role, roleCounts.getOrDefault(role.getId(), 0)))
-            .toList();
+                .map(role -> toRoleResponse(role, roleCounts.getOrDefault(role.getId(), 0)))
+                .toList();
     }
 
     private void repairCustomRoleOrderingOnce(Server server) {
@@ -71,9 +67,9 @@ public class RoleService {
         int baseOrder = highestRole != null ? Math.max(highestRole.getOrder(), 3) + 1 : 4;
 
         List<StaffRole> sorted = problematicRoles.stream()
-            .sorted(Comparator.comparing(StaffRole::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
-                .thenComparing(StaffRole::getId))
-            .toList();
+                .sorted(Comparator.comparing(StaffRole::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(StaffRole::getId))
+                .toList();
 
         Map<String, Integer> orderById = new LinkedHashMap<>();
         int nextOrder = baseOrder;
@@ -85,15 +81,15 @@ public class RoleService {
 
     private RoleResponse toRoleResponse(StaffRole role, int userCount) {
         return new RoleResponse(
-            role.getId(),
-            role.getName(),
-            role.getDescription(),
-            role.getPermissions(),
-            role.isDefault(),
-            role.getOrder(),
-            userCount,
-            role.getCreatedAt(),
-            role.getUpdatedAt()
+                role.getId(),
+                role.getName(),
+                role.getDescription(),
+                role.getPermissions(),
+                role.isDefault(),
+                role.getOrder(),
+                userCount,
+                role.getCreatedAt(),
+                role.getUpdatedAt()
         );
     }
 
@@ -128,9 +124,9 @@ public class RoleService {
         Set<String> validPermissions = new HashSet<>(permissionService.getGrantablePermissionIds(server));
         List<String> requested = permissions != null ? permissions : List.of();
         List<String> filtered = requested.stream()
-            .filter(validPermissions::contains)
-            .distinct()
-            .collect(Collectors.toCollection(ArrayList::new));
+                .filter(validPermissions::contains)
+                .distinct()
+                .collect(Collectors.toCollection(ArrayList::new));
 
         if (!performer.superAdmin()) {
             StaffRole performerRole = roleAuthorization.requirePerformerRole(server, performer);
@@ -156,9 +152,9 @@ public class RoleService {
 
         Set<String> validPermissions = new HashSet<>(permissionService.getGrantablePermissionIds(server));
         List<String> filteredPermissions = request.permissions()
-            .stream()
-            .filter(validPermissions::contains)
-            .toList();
+                .stream()
+                .filter(validPermissions::contains)
+                .toList();
 
         if (!performer.superAdmin()) {
             StaffRole performerRole = roleAuthorization.requirePerformerRole(server, performer);
@@ -169,23 +165,19 @@ public class RoleService {
         int nextOrder = nextRoleOrder(server);
 
         StaffRole newRole = StaffRole.builder()
-            .id(id)
-            .name(roleName)
-            .description(request.description())
-            .permissions(new ArrayList<>(filteredPermissions))
-            .isDefault(false)
-            .order(nextOrder)
-            .createdAt(new Date())
-            .updatedAt(new Date())
-            .build();
+                .id(id)
+                .name(roleName)
+                .description(request.description())
+                .permissions(new ArrayList<>(filteredPermissions))
+                .isDefault(false)
+                .order(nextOrder)
+                .createdAt(new Date())
+                .updatedAt(new Date())
+                .build();
 
         staffRoleRepository.saveEntity(server, newRole);
 
         return toRoleResponse(newRole, 0);
-    }
-
-    private static String generateCustomRoleId() {
-        return "custom-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
     private int nextRoleOrder(Server server) {
@@ -195,15 +187,15 @@ public class RoleService {
 
     private List<String> filterToGrantablePermissions(StaffRole performerRole, List<String> permissions) {
         return permissions.stream()
-            .filter(p -> RoleAuthorization.roleGrants(performerRole, p))
-            .toList();
+                .filter(p -> RoleAuthorization.roleGrants(performerRole, p))
+                .toList();
     }
 
     private List<String> filterToGrantableOrExisting(StaffRole performerRole, StaffRole targetRole, List<String> permissions) {
         Set<String> existing = new HashSet<>(targetRole.getPermissions() != null ? targetRole.getPermissions() : List.of());
         return permissions.stream()
-            .filter(p -> RoleAuthorization.roleGrants(performerRole, p) || existing.contains(p))
-            .collect(Collectors.toCollection(ArrayList::new));
+                .filter(p -> RoleAuthorization.roleGrants(performerRole, p) || existing.contains(p))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     private void ensureRoleNameAvailable(Server server, String roleName, String excludeRoleId) {
@@ -212,8 +204,8 @@ public class RoleService {
         }
 
         boolean exists = excludeRoleId != null && !excludeRoleId.isBlank()
-                         ? staffRoleRepository.existsByNameIgnoreCaseExcludingId(server, roleName, excludeRoleId)
-                         : staffRoleRepository.existsByNameIgnoreCase(server, roleName);
+                ? staffRoleRepository.existsByNameIgnoreCaseExcludingId(server, roleName, excludeRoleId)
+                : staffRoleRepository.existsByNameIgnoreCase(server, roleName);
         if (exists) {
             throw new ConflictException("A role with this name already exists");
         }
@@ -239,9 +231,9 @@ public class RoleService {
 
         Set<String> validPermissions = new HashSet<>(permissionService.getGrantablePermissionIds(server));
         List<String> filteredPermissions = request.permissions()
-            .stream()
-            .filter(validPermissions::contains)
-            .toList();
+                .stream()
+                .filter(validPermissions::contains)
+                .toList();
         if (performerRole != null) {
             filteredPermissions = filterToGrantableOrExisting(performerRole, updated, filteredPermissions);
         }
@@ -294,8 +286,8 @@ public class RoleService {
 
             List<String> ids = items.stream().map(ReorderRolesRequest.RoleOrderItem::id).toList();
             Map<String, StaffRole> rolesById = staffRoleRepository.findByIds(server, ids)
-                .stream()
-                .collect(Collectors.toMap(StaffRole::getId, Function.identity()));
+                    .stream()
+                    .collect(Collectors.toMap(StaffRole::getId, Function.identity()));
 
             for (ReorderRolesRequest.RoleOrderItem item : items) {
                 StaffRole targetRole = rolesById.get(item.id());
@@ -321,74 +313,74 @@ public class RoleService {
 
     public void createDefaultRoles(Server server) {
         List<String> allPunishmentPerms = permissionService.getPunishmentPermissions(server)
-            .stream()
-            .map(Permission::id)
-            .toList();
+                .stream()
+                .map(Permission::id)
+                .toList();
         List<String> moderatorPunishmentPerms = allPunishmentPerms.stream()
-            .filter(p -> !p.contains("blacklist"))
-            .toList();
+                .filter(p -> !p.contains("blacklist"))
+                .toList();
 
         List<String> superAdminPerms = new ArrayList<>(permissionService.getGrantablePermissionIds(server));
 
         List<String> adminPerms = new ArrayList<>(List.of(
-            PermissionService.ADMIN_SETTINGS_VIEW, PermissionService.ADMIN_STAFF_MANAGE, PermissionService.ADMIN_AUDIT_VIEW,
-            PermissionService.PUNISHMENT_VIEW, PermissionService.PUNISHMENT_MODIFY,
-            PermissionService.TICKET_VIEW_ALL, PermissionService.TICKET_REPLY_ALL, PermissionService.APPEAL_MODIFY, PermissionService.TICKET_CLOSE_ALL,
-            PermissionService.STAFF_CHAT_TOGGLE, PermissionService.STAFF_CHAT_CLEAR, PermissionService.STAFF_CHAT_SLOW,
-            PermissionService.STAFF_MAINTENANCE, PermissionService.STAFF_MODACTIONS,
-            PermissionService.STAFF_INTERCEPT, PermissionService.STAFF_CHATLOGS, PermissionService.STAFF_COMMANDLOGS
+                PermissionService.ADMIN_SETTINGS_VIEW, PermissionService.ADMIN_STAFF_MANAGE, PermissionService.ADMIN_AUDIT_VIEW,
+                PermissionService.PUNISHMENT_VIEW, PermissionService.PUNISHMENT_MODIFY,
+                PermissionService.TICKET_VIEW_ALL, PermissionService.TICKET_REPLY_ALL, PermissionService.APPEAL_MODIFY, PermissionService.TICKET_CLOSE_ALL,
+                PermissionService.STAFF_CHAT_TOGGLE, PermissionService.STAFF_CHAT_CLEAR, PermissionService.STAFF_CHAT_SLOW,
+                PermissionService.STAFF_MAINTENANCE, PermissionService.STAFF_MODACTIONS,
+                PermissionService.STAFF_INTERCEPT, PermissionService.STAFF_CHATLOGS, PermissionService.STAFF_COMMANDLOGS
         ));
         adminPerms.addAll(allPunishmentPerms);
 
         List<String> moderatorPerms = new ArrayList<>(List.of(
-            PermissionService.PUNISHMENT_VIEW, PermissionService.PUNISHMENT_MODIFY,
-            PermissionService.TICKET_VIEW_ALL, PermissionService.TICKET_REPLY_ALL, PermissionService.APPEAL_MODIFY, PermissionService.TICKET_CLOSE_ALL,
-            PermissionService.STAFF_MODACTIONS,
-            PermissionService.STAFF_CHATLOGS, PermissionService.STAFF_COMMANDLOGS
+                PermissionService.PUNISHMENT_VIEW, PermissionService.PUNISHMENT_MODIFY,
+                PermissionService.TICKET_VIEW_ALL, PermissionService.TICKET_REPLY_ALL, PermissionService.APPEAL_MODIFY, PermissionService.TICKET_CLOSE_ALL,
+                PermissionService.STAFF_MODACTIONS,
+                PermissionService.STAFF_CHATLOGS, PermissionService.STAFF_COMMANDLOGS
         ));
         moderatorPerms.addAll(moderatorPunishmentPerms);
 
         List<StaffRole> defaultRoles = List.of(
-            StaffRole.builder()
-                .id("super-admin")
-                .name("Super Admin")
-                .description("Full access to all features and settings")
-                .permissions(superAdminPerms)
-                .isDefault(true)
-                .order(0)
-                .createdAt(new Date())
-                .updatedAt(new Date())
-                .build(),
-            StaffRole.builder()
-                .id("admin")
-                .name("Admin")
-                .description("Administrative access with some restrictions")
-                .permissions(adminPerms)
-                .isDefault(true)
-                .order(1)
-                .createdAt(new Date())
-                .updatedAt(new Date())
-                .build(),
-            StaffRole.builder()
-                .id("moderator")
-                .name("Moderator")
-                .description("Moderation permissions for punishments and tickets")
-                .permissions(moderatorPerms)
-                .isDefault(true)
-                .order(2)
-                .createdAt(new Date())
-                .updatedAt(new Date())
-                .build(),
-            StaffRole.builder()
-                .id("helper")
-                .name("Helper")
-                .description("Basic support permissions")
-                .permissions(new ArrayList<>(List.of(PermissionService.TICKET_VIEW_ALL, PermissionService.TICKET_REPLY_ALL, PermissionService.APPEAL_MODIFY)))
-                .isDefault(true)
-                .order(3)
-                .createdAt(new Date())
-                .updatedAt(new Date())
-                .build()
+                StaffRole.builder()
+                        .id("super-admin")
+                        .name("Super Admin")
+                        .description("Full access to all features and settings")
+                        .permissions(superAdminPerms)
+                        .isDefault(true)
+                        .order(0)
+                        .createdAt(new Date())
+                        .updatedAt(new Date())
+                        .build(),
+                StaffRole.builder()
+                        .id("admin")
+                        .name("Admin")
+                        .description("Administrative access with some restrictions")
+                        .permissions(adminPerms)
+                        .isDefault(true)
+                        .order(1)
+                        .createdAt(new Date())
+                        .updatedAt(new Date())
+                        .build(),
+                StaffRole.builder()
+                        .id("moderator")
+                        .name("Moderator")
+                        .description("Moderation permissions for punishments and tickets")
+                        .permissions(moderatorPerms)
+                        .isDefault(true)
+                        .order(2)
+                        .createdAt(new Date())
+                        .updatedAt(new Date())
+                        .build(),
+                StaffRole.builder()
+                        .id("helper")
+                        .name("Helper")
+                        .description("Basic support permissions")
+                        .permissions(new ArrayList<>(List.of(PermissionService.TICKET_VIEW_ALL, PermissionService.TICKET_REPLY_ALL, PermissionService.APPEAL_MODIFY)))
+                        .isDefault(true)
+                        .order(3)
+                        .createdAt(new Date())
+                        .updatedAt(new Date())
+                        .build()
         );
 
         for (StaffRole role : defaultRoles) {

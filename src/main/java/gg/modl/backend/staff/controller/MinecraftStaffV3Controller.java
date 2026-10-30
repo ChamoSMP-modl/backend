@@ -8,24 +8,15 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.staff.dto.response.MinecraftStaffPermissionsResponse;
 import gg.modl.backend.staff.dto.response.MinecraftStaffSummaryResponse;
 import gg.modl.backend.staff.service.MinecraftStaffService;
-import gg.modl.proto.modl.v1.MinecraftStaffOperationResponse;
-import gg.modl.proto.modl.v1.StaffDisconnectRequest;
-import gg.modl.proto.modl.v1.StaffListResponse;
-import gg.modl.proto.modl.v1.StaffPermissionsListResponse;
-import gg.modl.proto.modl.v1.UpdateStaffRoleRequest;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(RESTMappingV3.PREFIX_MINECRAFT + "/staff")
@@ -43,8 +34,8 @@ public class MinecraftStaffV3Controller {
     }
 
     @GetMapping(
-        value = "/permissions",
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+            value = "/permissions",
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
     )
     public ResponseEntity<StaffPermissionsListResponse> getStaffPermissions(HttpServletRequest request) {
         Server server = RequestUtil.getRequestServer(request);
@@ -54,14 +45,14 @@ public class MinecraftStaffV3Controller {
     }
 
     @PatchMapping(
-        value = "/{id}/role",
-        consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+            value = "/{id}/role",
+            consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
     )
     public ResponseEntity<MinecraftStaffOperationResponse> updateStaffRole(
-        @PathVariable String id,
-        @RequestBody @Valid UpdateStaffRoleRequest request,
-        HttpServletRequest httpRequest
+            @PathVariable String id,
+            @RequestBody @Valid UpdateStaffRoleRequest request,
+            HttpServletRequest httpRequest
     ) {
         Server server = RequestUtil.getRequestServer(httpRequest);
         String actingStaffId = RequestUtil.getActingStaffId(httpRequest);
@@ -75,13 +66,13 @@ public class MinecraftStaffV3Controller {
     }
 
     @PostMapping(
-        value = "/disconnect",
-        consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+            value = "/disconnect",
+            consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
     )
     public ResponseEntity<MinecraftStaffOperationResponse> staffDisconnect(
-        @RequestBody @Valid StaffDisconnectRequest request,
-        HttpServletRequest httpRequest
+            @RequestBody @Valid StaffDisconnectRequest request,
+            HttpServletRequest httpRequest
     ) {
         Server server = RequestUtil.getRequestServer(httpRequest);
 
@@ -94,13 +85,13 @@ public class MinecraftStaffV3Controller {
 
     private ResponseEntity<MinecraftStaffOperationResponse> operationResponse(HttpStatus httpStatus, boolean success, String message) {
         MinecraftStaffOperationResponse.Builder response = MinecraftStaffOperationResponse.newBuilder()
-            .setStatus(httpStatus.value())
-            .setSuccess(success);
+                .setStatus(httpStatus.value())
+                .setSuccess(success);
         if (message != null) {
             response.setMessage(message);
         }
         return ResponseEntity.status(httpStatus)
-            .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-            .body(response.build());
+                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                .body(response.build());
     }
 }

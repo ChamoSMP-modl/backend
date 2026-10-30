@@ -7,25 +7,12 @@ import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
 import gg.modl.backend.realtime.publish.RealtimeEventPublisher;
 import gg.modl.backend.server.data.Server;
-import gg.modl.proto.modl.v1.CreateCardRequest;
-import gg.modl.proto.modl.v1.HomepageCardMutationResponse;
-import gg.modl.proto.modl.v1.PanelHomepageCardResponse;
-import gg.modl.proto.modl.v1.PanelHomepageCardsResponse;
-import gg.modl.proto.modl.v1.PanelResource;
-import gg.modl.proto.modl.v1.ReorderRequest;
-import gg.modl.proto.modl.v1.UpdateCardRequest;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_HOMEPAGE_CARDS)
@@ -44,8 +31,8 @@ public class PanelHomepageCardController {
 
     @PostMapping
     public ResponseEntity<PanelHomepageCardResponse> createCard(
-        @RequestBody CreateCardRequest createRequest,
-        HttpServletRequest request
+            @RequestBody CreateCardRequest createRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         HomepageCard card = cardService.createCard(server, createRequest);
@@ -55,23 +42,23 @@ public class PanelHomepageCardController {
 
     @PutMapping("/{id}")
     public ResponseEntity<PanelHomepageCardResponse> updateCard(
-        @PathVariable String id,
-        @RequestBody UpdateCardRequest updateRequest,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody UpdateCardRequest updateRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         return cardService.updateCard(server, id, updateRequest)
-            .map(card -> {
-                publisher.invalidatePanel(server, PanelResource.PANEL_RESOURCE_HOMEPAGE, card.getId());
-                return ResponseEntity.ok(mapper.toPanelCardResponse(card));
-            })
-            .orElseGet(() -> ResponseEntity.notFound().build());
+                .map(card -> {
+                    publisher.invalidatePanel(server, PanelResource.PANEL_RESOURCE_HOMEPAGE, card.getId());
+                    return ResponseEntity.ok(mapper.toPanelCardResponse(card));
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<HomepageCardMutationResponse> deleteCard(
-        @PathVariable String id,
-        HttpServletRequest request
+            @PathVariable String id,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         boolean deleted = cardService.deleteCard(server, id);
@@ -84,8 +71,8 @@ public class PanelHomepageCardController {
 
     @PutMapping("/reorder")
     public ResponseEntity<HomepageCardMutationResponse> reorderCards(
-        @RequestBody ReorderRequest reorderRequest,
-        HttpServletRequest request
+            @RequestBody ReorderRequest reorderRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         cardService.reorderCards(server, reorderRequest.getIdsList());

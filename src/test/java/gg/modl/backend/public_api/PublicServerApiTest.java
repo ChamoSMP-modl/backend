@@ -15,6 +15,7 @@ class PublicServerApiTest {
 
     @Disabled("Skipped: would create a new server registration on staging")
     @Test
-    void registerServer() throws Exception {}
+    void registerServer() throws Exception {
+    }
 }
 

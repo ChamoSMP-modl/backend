@@ -5,5 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record AcceptInvitationRequest(
-    @NotBlank @Size(max = RequestValidationLimits.STAFF_TOKEN_MAX_LENGTH) String token
-) {}
+        @NotBlank @Size(max = RequestValidationLimits.STAFF_TOKEN_MAX_LENGTH) String token
+) {
+}

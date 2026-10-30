@@ -1,11 +1,5 @@
 package gg.modl.backend.ticket.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoValidationSupport.error;
-import static gg.modl.backend.infrastructure.proto.ProtoValidationSupport.fieldViolation;
-import static gg.modl.backend.infrastructure.proto.ProtoValidationSupport.isBlank;
-import static gg.modl.backend.infrastructure.proto.ProtoValidationSupport.validationError;
-
-import gg.modl.backend.ai.service.AITicketAnalysisService;
 import gg.modl.backend.infrastructure.proto.ProtobufMediaTypes;
 import gg.modl.backend.infrastructure.rest.RESTMappingV3;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
@@ -18,218 +12,31 @@ import gg.modl.backend.ticket.dto.response.MinecraftPlayerTicketView;
 import gg.modl.backend.ticket.dto.response.MinecraftTicketListItemView;
 import gg.modl.backend.ticket.dto.response.MinecraftTicketLookupView;
 import gg.modl.backend.ticket.service.MinecraftTicketService;
-import gg.modl.proto.modl.v1.FieldViolation;
-import gg.modl.proto.modl.v1.MinecraftClaimTicketRequest;
-import gg.modl.proto.modl.v1.MinecraftCreateTicketRequest;
-import gg.modl.proto.modl.v1.MinecraftTicketsByIdsRequest;
-import gg.modl.proto.modl.v1.TicketsResponse;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static gg.modl.backend.infrastructure.proto.ProtoValidationSupport.*;
 
 @RestController
 @RequestMapping(RESTMappingV3.PREFIX_MINECRAFT + "/tickets")
 @RequiredArgsConstructor
 public class MinecraftTicketsV3Controller {
     private final MinecraftTicketService minecraftTicketService;
-    private final AITicketAnalysisService aiTicketAnalysisService;
-
-    @PostMapping(
-        consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
-    )
-    public ResponseEntity<?> createTicket(
-        @RequestBody @Valid MinecraftCreateTicketRequest request,
-        HttpServletRequest httpRequest
-    ) {
-        List<FieldViolation> violations = validateCreateTicketRequest(request);
-        if (!violations.isEmpty()) {
-            return validationError(violations);
-        }
-
-        Server server = RequestUtil.getRequestServer(httpRequest);
-        Ticket ticket = minecraftTicketService.createMinecraftTicket(
-            server,
-            MinecraftTicketProtoMapper.toCreateTicketRequest(request)
-        );
-
-        if (TicketCategory.fromCanonicalId(request.getType()) == TicketCategory.CHAT
-            && request.getChatMessagesCount() > 0) {
-            aiTicketAnalysisService.analyzeTicketAsync(server, ticket.getId());
-        }
-
-        return ResponseEntity.ok(MinecraftTicketProtoMapper.toCreateTicketResponse(
-            200,
-            true,
-            ticket.getId(),
-            "Ticket created successfully"
-        ));
-    }
-
-    @PostMapping(
-        value = "/unfinished",
-        consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
-    )
-    public ResponseEntity<?> createUnfinishedTicket(
-        @RequestBody @Valid MinecraftCreateTicketRequest request,
-        HttpServletRequest httpRequest
-    ) {
-        List<FieldViolation> violations = validateCreateTicketRequest(request);
-        if (!violations.isEmpty()) {
-            return validationError(violations);
-        }
-
-        Server server = RequestUtil.getRequestServer(httpRequest);
-        Ticket ticket = minecraftTicketService.createUnfinishedMinecraftTicket(
-            server,
-            MinecraftTicketProtoMapper.toCreateTicketRequest(request)
-        );
-
-        return ResponseEntity.ok(MinecraftTicketProtoMapper.toCreateTicketResponse(
-            200,
-            true,
-            ticket.getId(),
-            "Ticket draft created - complete the form on the panel"
-        ));
-    }
-
-    @GetMapping(produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)
-    public ResponseEntity<?> getAllTickets(
-        @RequestParam(required = false) String status,
-        @RequestParam(required = false) String type,
-        @RequestParam(defaultValue = "50") int limit,
-        HttpServletRequest httpRequest
-    ) {
-        if (limit < RequestValidationLimits.PAGINATION_LIMIT_MIN || limit > RequestValidationLimits.PAGINATION_LIMIT_MAX) {
-            return error(HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", "Invalid data provided.");
-        }
-
-        Server server = RequestUtil.getRequestServer(httpRequest);
-        List<MinecraftTicketListItemView> tickets = minecraftTicketService.getMinecraftTickets(server, status, type, limit)
-            .stream()
-            .map(minecraftTicketService::toTicketListItem)
-            .toList();
-
-        return ResponseEntity.ok(MinecraftTicketProtoMapper.toTicketsResponse(200, tickets));
-    }
-
-    @GetMapping(
-        value = "/player/{uuid}",
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
-    )
-    public ResponseEntity<TicketsResponse> getPlayerTickets(
-        @PathVariable String uuid,
-        HttpServletRequest httpRequest
-    ) {
-        Server server = RequestUtil.getRequestServer(httpRequest);
-        List<MinecraftPlayerTicketView> tickets = minecraftTicketService.getMinecraftTicketsByCreator(server, uuid, 50)
-            .stream()
-            .map(minecraftTicketService::toPlayerTicketItem)
-            .toList();
-
-        return ResponseEntity.ok(MinecraftTicketProtoMapper.toPlayerTicketsResponse(200, tickets));
-    }
-
-    @GetMapping(
-        value = "/{id}",
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
-    )
-    public ResponseEntity<?> getTicket(
-        @PathVariable String id,
-        HttpServletRequest httpRequest
-    ) {
-        Server server = RequestUtil.getRequestServer(httpRequest);
-        Ticket ticket = minecraftTicketService.getMinecraftTicket(server, id).orElse(null);
-        if (ticket == null) {
-            return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Ticket not found");
-        }
-
-        return ResponseEntity.ok(MinecraftTicketProtoMapper.toTicketDetailResponse(
-            200,
-            minecraftTicketService.toTicketDetail(ticket)
-        ));
-    }
-
-    @PostMapping(
-        value = "/{id}/claim",
-        consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
-    )
-    public ResponseEntity<?> claimTicket(
-        @PathVariable String id,
-        @RequestBody @Valid MinecraftClaimTicketRequest request,
-        HttpServletRequest httpRequest
-    ) {
-        List<FieldViolation> violations = validateClaimTicketRequest(request);
-        if (!violations.isEmpty()) {
-            return validationError(violations);
-        }
-
-        Server server = RequestUtil.getRequestServer(httpRequest);
-        MinecraftTicketService.MinecraftTicketClaimResult result = minecraftTicketService.claimMinecraftTicket(
-            server,
-            id,
-            MinecraftTicketProtoMapper.toClaimTicketRequest(request)
-        );
-
-        return switch (result.status()) {
-            case NOT_FOUND -> error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Ticket not found");
-            case ALREADY_LINKED -> error(HttpStatus.CONFLICT, "ALREADY_LINKED",
-                "Ticket is already linked to a Minecraft account");
-            case SUCCESS -> ResponseEntity.ok(MinecraftTicketProtoMapper.toClaimTicketSuccess(
-                "Ticket successfully linked to your account",
-                id,
-                result.ticket() != null ? result.ticket().getSubject() : null
-            ));
-        };
-    }
-
-    @PostMapping(
-        value = "/by-ids",
-        consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
-    )
-    public ResponseEntity<?> getTicketsByIds(
-        @RequestBody(required = false) @Valid MinecraftTicketsByIdsRequest request,
-        HttpServletRequest httpRequest
-    ) {
-        MinecraftTicketsByIdsRequest effectiveRequest = request != null
-            ? request
-            : MinecraftTicketsByIdsRequest.getDefaultInstance();
-        if (effectiveRequest.getIdsCount() == 0) {
-            return ResponseEntity.ok(MinecraftTicketProtoMapper.toLookupTicketsResponse(200, List.of()));
-        }
-        if (!isValidTicketIdsRequest(effectiveRequest)) {
-            return error(HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", "Invalid data provided.");
-        }
-
-        Server server = RequestUtil.getRequestServer(httpRequest);
-        List<MinecraftTicketLookupView> tickets = minecraftTicketService.getMinecraftTicketsByIds(server, effectiveRequest.getIdsList())
-            .stream()
-            .map(minecraftTicketService::toTicketLookupItem)
-            .toList();
-
-        return ResponseEntity.ok(MinecraftTicketProtoMapper.toLookupTicketsResponse(200, tickets));
-    }
 
     private static boolean isValidTicketIdsRequest(MinecraftTicketsByIdsRequest request) {
         if (request.getIdsCount() > RequestValidationLimits.TICKET_IDS_MAX_ENTRIES) {
             return false;
         }
         return request.getIdsList().stream()
-            .allMatch(id -> id != null && !id.isBlank() && id.length() <= RequestValidationLimits.ID_MAX_LENGTH);
+                .allMatch(id -> id != null && !id.isBlank() && id.length() <= RequestValidationLimits.ID_MAX_LENGTH);
     }
 
     private static List<FieldViolation> validateCreateTicketRequest(MinecraftCreateTicketRequest request) {
@@ -253,7 +60,7 @@ public class MinecraftTicketsV3Controller {
             violations.add(fieldViolation("reported_player_uuid", "reported_player_uuid must be a valid UUID"));
         }
         if (request.hasReportedPlayerName()
-            && request.getReportedPlayerName().length() > RequestValidationLimits.LOG_USERNAME_MAX_LENGTH) {
+                && request.getReportedPlayerName().length() > RequestValidationLimits.LOG_USERNAME_MAX_LENGTH) {
             violations.add(fieldViolation("reported_player_name", "reported_player_name is too long"));
         }
         if (request.getChatMessagesCount() > RequestValidationLimits.MC_TICKET_CHAT_MESSAGES_MAX_ENTRIES) {
@@ -274,11 +81,11 @@ public class MinecraftTicketsV3Controller {
             }
         }
         if (request.hasCreatedServer()
-            && request.getCreatedServer().length() > RequestValidationLimits.MC_CREATE_TICKET_SERVER_MAX_LENGTH) {
+                && request.getCreatedServer().length() > RequestValidationLimits.MC_CREATE_TICKET_SERVER_MAX_LENGTH) {
             violations.add(fieldViolation("created_server", "created_server is too long"));
         }
         if (request.hasReplayUrl()
-            && request.getReplayUrl().length() > RequestValidationLimits.MC_CREATE_TICKET_REPLAY_URL_MAX_LENGTH) {
+                && request.getReplayUrl().length() > RequestValidationLimits.MC_CREATE_TICKET_REPLAY_URL_MAX_LENGTH) {
             violations.add(fieldViolation("replay_url", "replay_url is too long"));
         }
         return violations;
@@ -302,6 +109,184 @@ public class MinecraftTicketsV3Controller {
         } catch (IllegalArgumentException ex) {
             return false;
         }
+    }
+
+    @PostMapping(
+            consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+    )
+    public ResponseEntity<?> createTicket(
+            @RequestBody @Valid MinecraftCreateTicketRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        List<FieldViolation> violations = validateCreateTicketRequest(request);
+        if (!violations.isEmpty()) {
+            return validationError(violations);
+        }
+
+        Server server = RequestUtil.getRequestServer(httpRequest);
+        Ticket ticket = minecraftTicketService.createMinecraftTicket(
+                server,
+                MinecraftTicketProtoMapper.toCreateTicketRequest(request)
+        );
+
+        if (TicketCategory.fromCanonicalId(request.getType()) == TicketCategory.CHAT) {
+            request.getChatMessagesCount();
+        }
+
+        return ResponseEntity.ok(MinecraftTicketProtoMapper.toCreateTicketResponse(
+                200,
+                true,
+                ticket.getId(),
+                "Ticket created successfully"
+        ));
+    }
+
+    @PostMapping(
+            value = "/unfinished",
+            consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+    )
+    public ResponseEntity<?> createUnfinishedTicket(
+            @RequestBody @Valid MinecraftCreateTicketRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        List<FieldViolation> violations = validateCreateTicketRequest(request);
+        if (!violations.isEmpty()) {
+            return validationError(violations);
+        }
+
+        Server server = RequestUtil.getRequestServer(httpRequest);
+        Ticket ticket = minecraftTicketService.createUnfinishedMinecraftTicket(
+                server,
+                MinecraftTicketProtoMapper.toCreateTicketRequest(request)
+        );
+
+        return ResponseEntity.ok(MinecraftTicketProtoMapper.toCreateTicketResponse(
+                200,
+                true,
+                ticket.getId(),
+                "Ticket draft created - complete the form on the panel"
+        ));
+    }
+
+    @GetMapping(produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE)
+    public ResponseEntity<?> getAllTickets(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String type,
+            @RequestParam(defaultValue = "50") int limit,
+            HttpServletRequest httpRequest
+    ) {
+        if (limit < RequestValidationLimits.PAGINATION_LIMIT_MIN || limit > RequestValidationLimits.PAGINATION_LIMIT_MAX) {
+            return error(HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", "Invalid data provided.");
+        }
+
+        Server server = RequestUtil.getRequestServer(httpRequest);
+        List<MinecraftTicketListItemView> tickets = minecraftTicketService.getMinecraftTickets(server, status, type, limit)
+                .stream()
+                .map(minecraftTicketService::toTicketListItem)
+                .toList();
+
+        return ResponseEntity.ok(MinecraftTicketProtoMapper.toTicketsResponse(200, tickets));
+    }
+
+    @GetMapping(
+            value = "/player/{uuid}",
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+    )
+    public ResponseEntity<TicketsResponse> getPlayerTickets(
+            @PathVariable String uuid,
+            HttpServletRequest httpRequest
+    ) {
+        Server server = RequestUtil.getRequestServer(httpRequest);
+        List<MinecraftPlayerTicketView> tickets = minecraftTicketService.getMinecraftTicketsByCreator(server, uuid, 50)
+                .stream()
+                .map(minecraftTicketService::toPlayerTicketItem)
+                .toList();
+
+        return ResponseEntity.ok(MinecraftTicketProtoMapper.toPlayerTicketsResponse(200, tickets));
+    }
+
+    @GetMapping(
+            value = "/{id}",
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+    )
+    public ResponseEntity<?> getTicket(
+            @PathVariable String id,
+            HttpServletRequest httpRequest
+    ) {
+        Server server = RequestUtil.getRequestServer(httpRequest);
+        Ticket ticket = minecraftTicketService.getMinecraftTicket(server, id).orElse(null);
+        if (ticket == null) {
+            return error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Ticket not found");
+        }
+
+        return ResponseEntity.ok(MinecraftTicketProtoMapper.toTicketDetailResponse(
+                200,
+                minecraftTicketService.toTicketDetail(ticket)
+        ));
+    }
+
+    @PostMapping(
+            value = "/{id}/claim",
+            consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+    )
+    public ResponseEntity<?> claimTicket(
+            @PathVariable String id,
+            @RequestBody @Valid MinecraftClaimTicketRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        List<FieldViolation> violations = validateClaimTicketRequest(request);
+        if (!violations.isEmpty()) {
+            return validationError(violations);
+        }
+
+        Server server = RequestUtil.getRequestServer(httpRequest);
+        MinecraftTicketService.MinecraftTicketClaimResult result = minecraftTicketService.claimMinecraftTicket(
+                server,
+                id,
+                MinecraftTicketProtoMapper.toClaimTicketRequest(request)
+        );
+
+        return switch (result.status()) {
+            case NOT_FOUND -> error(HttpStatus.NOT_FOUND, "NOT_FOUND", "Ticket not found");
+            case ALREADY_LINKED -> error(HttpStatus.CONFLICT, "ALREADY_LINKED",
+                    "Ticket is already linked to a Minecraft account");
+            case SUCCESS -> ResponseEntity.ok(MinecraftTicketProtoMapper.toClaimTicketSuccess(
+                    "Ticket successfully linked to your account",
+                    id,
+                    result.ticket() != null ? result.ticket().getSubject() : null
+            ));
+        };
+    }
+
+    @PostMapping(
+            value = "/by-ids",
+            consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+    )
+    public ResponseEntity<?> getTicketsByIds(
+            @RequestBody(required = false) @Valid MinecraftTicketsByIdsRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        MinecraftTicketsByIdsRequest effectiveRequest = request != null
+                ? request
+                : MinecraftTicketsByIdsRequest.getDefaultInstance();
+        if (effectiveRequest.getIdsCount() == 0) {
+            return ResponseEntity.ok(MinecraftTicketProtoMapper.toLookupTicketsResponse(200, List.of()));
+        }
+        if (!isValidTicketIdsRequest(effectiveRequest)) {
+            return error(HttpStatus.BAD_REQUEST, "INVALID_ARGUMENT", "Invalid data provided.");
+        }
+
+        Server server = RequestUtil.getRequestServer(httpRequest);
+        List<MinecraftTicketLookupView> tickets = minecraftTicketService.getMinecraftTicketsByIds(server, effectiveRequest.getIdsList())
+                .stream()
+                .map(minecraftTicketService::toTicketLookupItem)
+                .toList();
+
+        return ResponseEntity.ok(MinecraftTicketProtoMapper.toLookupTicketsResponse(200, tickets));
     }
 
 }

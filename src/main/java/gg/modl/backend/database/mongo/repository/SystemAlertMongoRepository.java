@@ -7,15 +7,16 @@ import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.AbstractGlobalMongoRepository;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.SystemAlertFields;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class SystemAlertMongoRepository extends AbstractGlobalMongoRepository<SystemAlert> {
@@ -29,12 +30,12 @@ public class SystemAlertMongoRepository extends AbstractGlobalMongoRepository<Sy
 
     public List<SystemAlert> findVisible(Date now) {
         Criteria notExpired = new Criteria().orOperator(
-            Criteria.where(SystemAlertFields.EXPIRES_AT).is(null),
-            Criteria.where(SystemAlertFields.EXPIRES_AT).exists(false),
-            Criteria.where(SystemAlertFields.EXPIRES_AT).gt(now)
+                Criteria.where(SystemAlertFields.EXPIRES_AT).is(null),
+                Criteria.where(SystemAlertFields.EXPIRES_AT).exists(false),
+                Criteria.where(SystemAlertFields.EXPIRES_AT).gt(now)
         );
         Query query = Query.query(notExpired)
-            .with(Sort.by(Sort.Direction.DESC, SystemAlertFields.CREATED_AT));
+                .with(Sort.by(Sort.Direction.DESC, SystemAlertFields.CREATED_AT));
         return find(query);
     }
 
@@ -43,18 +44,18 @@ public class SystemAlertMongoRepository extends AbstractGlobalMongoRepository<Sy
     }
 
     public Optional<SystemAlert> updateAlert(
-        String id,
-        String message,
-        SystemAlertSeverity severity,
-        SystemAlertAudience audience,
-        boolean expiresAtPresent,
-        Date expiresAt,
-        Date updatedAt,
-        String updatedBy
+            String id,
+            String message,
+            SystemAlertSeverity severity,
+            SystemAlertAudience audience,
+            boolean expiresAtPresent,
+            Date expiresAt,
+            Date updatedAt,
+            String updatedBy
     ) {
         Update update = new Update()
-            .set(SystemAlertFields.UPDATED_AT, updatedAt)
-            .set(SystemAlertFields.UPDATED_BY, updatedBy);
+                .set(SystemAlertFields.UPDATED_AT, updatedAt)
+                .set(SystemAlertFields.UPDATED_BY, updatedBy);
         if (message != null) {
             update.set(SystemAlertFields.MESSAGE, message);
         }
@@ -73,9 +74,9 @@ public class SystemAlertMongoRepository extends AbstractGlobalMongoRepository<Sy
         }
 
         SystemAlert updated = findAndModify(
-            Query.query(Criteria.where(SystemAlertFields.ID).is(id)),
-            update,
-            FindAndModifyOptions.options().returnNew(true)
+                Query.query(Criteria.where(SystemAlertFields.ID).is(id)),
+                update,
+                FindAndModifyOptions.options().returnNew(true)
         );
         return Optional.ofNullable(updated);
     }

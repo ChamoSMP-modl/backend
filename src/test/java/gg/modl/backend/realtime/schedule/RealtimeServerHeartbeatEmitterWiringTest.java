@@ -1,14 +1,14 @@
 package gg.modl.backend.realtime.schedule;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.realtime.state.RealtimeConnectionRegistry;
 import gg.modl.backend.realtime.transport.RealtimeCodec;
 import gg.modl.backend.realtime.transport.RealtimeSessionOperations;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 
 /**
  * The emitter carries a second, package-private constructor for injecting a delivery executor in

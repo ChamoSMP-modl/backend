@@ -1,42 +1,34 @@
 package gg.modl.backend.ticket.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import gg.modl.backend.ai.service.AITicketAnalysisService;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.ticket.data.Ticket;
-import gg.modl.backend.ticket.dto.request.AssignReportRequest;
-import gg.modl.backend.ticket.dto.request.DismissReportRequest;
-import gg.modl.backend.ticket.dto.request.MinecraftClaimTicketRequest;
-import gg.modl.backend.ticket.dto.request.MinecraftCreateTicketRequest;
-import gg.modl.backend.ticket.dto.request.MinecraftTicketsByIdsRequest;
-import gg.modl.backend.ticket.dto.request.ResolveReportRequest;
+import gg.modl.backend.ticket.dto.request.*;
 import gg.modl.backend.ticket.dto.response.MinecraftTicketDetailView;
 import gg.modl.backend.ticket.dto.response.MinecraftV1Response;
 import gg.modl.backend.ticket.service.MinecraftTicketService;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 class MinecraftTicketV1EnvelopeGoldenTest {
 
     private static final ObjectMapper JSON = new ObjectMapper()
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
 
     private MinecraftTicketService ticketService;
-    private AITicketAnalysisService aiService;
     private MinecraftTicketsController ticketsController;
     private MinecraftReportsController reportsController;
     private HttpServletRequest request;
@@ -44,8 +36,7 @@ class MinecraftTicketV1EnvelopeGoldenTest {
     @BeforeEach
     void setUp() {
         ticketService = mock(MinecraftTicketService.class);
-        aiService = mock(AITicketAnalysisService.class);
-        ticketsController = new MinecraftTicketsController(ticketService, aiService);
+        ticketsController = new MinecraftTicketsController(ticketService);
         reportsController = new MinecraftReportsController(ticketService);
         request = mock(HttpServletRequest.class);
         when(request.getAttribute(RequestAttribute.SERVER)).thenReturn(mock(Server.class));
@@ -62,7 +53,7 @@ class MinecraftTicketV1EnvelopeGoldenTest {
         ResponseEntity<MinecraftV1Response> response = ticketsController.createTicket(createRequest, request);
 
         assertEnvelope(response, 200,
-            "{\"status\":200,\"success\":true,\"ticketId\":\"ticket-1\",\"message\":\"Ticket created successfully\"}");
+                "{\"status\":200,\"success\":true,\"ticketId\":\"ticket-1\",\"message\":\"Ticket created successfully\"}");
     }
 
     @Test
@@ -75,8 +66,8 @@ class MinecraftTicketV1EnvelopeGoldenTest {
         ResponseEntity<MinecraftV1Response> response = ticketsController.createUnfinishedTicket(createRequest, request);
 
         assertEnvelope(response, 200,
-            "{\"status\":200,\"success\":true,\"ticketId\":\"ticket-1\","
-                + "\"message\":\"Ticket draft created - complete the form on the panel\"}");
+                "{\"status\":200,\"success\":true,\"ticketId\":\"ticket-1\","
+                        + "\"message\":\"Ticket draft created - complete the form on the panel\"}");
     }
 
     @Test
@@ -93,8 +84,8 @@ class MinecraftTicketV1EnvelopeGoldenTest {
         Ticket ticket = mock(Ticket.class);
         when(ticketService.getMinecraftTicket(any(), eq("ticket-1"))).thenReturn(Optional.of(ticket));
         when(ticketService.toTicketDetail(ticket)).thenReturn(new MinecraftTicketDetailView(
-            "ticket-1", null, null, null, null, null, null, null, List.of(), null, null,
-            false, List.of(), List.of(), null));
+                "ticket-1", null, null, null, null, null, null, null, List.of(), null, null,
+                false, List.of(), List.of(), null));
 
         ResponseEntity<MinecraftV1Response> response = ticketsController.getTicket("ticket-1", request);
 
@@ -125,11 +116,11 @@ class MinecraftTicketV1EnvelopeGoldenTest {
     @Test
     void claimTicketNotFoundRendersFrozenEnvelope() throws Exception {
         when(ticketService.claimMinecraftTicket(any(), eq("t-1"), any()))
-            .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
-                MinecraftTicketService.MinecraftTicketClaimStatus.NOT_FOUND, null));
+                .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
+                        MinecraftTicketService.MinecraftTicketClaimStatus.NOT_FOUND, null));
 
         ResponseEntity<MinecraftV1Response> response = ticketsController.claimTicket(
-            "t-1", mock(MinecraftClaimTicketRequest.class), request);
+                "t-1", mock(MinecraftClaimTicketRequest.class), request);
 
         assertEnvelope(response, 404, "{\"status\":404,\"success\":false,\"message\":\"Ticket not found\"}");
     }
@@ -137,14 +128,14 @@ class MinecraftTicketV1EnvelopeGoldenTest {
     @Test
     void claimTicketAlreadyLinkedRendersFrozenConflictEnvelope() throws Exception {
         when(ticketService.claimMinecraftTicket(any(), eq("t-1"), any()))
-            .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
-                MinecraftTicketService.MinecraftTicketClaimStatus.ALREADY_LINKED, null));
+                .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
+                        MinecraftTicketService.MinecraftTicketClaimStatus.ALREADY_LINKED, null));
 
         ResponseEntity<MinecraftV1Response> response = ticketsController.claimTicket(
-            "t-1", mock(MinecraftClaimTicketRequest.class), request);
+                "t-1", mock(MinecraftClaimTicketRequest.class), request);
 
         assertEnvelope(response, 409,
-            "{\"status\":409,\"success\":false,\"message\":\"Ticket is already linked to a Minecraft account\"}");
+                "{\"status\":409,\"success\":false,\"message\":\"Ticket is already linked to a Minecraft account\"}");
     }
 
     @Test
@@ -152,15 +143,15 @@ class MinecraftTicketV1EnvelopeGoldenTest {
         Ticket ticket = mock(Ticket.class);
         when(ticket.getSubject()).thenReturn("Help me");
         when(ticketService.claimMinecraftTicket(any(), eq("t-1"), any()))
-            .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
-                MinecraftTicketService.MinecraftTicketClaimStatus.SUCCESS, ticket));
+                .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
+                        MinecraftTicketService.MinecraftTicketClaimStatus.SUCCESS, ticket));
 
         ResponseEntity<MinecraftV1Response> response = ticketsController.claimTicket(
-            "t-1", mock(MinecraftClaimTicketRequest.class), request);
+                "t-1", mock(MinecraftClaimTicketRequest.class), request);
 
         assertEnvelope(response, 200,
-            "{\"status\":200,\"success\":true,\"message\":\"Ticket successfully linked to your account\","
-                + "\"ticketId\":\"t-1\",\"subject\":\"Help me\"}");
+                "{\"status\":200,\"success\":true,\"message\":\"Ticket successfully linked to your account\","
+                        + "\"ticketId\":\"t-1\",\"subject\":\"Help me\"}");
     }
 
     @Test
@@ -168,15 +159,15 @@ class MinecraftTicketV1EnvelopeGoldenTest {
         Ticket ticket = mock(Ticket.class);
         when(ticket.getSubject()).thenReturn(null);
         when(ticketService.claimMinecraftTicket(any(), eq("t-1"), any()))
-            .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
-                MinecraftTicketService.MinecraftTicketClaimStatus.SUCCESS, ticket));
+                .thenReturn(new MinecraftTicketService.MinecraftTicketClaimResult(
+                        MinecraftTicketService.MinecraftTicketClaimStatus.SUCCESS, ticket));
 
         ResponseEntity<MinecraftV1Response> response = ticketsController.claimTicket(
-            "t-1", mock(MinecraftClaimTicketRequest.class), request);
+                "t-1", mock(MinecraftClaimTicketRequest.class), request);
 
         assertEnvelope(response, 200,
-            "{\"status\":200,\"success\":true,\"message\":\"Ticket successfully linked to your account\","
-                + "\"ticketId\":\"t-1\"}");
+                "{\"status\":200,\"success\":true,\"message\":\"Ticket successfully linked to your account\","
+                        + "\"ticketId\":\"t-1\"}");
     }
 
     @Test
@@ -201,11 +192,11 @@ class MinecraftTicketV1EnvelopeGoldenTest {
     @Test
     void dismissReportSuccessRendersFrozenEnvelope() throws Exception {
         when(ticketService.dismissMinecraftReport(any(), eq("r-1"), any()))
-            .thenReturn(new MinecraftTicketService.ReportOperationResult(
-                MinecraftTicketService.ReportOperationStatus.SUCCESS, null));
+                .thenReturn(new MinecraftTicketService.ReportOperationResult(
+                        MinecraftTicketService.ReportOperationStatus.SUCCESS, null));
 
         ResponseEntity<MinecraftV1Response> response = reportsController.dismissReport(
-            "r-1", mock(DismissReportRequest.class), request);
+                "r-1", mock(DismissReportRequest.class), request);
 
         assertEnvelope(response, 200, "{\"status\":200,\"success\":true,\"message\":\"Report dismissed\"}");
     }
@@ -213,11 +204,11 @@ class MinecraftTicketV1EnvelopeGoldenTest {
     @Test
     void dismissReportNotFoundRendersFrozenErrorBody() throws Exception {
         when(ticketService.dismissMinecraftReport(any(), eq("r-1"), any()))
-            .thenReturn(new MinecraftTicketService.ReportOperationResult(
-                MinecraftTicketService.ReportOperationStatus.NOT_FOUND, null));
+                .thenReturn(new MinecraftTicketService.ReportOperationResult(
+                        MinecraftTicketService.ReportOperationStatus.NOT_FOUND, null));
 
         ResponseEntity<MinecraftV1Response> response = reportsController.dismissReport(
-            "r-1", mock(DismissReportRequest.class), request);
+                "r-1", mock(DismissReportRequest.class), request);
 
         assertEnvelope(response, 404, "{\"status\":404,\"message\":\"Report not found\"}");
     }
@@ -225,11 +216,11 @@ class MinecraftTicketV1EnvelopeGoldenTest {
     @Test
     void resolveReportSuccessRendersFrozenEnvelope() throws Exception {
         when(ticketService.resolveMinecraftReport(any(), eq("r-1"), any()))
-            .thenReturn(new MinecraftTicketService.ReportOperationResult(
-                MinecraftTicketService.ReportOperationStatus.SUCCESS, null));
+                .thenReturn(new MinecraftTicketService.ReportOperationResult(
+                        MinecraftTicketService.ReportOperationStatus.SUCCESS, null));
 
         ResponseEntity<MinecraftV1Response> response = reportsController.resolveReport(
-            "r-1", mock(ResolveReportRequest.class), request);
+                "r-1", mock(ResolveReportRequest.class), request);
 
         assertEnvelope(response, 200, "{\"status\":200,\"success\":true,\"message\":\"Report resolved\"}");
     }
@@ -237,11 +228,11 @@ class MinecraftTicketV1EnvelopeGoldenTest {
     @Test
     void assignReportSuccessRendersFrozenEnvelope() throws Exception {
         when(ticketService.assignMinecraftReport(any(), eq("r-1"), any(AssignReportRequest.class)))
-            .thenReturn(new MinecraftTicketService.ReportOperationResult(
-                MinecraftTicketService.ReportOperationStatus.SUCCESS, null));
+                .thenReturn(new MinecraftTicketService.ReportOperationResult(
+                        MinecraftTicketService.ReportOperationStatus.SUCCESS, null));
 
         ResponseEntity<MinecraftV1Response> response = reportsController.assignReport(
-            "r-1", mock(AssignReportRequest.class), request);
+                "r-1", mock(AssignReportRequest.class), request);
 
         assertEnvelope(response, 200, "{\"status\":200,\"success\":true,\"message\":\"Report assigned\"}");
     }

@@ -1,16 +1,5 @@
 package gg.modl.backend.realtime.transport;
 
-import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.realtime.auth.RealtimeAuthenticator;
 import gg.modl.backend.realtime.auth.RealtimePrincipal;
 import gg.modl.backend.realtime.auth.RealtimeTopicAuthorizer;
@@ -27,11 +16,16 @@ import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.proto.modl.v1.Heartbeat;
 import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class RealtimeWebSocketHandlerCleanupTest {
 
@@ -46,16 +40,16 @@ class RealtimeWebSocketHandlerCleanupTest {
         RealtimeMetrics metrics = new RealtimeMetrics(meterRegistry);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeWebSocketHandler handler = new RealtimeWebSocketHandler(
-            properties,
-            mock(RealtimeCodec.class),
-            mock(RealtimeAuthenticator.class),
-            mock(RealtimeTopicAuthorizer.class),
-            registry,
-            rateLimiter,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeUnauthenticatedConnectionLimiter(properties)
+                properties,
+                mock(RealtimeCodec.class),
+                mock(RealtimeAuthenticator.class),
+                mock(RealtimeTopicAuthorizer.class),
+                registry,
+                rateLimiter,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeUnauthenticatedConnectionLimiter(properties)
         );
         WebSocketSession session = session("transport-error");
         when(session.isOpen()).thenReturn(true, true, false);
@@ -83,16 +77,16 @@ class RealtimeWebSocketHandlerCleanupTest {
         RealtimeMetrics metrics = new RealtimeMetrics(meterRegistry);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeWebSocketHandler handler = new RealtimeWebSocketHandler(
-            properties,
-            mock(RealtimeCodec.class),
-            mock(RealtimeAuthenticator.class),
-            mock(RealtimeTopicAuthorizer.class),
-            registry,
-            rateLimiter,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeUnauthenticatedConnectionLimiter(properties)
+                properties,
+                mock(RealtimeCodec.class),
+                mock(RealtimeAuthenticator.class),
+                mock(RealtimeTopicAuthorizer.class),
+                registry,
+                rateLimiter,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeUnauthenticatedConnectionLimiter(properties)
         );
         WebSocketSession session = session("transport-error-close-throws");
         when(session.isOpen()).thenReturn(true, true, false);
@@ -119,16 +113,16 @@ class RealtimeWebSocketHandlerCleanupTest {
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeWebSocketHandler handler = new RealtimeWebSocketHandler(
-            properties,
-            new RealtimeCodec(properties),
-            mock(RealtimeAuthenticator.class),
-            mock(RealtimeTopicAuthorizer.class),
-            registry,
-            rateLimiter,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeUnauthenticatedConnectionLimiter(properties)
+                properties,
+                new RealtimeCodec(properties),
+                mock(RealtimeAuthenticator.class),
+                mock(RealtimeTopicAuthorizer.class),
+                registry,
+                rateLimiter,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeUnauthenticatedConnectionLimiter(properties)
         );
         WebSocketSession session = session("terminal-frame");
         doThrow(new java.io.IOException("stalled close")).when(session).close(CloseStatus.SERVER_ERROR);
@@ -137,10 +131,10 @@ class RealtimeWebSocketHandlerCleanupTest {
 
         handler.handleTransportError(session, new IllegalStateException("broken transport"));
         handler.handleBinaryMessage(session, new BinaryMessage(RealtimeEnvelope.newBuilder()
-            .setProtocolVersion(1)
-            .setHeartbeat(Heartbeat.newBuilder().setSequence(13))
-            .build()
-            .toByteArray()));
+                .setProtocolVersion(1)
+                .setHeartbeat(Heartbeat.newBuilder().setSequence(13))
+                .build()
+                .toByteArray()));
 
         assertSame(state, registry.get(session).orElseThrow());
         assertTrue(state.isClosing());
@@ -204,24 +198,24 @@ class RealtimeWebSocketHandlerCleanupTest {
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeWebSocketHandler handler = new RealtimeWebSocketHandler(
-            properties,
-            new RealtimeCodec(properties),
-            mock(RealtimeAuthenticator.class),
-            mock(RealtimeTopicAuthorizer.class),
-            registry,
-            rateLimiter,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            new RealtimeUnauthenticatedConnectionLimiter(properties)
+                properties,
+                new RealtimeCodec(properties),
+                mock(RealtimeAuthenticator.class),
+                mock(RealtimeTopicAuthorizer.class),
+                registry,
+                rateLimiter,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                new RealtimeUnauthenticatedConnectionLimiter(properties)
         );
         WebSocketSession session = session("heartbeat");
         RealtimeConnectionState state = registry.register(session);
         state.authenticate(RealtimePrincipal.minecraft(server()), 1);
         RealtimeEnvelope envelope = RealtimeEnvelope.newBuilder()
-            .setProtocolVersion(1)
-            .setHeartbeat(Heartbeat.newBuilder().setSequence(12))
-            .build();
+                .setProtocolVersion(1)
+                .setHeartbeat(Heartbeat.newBuilder().setSequence(12))
+                .build();
 
         handler.handleBinaryMessage(session, new BinaryMessage(envelope.toByteArray()));
 
@@ -239,16 +233,16 @@ class RealtimeWebSocketHandlerCleanupTest {
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeUnauthenticatedConnectionLimiter connectionLimiter = new RealtimeUnauthenticatedConnectionLimiter(properties);
         RealtimeWebSocketHandler handler = new RealtimeWebSocketHandler(
-            properties,
-            mock(RealtimeCodec.class),
-            mock(RealtimeAuthenticator.class),
-            mock(RealtimeTopicAuthorizer.class),
-            registry,
-            rateLimiter,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics),
-            connectionLimiter
+                properties,
+                mock(RealtimeCodec.class),
+                mock(RealtimeAuthenticator.class),
+                mock(RealtimeTopicAuthorizer.class),
+                registry,
+                rateLimiter,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics),
+                connectionLimiter
         );
 
         connectionLimiter.tryAcquire("9.9.9.9");
@@ -264,7 +258,7 @@ class RealtimeWebSocketHandlerCleanupTest {
     }
 
     private Server server() {
-        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
         return server;
     }

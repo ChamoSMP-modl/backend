@@ -3,18 +3,19 @@ package gg.modl.backend.settings.service;
 import gg.modl.backend.database.mongo.repository.ServerCredentialRepository;
 import gg.modl.backend.database.mongo.repository.ServerLookupRepository;
 import gg.modl.backend.infrastructure.scheduling.SchedulerLeaseService;
-import gg.modl.backend.server.data.Server;
 import gg.modl.backend.infrastructure.util.IdGenerator;
-import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import gg.modl.backend.server.data.Server;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -31,18 +32,18 @@ public class ApiKeySettingsService {
     private final VersionedSettingsSupport<Map<String, Object>> support;
 
     public ApiKeySettingsService(
-        SettingsDocumentService settingsDocumentService,
-        IdGenerator idGenerator,
-        ServerLookupRepository serverLookupRepository,
-        ServerCredentialRepository serverCredentialRepository,
-        SchedulerLeaseService schedulerLeaseService
+            SettingsDocumentService settingsDocumentService,
+            IdGenerator idGenerator,
+            ServerLookupRepository serverLookupRepository,
+            ServerCredentialRepository serverCredentialRepository,
+            SchedulerLeaseService schedulerLeaseService
     ) {
         this.idGenerator = idGenerator;
         this.serverLookupRepository = serverLookupRepository;
         this.serverCredentialRepository = serverCredentialRepository;
         this.schedulerLeaseService = schedulerLeaseService;
         this.support = VersionedSettingsSupport.<Map<String, Object>>of(
-            settingsDocumentService, SETTINGS_TYPE_API_KEYS, LinkedHashMap::new);
+                settingsDocumentService, SETTINGS_TYPE_API_KEYS, LinkedHashMap::new);
     }
 
     @EventListener(ApplicationReadyEvent.class)

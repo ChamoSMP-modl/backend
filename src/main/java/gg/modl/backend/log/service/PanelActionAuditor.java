@@ -25,8 +25,8 @@ public class PanelActionAuditor {
             return "Unknown";
         }
         return staffLookupCache.findByEmail(server, actorEmail)
-            .map(Staff::getUsername)
-            .filter(username -> username != null && !username.isBlank())
-            .orElse(actorEmail);
+                .map(Staff::getUsername)
+                .filter(username -> username != null && !username.isBlank())
+                .orElse(actorEmail);
     }
 }

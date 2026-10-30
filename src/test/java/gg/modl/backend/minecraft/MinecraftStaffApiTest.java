@@ -1,13 +1,13 @@
 package gg.modl.backend.minecraft;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.support.ApiClient;
 import gg.modl.backend.support.JsonHelper;
 import gg.modl.backend.support.StagingCredentials;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MinecraftStaffApiTest {
 
@@ -51,7 +51,7 @@ class MinecraftStaffApiTest {
 
         // Set to same role (idempotent)
         var response = api.minecraftPatch("/v1/minecraft/staff/" + staffId + "/role", java.util.Map.of(
-            "role", currentRole
+                "role", currentRole
         ));
         JsonHelper.assertStatus(response, 200);
     }

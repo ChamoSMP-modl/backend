@@ -2,9 +2,10 @@ package gg.modl.backend.storage.service;
 
 import gg.modl.backend.database.mongo.repository.ServerUsageRepository;
 import gg.modl.backend.server.data.Server;
-import java.util.OptionalLong;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.OptionalLong;
 
 @Service
 @RequiredArgsConstructor

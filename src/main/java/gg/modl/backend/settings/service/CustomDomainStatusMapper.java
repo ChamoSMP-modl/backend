@@ -2,9 +2,10 @@ package gg.modl.backend.settings.service;
 
 import gg.modl.backend.cloudflare.external.CloudflareClient;
 import gg.modl.backend.server.data.CustomDomainStatus;
-import java.util.Locale;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
+
+import java.util.Locale;
 
 @Component
 public class CustomDomainStatusMapper {
@@ -14,7 +15,7 @@ public class CustomDomainStatusMapper {
     private static final String CF_BLOCKED = "blocked";
     private static final String CF_MOVED = "moved";
     private static final String HOSTNAME_MISSING_ERROR =
-        "Custom hostname not found in Cloudflare. Please reconfigure the domain.";
+            "Custom hostname not found in Cloudflare. Please reconfigure the domain.";
 
     public Resolution resolve(@Nullable CloudflareClient.CustomHostnameResult cfResult) {
         if (cfResult == null) {
@@ -26,8 +27,8 @@ public class CustomDomainStatusMapper {
         boolean cnameConfigured = STATUS_ACTIVE.equals(status);
         String sslStatus = cfResult.ssl() != null ? mapStatus(normalize(cfResult.ssl().status())) : STATUS_PENDING;
         String error = isRejected(normalizedCfStatus)
-                       ? "Domain verification failed. Status: " + normalizedCfStatus
-                       : null;
+                ? "Domain verification failed. Status: " + normalizedCfStatus
+                : null;
         return new Resolution(status, sslStatus, cnameConfigured, error);
     }
 
@@ -58,5 +59,6 @@ public class CustomDomainStatusMapper {
         return CF_BLOCKED.equals(normalizedCfStatus) || CF_MOVED.equals(normalizedCfStatus);
     }
 
-    public record Resolution(String status, String sslStatus, boolean cnameConfigured, String error) {}
+    public record Resolution(String status, String sslStatus, boolean cnameConfigured, String error) {
+    }
 }

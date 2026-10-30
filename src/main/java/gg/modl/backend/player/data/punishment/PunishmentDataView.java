@@ -1,15 +1,16 @@
 package gg.modl.backend.player.data.punishment;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
-import org.jetbrains.annotations.Nullable;
 
 public final class PunishmentDataView {
     @Nullable
-    private Map<String, Object> data;
-    @Nullable
     private final Consumer<Map<String, Object>> installer;
+    @Nullable
+    private Map<String, Object> data;
 
     private PunishmentDataView(@Nullable Map<String, Object> data, @Nullable Consumer<Map<String, Object>> installer) {
         this.data = data;

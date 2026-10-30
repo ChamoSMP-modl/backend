@@ -1,22 +1,11 @@
 package gg.modl.backend.auth.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.auth.AuthConfiguration;
 import gg.modl.backend.auth.AuthService;
 import gg.modl.backend.auth.EmailChangeService;
 import gg.modl.backend.auth.WebAuthnService;
 import gg.modl.backend.auth.session.AuthSessionData;
 import gg.modl.backend.auth.session.SessionService;
-import gg.modl.backend.billing.service.BillingService;
 import gg.modl.backend.email.EmailService;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
 import gg.modl.backend.infrastructure.util.CookieUtil;
@@ -30,11 +19,17 @@ import gg.modl.backend.staff.service.StaffLookupCache;
 import gg.modl.backend.staff.service.StaffProfileService;
 import gg.modl.proto.modl.v1.PanelUpdateEmailWithCodeRequest;
 import jakarta.servlet.http.Cookie;
-import java.util.Date;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import java.util.Date;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class PanelAuthControllerTest {
 
@@ -50,8 +45,8 @@ class PanelAuthControllerTest {
         request.setAttribute(RequestAttribute.SERVER, server);
         request.setAttribute(RequestAttribute.SESSION, session);
         request.setCookies(
-            new Cookie("MODL_SESSION", "session-1"),
-            new Cookie("MODL_SESSION", "session-2")
+                new Cookie("MODL_SESSION", "session-1"),
+                new Cookie("MODL_SESSION", "session-2")
         );
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -71,25 +66,24 @@ class PanelAuthControllerTest {
         StaffProfileService staffProfileService = mock(StaffProfileService.class);
         PermissionService permissionService = mock(PermissionService.class);
         EmailChangeService emailChangeService = new EmailChangeService(
-            permissionService,
-            authService,
-            staffProfileService,
-            mock(ServerService.class),
-            mock(WebAuthnService.class),
-            mock(BillingService.class),
-            sessionService,
-            mock(EmailService.class)
+                permissionService,
+                authService,
+                staffProfileService,
+                mock(ServerService.class),
+                mock(WebAuthnService.class),
+                sessionService,
+                mock(EmailService.class)
         );
         PanelAuthController controller = new PanelAuthController(
-            authService,
-            sessionService,
-            authConfiguration,
-            staffProfileService,
-            mock(StaffLookupCache.class),
-            permissionService,
-            mock(RoleAuthorization.class),
-            new CookieUtil(authConfiguration),
-            emailChangeService
+                authService,
+                sessionService,
+                authConfiguration,
+                staffProfileService,
+                mock(StaffLookupCache.class),
+                permissionService,
+                mock(RoleAuthorization.class),
+                new CookieUtil(authConfiguration),
+                emailChangeService
         );
         Server server = server();
         Staff staff = new Staff();
@@ -108,9 +102,9 @@ class PanelAuthControllerTest {
         when(sessionService.createSession(server, "new@example.com", "127.0.0.1", null)).thenReturn(newSession);
 
         controller.updateEmail(request, response, PanelUpdateEmailWithCodeRequest.newBuilder()
-            .setNewEmail("new@example.com")
-            .setCode("123456")
-            .build());
+                .setNewEmail("new@example.com")
+                .setCode("123456")
+                .build());
 
         verify(sessionService).invalidateAllSessionsForEmail(server, "old@example.com");
         verify(sessionService).createSession(server, "new@example.com", "127.0.0.1", null);
@@ -199,20 +193,20 @@ class PanelAuthControllerTest {
 
     private PanelAuthController createController(AuthConfiguration authConfiguration, SessionService sessionService) {
         return new PanelAuthController(
-            mock(AuthService.class),
-            sessionService,
-            authConfiguration,
-            mock(StaffProfileService.class),
-            mock(StaffLookupCache.class),
-            mock(PermissionService.class),
-            mock(RoleAuthorization.class),
-            new CookieUtil(authConfiguration),
-            mock(EmailChangeService.class)
+                mock(AuthService.class),
+                sessionService,
+                authConfiguration,
+                mock(StaffProfileService.class),
+                mock(StaffLookupCache.class),
+                mock(PermissionService.class),
+                mock(RoleAuthorization.class),
+                new CookieUtil(authConfiguration),
+                mock(EmailChangeService.class)
         );
     }
 
     private Server server() {
-        Server server = new Server("Alpha", "alpha", "server_alpha", "owner@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Alpha", "alpha", "server_alpha", "owner@example.com", true, ServerPlan.PREMIUM);
         server.setId("server_alpha");
         return server;
     }

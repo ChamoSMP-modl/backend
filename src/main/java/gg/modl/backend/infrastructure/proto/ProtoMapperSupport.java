@@ -1,33 +1,17 @@
 package gg.modl.backend.infrastructure.proto;
 
-import com.google.protobuf.ListValue;
-import com.google.protobuf.NullValue;
-import com.google.protobuf.Struct;
-import com.google.protobuf.Timestamp;
-import com.google.protobuf.Value;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.Instant;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.IntConsumer;
-import java.util.function.LongConsumer;
+import com.google.protobuf.*;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.*;
 
 public final class ProtoMapperSupport {
 
@@ -37,11 +21,6 @@ public final class ProtoMapperSupport {
     private static final Set<Class<?>> WARNED_UNEXPECTED_TYPES = ConcurrentHashMap.newKeySet();
 
     private ProtoMapperSupport() {
-    }
-
-    public enum StructEncoding {
-        CANONICAL,
-        LEGACY_DOUBLE_ISO
     }
 
     public static String stringValue(Object value) {
@@ -186,8 +165,8 @@ public final class ProtoMapperSupport {
             return null;
         }
         return structs.stream()
-            .map(struct -> (Object) structToMap(struct))
-            .toList();
+                .map(struct -> (Object) structToMap(struct))
+                .toList();
     }
 
     public static List<Map<String, Object>> structListToMaps(List<Struct> structs) {
@@ -195,16 +174,16 @@ public final class ProtoMapperSupport {
             return null;
         }
         return structs.stream()
-            .map(ProtoMapperSupport::structToMap)
-            .toList();
+                .map(ProtoMapperSupport::structToMap)
+                .toList();
     }
 
     public static Timestamp toTimestamp(Object value) {
         long millis = longValue(value);
         return Timestamp.newBuilder()
-            .setSeconds(Math.floorDiv(millis, 1000L))
-            .setNanos((int) (Math.floorMod(millis, 1000L) * 1_000_000L))
-            .build();
+                .setSeconds(Math.floorDiv(millis, 1000L))
+                .setNanos((int) (Math.floorMod(millis, 1000L) * 1_000_000L))
+                .build();
     }
 
     public static List<?> list(Object object) {
@@ -216,16 +195,16 @@ public final class ProtoMapperSupport {
 
     public static List<Map<String, Object>> listOfMaps(Object object) {
         return list(object).stream()
-            .filter(Map.class::isInstance)
-            .map(value -> stringObjectMap((Map<?, ?>) value))
-            .toList();
+                .filter(Map.class::isInstance)
+                .map(value -> stringObjectMap((Map<?, ?>) value))
+                .toList();
     }
 
     public static <T> List<T> listOf(Object object, Class<T> elementType) {
         return list(object).stream()
-            .filter(elementType::isInstance)
-            .map(elementType::cast)
-            .toList();
+                .filter(elementType::isInstance)
+                .map(elementType::cast)
+                .toList();
     }
 
     public static Map<String, Object> map(Object object) {
@@ -293,8 +272,8 @@ public final class ProtoMapperSupport {
         }
         if (object instanceof Date date) {
             return encoding == StructEncoding.LEGACY_DOUBLE_ISO
-                ? builder.setStringValue(date.toInstant().toString()).build()
-                : integralValue(builder, BigInteger.valueOf(date.getTime()));
+                    ? builder.setStringValue(date.toInstant().toString()).build()
+                    : integralValue(builder, BigInteger.valueOf(date.getTime()));
         }
         if (encoding == StructEncoding.LEGACY_DOUBLE_ISO && object instanceof Instant instant) {
             return builder.setStringValue(instant.toString()).build();
@@ -315,8 +294,8 @@ public final class ProtoMapperSupport {
         Class<?> type = object.getClass();
         if (WARNED_UNEXPECTED_TYPES.add(type)) {
             log.warn("ProtoMapperSupport: free-form Struct value of unexpected type {} coerced via "
-                + "toString(); value will reach clients as an opaque string. Callers must pass "
-                + "structured Maps, not raw beans.", type.getName());
+                    + "toString(); value will reach clients as an opaque string. Callers must pass "
+                    + "structured Maps, not raw beans.", type.getName());
         }
         return Objects.toString(object);
     }
@@ -330,8 +309,8 @@ public final class ProtoMapperSupport {
         }
         if (number instanceof BigDecimal decimal) {
             return decimal.stripTrailingZeros().scale() <= 0
-                ? integralValue(builder, decimal.toBigInteger())
-                : builder.setNumberValue(decimal.doubleValue()).build();
+                    ? integralValue(builder, decimal.toBigInteger())
+                    : builder.setNumberValue(decimal.doubleValue()).build();
         }
         if (number instanceof BigInteger bigInteger) {
             return integralValue(builder, bigInteger);
@@ -344,8 +323,8 @@ public final class ProtoMapperSupport {
 
     private static Value integralValue(Value.Builder builder, BigInteger value) {
         return value.abs().compareTo(MAX_SAFE_DOUBLE_INTEGER) > 0
-            ? builder.setStringValue(value.toString()).build()
-            : builder.setNumberValue(value.doubleValue()).build();
+                ? builder.setStringValue(value.toString()).build()
+                : builder.setNumberValue(value.doubleValue()).build();
     }
 
     public static List<Object> valuesToObjects(List<Value> values) {
@@ -353,8 +332,8 @@ public final class ProtoMapperSupport {
             return null;
         }
         return values.stream()
-            .map(ProtoMapperSupport::valueToObject)
-            .toList();
+                .map(ProtoMapperSupport::valueToObject)
+                .toList();
     }
 
     public static Object valueToObject(Value value) {
@@ -365,8 +344,13 @@ public final class ProtoMapperSupport {
             case BOOL_VALUE -> value.getBoolValue();
             case STRUCT_VALUE -> structToMap(value.getStructValue());
             case LIST_VALUE -> value.getListValue().getValuesList().stream()
-                .map(ProtoMapperSupport::valueToObject)
-                .toList();
+                    .map(ProtoMapperSupport::valueToObject)
+                    .toList();
         };
+    }
+
+    public enum StructEncoding {
+        CANONICAL,
+        LEGACY_DOUBLE_ISO
     }
 }

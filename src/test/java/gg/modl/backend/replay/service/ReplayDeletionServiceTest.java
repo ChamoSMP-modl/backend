@@ -1,15 +1,5 @@
 package gg.modl.backend.replay.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.ReplayMongoRepository;
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
 import gg.modl.backend.database.mongo.repository.TrainingSegmentRepository;
@@ -19,9 +9,14 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.storage.service.S3StorageService;
 import gg.modl.backend.storage.service.StorageMetadataService;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class ReplayDeletionServiceTest {
     private static final String R1_KEY = "db/replays/r1.modlreplay";
@@ -44,13 +39,13 @@ class ReplayDeletionServiceTest {
         ticketRepository = mock(TicketMongoRepository.class);
         trainingSegmentRepository = mock(TrainingSegmentRepository.class);
         service = new ReplayDeletionService(
-            replayRepository,
-            s3StorageService,
-            storageMetadataService,
-            ticketRepository,
-            trainingSegmentRepository
+                replayRepository,
+                s3StorageService,
+                storageMetadataService,
+                ticketRepository,
+                trainingSegmentRepository
         );
-        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     }
 
     @Test
@@ -58,8 +53,8 @@ class ReplayDeletionServiceTest {
         when(replayRepository.deleteByReplayIds(server, List.of("r1", "r2"))).thenReturn(2L);
 
         ReplayBatchDeletionResult result = service.deleteReplaysWithStorage(
-            server,
-            List.of(replay("r1", R1_KEY), replay("r2", R2_KEY))
+                server,
+                List.of(replay("r1", R1_KEY), replay("r2", R2_KEY))
         );
 
         assertEquals(2, result.requested());
@@ -77,8 +72,8 @@ class ReplayDeletionServiceTest {
         when(replayRepository.deleteByReplayIds(server, List.of("r1", "r2"))).thenReturn(1L);
 
         ReplayBatchDeletionResult result = service.deleteReplaysWithStorage(
-            server,
-            List.of(replay("r1", R1_KEY), replay("r2", R2_KEY))
+                server,
+                List.of(replay("r1", R1_KEY), replay("r2", R2_KEY))
         );
 
         assertEquals(2, result.requested());
@@ -91,8 +86,8 @@ class ReplayDeletionServiceTest {
         when(replayRepository.deleteByReplayIds(server, List.of("r1"))).thenReturn(1L);
 
         ReplayBatchDeletionResult result = service.deleteReplaysWithStorage(
-            server,
-            List.of(replay("r1", R1_KEY), replay(null, R2_KEY))
+                server,
+                List.of(replay("r1", R1_KEY), replay(null, R2_KEY))
         );
 
         assertEquals(1, result.requested());
@@ -127,7 +122,7 @@ class ReplayDeletionServiceTest {
     @Test
     void reconcileDeletedStorageKeysPurgesMatchingReplayRecordsAndTicketReferences() {
         when(replayRepository.findByStorageKeys(server, List.of(R1_KEY)))
-            .thenReturn(List.of(replay("r1", R1_KEY)));
+                .thenReturn(List.of(replay("r1", R1_KEY)));
         when(replayRepository.deleteByReplayIds(server, List.of("r1"))).thenReturn(1L);
         when(ticketRepository.clearReplayReferences(server, List.of("r1"))).thenReturn(1L);
 

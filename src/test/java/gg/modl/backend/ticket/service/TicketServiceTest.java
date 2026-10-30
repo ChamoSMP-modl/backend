@@ -1,16 +1,5 @@
 package gg.modl.backend.ticket.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
 import gg.modl.backend.server.data.Server;
@@ -18,23 +7,9 @@ import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.data.QuickResponseSettings;
 import gg.modl.backend.settings.service.QuickResponseSettingsService;
 import gg.modl.backend.settings.service.TicketFormSettingsService;
-import gg.modl.backend.ticket.data.Ticket;
-import gg.modl.backend.ticket.data.TicketCategory;
-import gg.modl.backend.ticket.data.TicketPriority;
-import gg.modl.backend.ticket.data.TicketReply;
-import gg.modl.backend.ticket.data.TicketStatus;
-import gg.modl.backend.ticket.dto.request.CreateTicketRequest;
-import gg.modl.backend.ticket.dto.request.DismissReportRequest;
-import gg.modl.backend.ticket.dto.request.MinecraftClaimTicketRequest;
-import gg.modl.backend.ticket.dto.request.MinecraftCreateTicketRequest;
-import gg.modl.backend.ticket.dto.request.QuickResponseRequest;
-import gg.modl.backend.ticket.dto.request.SubmitTicketFormRequest;
 import gg.modl.backend.settings.service.WebhookSettingsService;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import gg.modl.backend.ticket.data.*;
+import gg.modl.backend.ticket.dto.request.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,29 +17,29 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 class TicketServiceTest {
 
+    private final TicketContentService contentService = new TicketContentService();
     @Mock
     private TicketMongoRepository ticketRepository;
-
     @Mock
     private StaffMongoRepository staffRepository;
-
     @Mock
     private QuickResponseSettingsService quickResponseSettingsService;
-
     @Mock
     private TicketFormSettingsService ticketFormSettingsService;
-
     @Mock
     private TicketNotificationService notificationService;
-
     @Mock
     private TicketIdGenerator ticketIdGenerator;
-
-    private final TicketContentService contentService = new TicketContentService();
-
     @Mock
     private WebhookSettingsService webhookSettingsService;
 
@@ -79,29 +54,29 @@ class TicketServiceTest {
 
     @Test
     void createMinecraftTicketMapsPluginTypeAndPersistsReply() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(ticketIdGenerator.insertWithUniqueId(any(Server.class), any(String.class), any(Ticket.class)))
-            .thenAnswer(invocation -> {
-                Ticket t = invocation.getArgument(2);
-                if (t.getId() == null) {
-                    t.setId("CHAT-123456");
-                }
-                return t;
-            });
+                .thenAnswer(invocation -> {
+                    Ticket t = invocation.getArgument(2);
+                    if (t.getId() == null) {
+                        t.setId("CHAT-123456");
+                    }
+                    return t;
+                });
 
         Ticket ticket = minecraftTicketService.createMinecraftTicket(server, new MinecraftCreateTicketRequest(
-            "uuid-1",
-            "PlayerOne",
-            "chat",
-            "Chat report",
-            "reported bad chat",
-            "uuid-2",
-            "PlayerTwo",
-            List.of("hello world"),
-            List.of("report"),
-            null,
-            "survival",
-            null
+                "uuid-1",
+                "PlayerOne",
+                "chat",
+                "Chat report",
+                "reported bad chat",
+                "uuid-2",
+                "PlayerTwo",
+                List.of("hello world"),
+                List.of("report"),
+                null,
+                "survival",
+                null
         ));
 
         assertEquals(TicketCategory.CHAT, ticket.getType());
@@ -113,33 +88,33 @@ class TicketServiceTest {
 
     @Test
     void createTicketAcceptsLegacyTypeSpacingAndPriorityAliases() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(ticketIdGenerator.insertWithUniqueId(any(Server.class), any(String.class), any(Ticket.class)))
-            .thenAnswer(invocation -> {
-                Ticket t = invocation.getArgument(2);
-                if (t.getId() == null) {
-                    t.setId("STAFF-123456");
-                }
-                return t;
-            });
+                .thenAnswer(invocation -> {
+                    Ticket t = invocation.getArgument(2);
+                    if (t.getId() == null) {
+                        t.setId("STAFF-123456");
+                    }
+                    return t;
+                });
 
         ticketService.createTicket(server, new CreateTicketRequest(
-            "staff application",
-            "",
-            "Legacy alias submit",
-            null,
-            "Applicant",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            List.of("legacy"),
-            "medium",
-            null,
-            null,
-            null
+                "staff application",
+                "",
+                "Legacy alias submit",
+                null,
+                "Applicant",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of("legacy"),
+                "medium",
+                null,
+                null,
+                null
         ));
 
         ArgumentCaptor<Ticket> savedTicketCaptor = ArgumentCaptor.forClass(Ticket.class);
@@ -153,24 +128,24 @@ class TicketServiceTest {
 
     @Test
     void claimMinecraftTicketRenamesMatchingNonStaffReplies() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Ticket ticket = Ticket.builder()
-            .id("SUPPORT-123456")
-            .creatorName("Old Web User")
-            .replies(new ArrayList<>(List.of(
-                TicketReply.builder().id("1").name("Old Web User").staff(false).content("first").created(new Date()).build(),
-                TicketReply.builder().id("2").name("Staff").staff(true).content("staff").created(new Date()).build()
-            )))
-            .build();
+                .id("SUPPORT-123456")
+                .creatorName("Old Web User")
+                .replies(new ArrayList<>(List.of(
+                        TicketReply.builder().id("1").name("Old Web User").staff(false).content("first").created(new Date()).build(),
+                        TicketReply.builder().id("2").name("Staff").staff(true).content("staff").created(new Date()).build()
+                )))
+                .build();
 
         when(ticketRepository.findById(server, "SUPPORT-123456")).thenReturn(Optional.of(ticket));
         when(ticketRepository.saveEntity(any(Server.class), any(Ticket.class)))
-            .thenAnswer(invocation -> invocation.getArgument(1));
+                .thenAnswer(invocation -> invocation.getArgument(1));
 
         MinecraftTicketService.MinecraftTicketClaimResult result = minecraftTicketService.claimMinecraftTicket(
-            server,
-            "SUPPORT-123456",
-            new MinecraftClaimTicketRequest("uuid-new", "VerifiedPlayer")
+                server,
+                "SUPPORT-123456",
+                new MinecraftClaimTicketRequest("uuid-new", "VerifiedPlayer")
         );
 
         assertEquals(MinecraftTicketService.MinecraftTicketClaimStatus.SUCCESS, result.status());
@@ -187,21 +162,21 @@ class TicketServiceTest {
 
     @Test
     void dismissMinecraftReportClosesTicketAndAppendsStaffReply() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Ticket ticket = Ticket.builder()
-            .id("REPORT-1")
-            .data(new HashMap<>())
-            .replies(new ArrayList<>())
-            .build();
+                .id("REPORT-1")
+                .data(new HashMap<>())
+                .replies(new ArrayList<>())
+                .build();
 
         when(ticketRepository.findById(server, "REPORT-1")).thenReturn(Optional.of(ticket));
         when(ticketRepository.saveEntity(any(Server.class), any(Ticket.class)))
-            .thenAnswer(invocation -> invocation.getArgument(1));
+                .thenAnswer(invocation -> invocation.getArgument(1));
 
         MinecraftTicketService.ReportOperationResult result = minecraftTicketService.dismissMinecraftReport(
-            server,
-            "REPORT-1",
-            new DismissReportRequest("Moderator", "Insufficient evidence")
+                server,
+                "REPORT-1",
+                new DismissReportRequest("Moderator", "Insufficient evidence")
         );
 
         assertEquals(MinecraftTicketService.ReportOperationStatus.SUCCESS, result.status());
@@ -220,32 +195,32 @@ class TicketServiceTest {
 
     @Test
     void processQuickResponseClosesTicketThroughRepositorySave() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Ticket ticket = Ticket.builder()
-            .id("SUPPORT-1")
-            .replies(new ArrayList<>())
-            .notes(new ArrayList<>())
-            .build();
+                .id("SUPPORT-1")
+                .replies(new ArrayList<>())
+                .notes(new ArrayList<>())
+                .build();
         QuickResponseSettings settings = QuickResponseSettings.builder().build();
         QuickResponseSettings.Action action = QuickResponseSettings.Action.builder()
-            .id("close")
-            .name("Close")
-            .message("Resolved")
-            .closeTicket(true)
-            .appealAction("none")
-            .build();
+                .id("close")
+                .name("Close")
+                .message("Resolved")
+                .closeTicket(true)
+                .appealAction("none")
+                .build();
 
         when(ticketRepository.findById(server, "SUPPORT-1")).thenReturn(Optional.of(ticket));
         when(ticketRepository.saveEntity(any(Server.class), any(Ticket.class)))
-            .thenAnswer(invocation -> invocation.getArgument(1));
+                .thenAnswer(invocation -> invocation.getArgument(1));
         when(quickResponseSettingsService.getQuickResponseSettings(server)).thenReturn(settings);
         when(quickResponseSettingsService.findAction(settings, "general", "close")).thenReturn(action);
 
         var result = ticketService.processQuickResponse(
-            server,
-            "SUPPORT-1",
-            new QuickResponseRequest("close", "general", null, null, null, null),
-            "Moderator"
+                server,
+                "SUPPORT-1",
+                new QuickResponseRequest("close", "general", null, null, null, null),
+                "Moderator"
         );
 
         assertTrue(result.success());
@@ -263,33 +238,33 @@ class TicketServiceTest {
 
     @Test
     void submitTicketFormPromotesUnfinishedTicketAndAddsInitialReply() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Ticket ticket = Ticket.builder()
-            .id("SUPPORT-2")
-            .type(TicketCategory.SUPPORT)
-            .status(TicketStatus.UNFINISHED)
-            .creatorName("PlayerOne")
-            .replies(new ArrayList<>())
-            .notes(new ArrayList<>())
-            .data(new HashMap<>())
-            .build();
+                .id("SUPPORT-2")
+                .type(TicketCategory.SUPPORT)
+                .status(TicketStatus.UNFINISHED)
+                .creatorName("PlayerOne")
+                .replies(new ArrayList<>())
+                .notes(new ArrayList<>())
+                .data(new HashMap<>())
+                .build();
 
         when(ticketRepository.findById(server, "SUPPORT-2")).thenReturn(Optional.of(ticket));
         when(ticketRepository.saveEntity(any(Server.class), any(Ticket.class)))
-            .thenAnswer(invocation -> invocation.getArgument(1));
+                .thenAnswer(invocation -> invocation.getArgument(1));
 
         var response = ticketService.submitTicketForm(
-            server,
-            "SUPPORT-2",
-            new SubmitTicketFormRequest(
-                "Updated subject",
-                "player@example.com",
-                java.util.Map.of("issue_type", "Bug report", "emailAuthEnabled", true),
-                List.of(),
-                "creator-1",
-                null
-            ),
-            true
+                server,
+                "SUPPORT-2",
+                new SubmitTicketFormRequest(
+                        "Updated subject",
+                        "player@example.com",
+                        java.util.Map.of("issue_type", "Bug report", "emailAuthEnabled", true),
+                        List.of(),
+                        "creator-1",
+                        null
+                ),
+                true
         );
 
         assertNotNull(response);
@@ -310,7 +285,7 @@ class TicketServiceTest {
 
     @Test
     void getMinecraftTicketsByCreatorLowercasesUuidBeforeQueryingRepository() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(ticketRepository.findRecentByCreator(any(Server.class), any(), anyInt())).thenReturn(List.of());
 
         minecraftTicketService.getMinecraftTicketsByCreator(server, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", 25);
@@ -320,7 +295,7 @@ class TicketServiceTest {
 
     @Test
     void getMinecraftReportsForPlayerLowercasesUuidBeforeQueryingRepository() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(ticketRepository.findReports(any(Server.class), any(), any(), anyInt(), anyBoolean())).thenReturn(List.of());
 
         minecraftTicketService.getMinecraftReportsForPlayer(server, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "open", 10);
@@ -330,34 +305,34 @@ class TicketServiceTest {
 
     @Test
     void submitTicketFormCannotDisableExistingEmailAuthWhileSavingEmail() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         Ticket ticket = Ticket.builder()
-            .id("SUPPORT-3")
-            .type(TicketCategory.SUPPORT)
-            .status(TicketStatus.UNFINISHED)
-            .emailAuthEnabled(true)
-            .creatorName("PlayerOne")
-            .replies(new ArrayList<>())
-            .notes(new ArrayList<>())
-            .data(new HashMap<>())
-            .build();
+                .id("SUPPORT-3")
+                .type(TicketCategory.SUPPORT)
+                .status(TicketStatus.UNFINISHED)
+                .emailAuthEnabled(true)
+                .creatorName("PlayerOne")
+                .replies(new ArrayList<>())
+                .notes(new ArrayList<>())
+                .data(new HashMap<>())
+                .build();
 
         when(ticketRepository.findById(server, "SUPPORT-3")).thenReturn(Optional.of(ticket));
         when(ticketRepository.saveEntity(any(Server.class), any(Ticket.class)))
-            .thenAnswer(invocation -> invocation.getArgument(1));
+                .thenAnswer(invocation -> invocation.getArgument(1));
 
         ticketService.submitTicketForm(
-            server,
-            "SUPPORT-3",
-            new SubmitTicketFormRequest(
-                "Updated subject",
-                "player@example.com",
-                java.util.Map.of("issue_type", "Bug report", "emailAuthEnabled", false),
-                List.of(),
-                "creator-1",
-                null
-            ),
-            false
+                server,
+                "SUPPORT-3",
+                new SubmitTicketFormRequest(
+                        "Updated subject",
+                        "player@example.com",
+                        java.util.Map.of("issue_type", "Bug report", "emailAuthEnabled", false),
+                        List.of(),
+                        "creator-1",
+                        null
+                ),
+                false
         );
 
         ArgumentCaptor<Ticket> updatedTicketCaptor = ArgumentCaptor.forClass(Ticket.class);

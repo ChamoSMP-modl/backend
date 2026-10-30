@@ -1,9 +1,5 @@
 package gg.modl.backend.audit.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.audit.dto.response.StaffDetailsResponse;
 import gg.modl.backend.audit.dto.response.StaffPerformanceResponse;
 import gg.modl.backend.database.mongo.repository.AuditLogRepository;
@@ -15,15 +11,20 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.service.StaffService;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class StaffPerformanceServiceTest {
@@ -52,46 +53,52 @@ class StaffPerformanceServiceTest {
     @Mock
     private Server server;
 
+    private static Document ticketDetailDocument(String id, Date firstReply) {
+        return new Document("_id", id)
+                .append("ticketCreated", TICKET_CREATED)
+                .append("firstReply", firstReply);
+    }
+
     @Test
     void staffPerformanceAndStaffDetailsShareAvgResponseTime() {
         StaffPerformanceService service = new StaffPerformanceService(
-            staffActivityAnalyticsRepository,
-            auditLogRepository,
-            staffMongoRepository,
-            punishmentTypeService,
-            staffService,
-            permissionService);
+                staffActivityAnalyticsRepository,
+                auditLogRepository,
+                staffMongoRepository,
+                punishmentTypeService,
+                staffService,
+                permissionService);
 
         when(staffMongoRepository.findAllStaff(any())).thenReturn(List.of(
-            Staff.builder().username(USERNAME).build()));
+                Staff.builder().username(USERNAME).build()));
         when(permissionService.resolveRoleNames(any(), any())).thenReturn(Map.of());
         when(staffActivityAnalyticsRepository.aggregateLogActivityBySource(any(), any()))
-            .thenReturn(List.of());
+                .thenReturn(List.of());
         when(staffActivityAnalyticsRepository.aggregateTicketResponseCounts(any(), any()))
-            .thenReturn(List.of());
+                .thenReturn(List.of());
         when(staffActivityAnalyticsRepository.aggregatePunishmentCountsByIssuer(any(), any()))
-            .thenReturn(List.of());
+                .thenReturn(List.of());
         when(staffMongoRepository.findUsernamesByIds(any(), any())).thenReturn(Map.of());
         when(staffActivityAnalyticsRepository.aggregateTicketResponseTimesByStaff(any(), any()))
-            .thenReturn(List.of(
-                new StaffTicketResponseTime("byteful", TICKET_CREATED, FIRST_REPLY_A),
-                new StaffTicketResponseTime("byteful", TICKET_CREATED, FIRST_REPLY_B),
-                new StaffTicketResponseTime("byteful", TICKET_CREATED, FIRST_REPLY_C)));
+                .thenReturn(List.of(
+                        new StaffTicketResponseTime("byteful", TICKET_CREATED, FIRST_REPLY_A),
+                        new StaffTicketResponseTime("byteful", TICKET_CREATED, FIRST_REPLY_B),
+                        new StaffTicketResponseTime("byteful", TICKET_CREATED, FIRST_REPLY_C)));
 
         when(staffService.getStaffByUsername(any(), any())).thenReturn(Optional.empty());
         when(staffActivityAnalyticsRepository.aggregatePunishmentDetails(any(), any(), any(), any()))
-            .thenReturn(List.of());
+                .thenReturn(List.of());
         when(staffActivityAnalyticsRepository.aggregateTicketDetails(any(), any(), any()))
-            .thenReturn(List.of(
-                ticketDetailDocument("t1", FIRST_REPLY_A),
-                ticketDetailDocument("t2", FIRST_REPLY_B),
-                ticketDetailDocument("t3", FIRST_REPLY_C)));
+                .thenReturn(List.of(
+                        ticketDetailDocument("t1", FIRST_REPLY_A),
+                        ticketDetailDocument("t2", FIRST_REPLY_B),
+                        ticketDetailDocument("t3", FIRST_REPLY_C)));
         when(staffActivityAnalyticsRepository.aggregateDailyPunishmentCounts(any(), any(), any(), any()))
-            .thenReturn(List.of());
+                .thenReturn(List.of());
         when(staffActivityAnalyticsRepository.aggregateDailyTicketResponseCounts(any(), any(), any()))
-            .thenReturn(List.of());
+                .thenReturn(List.of());
         when(staffActivityAnalyticsRepository.aggregatePunishmentTypeBreakdown(any(), any(), any(), any()))
-            .thenReturn(List.of());
+                .thenReturn(List.of());
         when(auditLogRepository.countEvidenceUploads(any(), any(), any())).thenReturn(0L);
 
         List<StaffPerformanceResponse> performance = service.getStaffPerformance(server, PERIOD);
@@ -99,11 +106,5 @@ class StaffPerformanceServiceTest {
 
         assertEquals(EXPECTED_AVG, performance.get(0).avgResponseTime());
         assertEquals(details.summary().avgResponseTime(), performance.get(0).avgResponseTime());
-    }
-
-    private static Document ticketDetailDocument(String id, Date firstReply) {
-        return new Document("_id", id)
-            .append("ticketCreated", TICKET_CREATED)
-            .append("firstReply", firstReply);
     }
 }

@@ -6,11 +6,12 @@ import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.ChatLogFields;
 import gg.modl.backend.player.data.log.ChatLogDocument;
 import gg.modl.backend.server.data.Server;
-import java.util.List;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 public class ChatLogMongoRepository extends AbstractServerMongoRepository<ChatLogDocument> {

@@ -9,12 +9,13 @@ import gg.modl.backend.ticket.data.TicketNote;
 import gg.modl.backend.ticket.data.TicketReply;
 import gg.modl.backend.ticket.dto.request.AddNoteRequest;
 import gg.modl.backend.ticket.dto.request.AddReplyRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -27,17 +28,17 @@ public class TicketReplyService {
         Ticket ticket = loadWritableTicket(server, ticketId);
 
         TicketReply newReply = TicketReply.builder()
-            .id(UUID.randomUUID().toString())
-            .name(request.name())
-            .avatar(request.avatar())
-            .content(request.content())
-            .type(request.type() != null ? request.type() : "public")
-            .created(new Date())
-            .staff(request.staff())
-            .action(request.action())
-            .attachments(request.attachments() != null ? request.attachments() : new ArrayList<>())
-            .creatorIdentifier(request.creatorIdentifier())
-            .build();
+                .id(UUID.randomUUID().toString())
+                .name(request.name())
+                .avatar(request.avatar())
+                .content(request.content())
+                .type(request.type() != null ? request.type() : "public")
+                .created(new Date())
+                .staff(request.staff())
+                .action(request.action())
+                .attachments(request.attachments() != null ? request.attachments() : new ArrayList<>())
+                .creatorIdentifier(request.creatorIdentifier())
+                .build();
         ticket.ensureReplies().add(newReply);
         ticket.setUpdatedAt(new Date());
         Ticket saved = ticketRepository.saveEntity(server, ticket);
@@ -53,14 +54,14 @@ public class TicketReplyService {
         Ticket ticket = loadWritableTicket(server, ticketId);
 
         TicketReply newReply = TicketReply.builder()
-            .id(UUID.randomUUID().toString())
-            .name(ticket.getCreatorName())
-            .content(content)
-            .type("user")
-            .created(new Date())
-            .staff(false)
-            .attachments(contentService.normalizeAttachments(attachments))
-            .build();
+                .id(UUID.randomUUID().toString())
+                .name(ticket.getCreatorName())
+                .content(content)
+                .type("user")
+                .created(new Date())
+                .staff(false)
+                .attachments(contentService.normalizeAttachments(attachments))
+                .build();
         ticket.ensureReplies().add(newReply);
         ticket.setUpdatedAt(new Date());
         ticketRepository.saveEntity(server, ticket);
@@ -72,11 +73,11 @@ public class TicketReplyService {
         Ticket ticket = loadTicket(server, ticketId);
 
         TicketNote newNote = TicketNote.builder()
-            .text(request.text())
-            .issuerName(request.issuerName())
-            .issuerAvatar(request.issuerAvatar())
-            .date(new Date())
-            .build();
+                .text(request.text())
+                .issuerName(request.issuerName())
+                .issuerAvatar(request.issuerAvatar())
+                .date(new Date())
+                .build();
         ticket.ensureNotes().add(newNote);
         ticket.setUpdatedAt(new Date());
         ticketRepository.saveEntity(server, ticket);
@@ -113,7 +114,7 @@ public class TicketReplyService {
 
     private Ticket loadTicket(Server server, String ticketId) {
         return ticketRepository.findById(server, ticketId)
-            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
     }
 
     private Ticket loadWritableTicket(Server server, String ticketId) {

@@ -1,10 +1,6 @@
 package gg.modl.backend.analytics.controller;
 
-import gg.modl.backend.analytics.dto.response.AuditLogsAnalyticsResponse;
-import gg.modl.backend.analytics.dto.response.OverviewResponse;
-import gg.modl.backend.analytics.dto.response.PlayerActivityResponse;
-import gg.modl.backend.analytics.dto.response.PunishmentAnalyticsResponse;
-import gg.modl.backend.analytics.dto.response.TicketAnalyticsResponse;
+import gg.modl.backend.analytics.dto.response.*;
 import gg.modl.backend.analytics.service.AnalyticsService;
 import gg.modl.backend.infrastructure.authorization.RequiresPanelPermission;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
@@ -36,8 +32,8 @@ public class AnalyticsController {
 
     @GetMapping("/tickets")
     public ResponseEntity<gg.modl.proto.modl.v1.TicketAnalyticsResponse> getTicketAnalytics(
-        @RequestParam(defaultValue = "30d") String period,
-        HttpServletRequest request
+            @RequestParam(defaultValue = "30d") String period,
+            HttpServletRequest request
     ) {
         final Server server = RequestUtil.getRequestServer(request);
         final TicketAnalyticsResponse analytics = analyticsService.getTicketAnalytics(server, period);
@@ -47,8 +43,8 @@ public class AnalyticsController {
 
     @GetMapping("/punishments")
     public ResponseEntity<gg.modl.proto.modl.v1.PunishmentAnalyticsResponse> getPunishmentAnalytics(
-        @RequestParam(defaultValue = "30d") String period,
-        HttpServletRequest request
+            @RequestParam(defaultValue = "30d") String period,
+            HttpServletRequest request
     ) {
         final Server server = RequestUtil.getRequestServer(request);
         final PunishmentAnalyticsResponse analytics = analyticsService.getPunishmentAnalytics(server, period);
@@ -58,8 +54,8 @@ public class AnalyticsController {
 
     @GetMapping("/audit-logs")
     public ResponseEntity<gg.modl.proto.modl.v1.AuditLogsAnalyticsResponse> getAuditLogsAnalytics(
-        @RequestParam(defaultValue = "7d") String period,
-        HttpServletRequest request
+            @RequestParam(defaultValue = "7d") String period,
+            HttpServletRequest request
     ) {
         final Server server = RequestUtil.getRequestServer(request);
         final AuditLogsAnalyticsResponse analytics = analyticsService.getAuditLogsAnalytics(server, period);
@@ -69,8 +65,8 @@ public class AnalyticsController {
 
     @GetMapping("/player-activity")
     public ResponseEntity<gg.modl.proto.modl.v1.PlayerActivityResponse> getPlayerActivityAnalytics(
-        @RequestParam(defaultValue = "30d") String period,
-        HttpServletRequest request
+            @RequestParam(defaultValue = "30d") String period,
+            HttpServletRequest request
     ) {
         final Server server = RequestUtil.getRequestServer(request);
         final PlayerActivityResponse analytics = analyticsService.getPlayerActivityAnalytics(server, period);

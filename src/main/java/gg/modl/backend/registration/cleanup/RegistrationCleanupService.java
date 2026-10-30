@@ -9,16 +9,17 @@ import gg.modl.backend.server.ServerService;
 import gg.modl.backend.server.data.ProvisioningStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.staff.service.StaffLookupCache;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +47,9 @@ public class RegistrationCleanupService {
         Date cutoff = Date.from(now.minus(properties.getExpiry()));
         Date claimCutoff = Date.from(now.minus(properties.getClaimTtl()));
         List<Server> candidates = serverRegistrationCleanupRepository.findExpiredRegistrationCleanupCandidates(
-            cutoff,
-            claimCutoff,
-            properties.getBatchSize()
+                cutoff,
+                claimCutoff,
+                properties.getBatchSize()
         );
 
         CleanupStats stats = new CleanupStats();
@@ -58,16 +59,16 @@ public class RegistrationCleanupService {
         }
 
         log.info(
-            "Registration cleanup scanned={} deleted={} dryRun={} skippedIneligible={} skippedPlayers={} skippedUnknown={} skippedRace={} dropFailed={} finalDeleteFailed={}",
-            stats.candidates,
-            stats.deleted,
-            properties.isDryRun(),
-            stats.skippedIneligible,
-            stats.skippedPlayers,
-            stats.skippedUnknown,
-            stats.skippedRace,
-            stats.dropFailed,
-            stats.finalDeleteFailed
+                "Registration cleanup scanned={} deleted={} dryRun={} skippedIneligible={} skippedPlayers={} skippedUnknown={} skippedRace={} dropFailed={} finalDeleteFailed={}",
+                stats.candidates,
+                stats.deleted,
+                properties.isDryRun(),
+                stats.skippedIneligible,
+                stats.skippedPlayers,
+                stats.skippedUnknown,
+                stats.skippedRace,
+                stats.dropFailed,
+                stats.finalDeleteFailed
         );
     }
 
@@ -106,10 +107,10 @@ public class RegistrationCleanupService {
         }
 
         Optional<Server> confirmed = serverRegistrationCleanupRepository.confirmRegistrationCleanupClaim(
-            claimedServer.getId(),
-            claimedServer.getCleanupClaimId(),
-            cutoff,
-            now
+                claimedServer.getId(),
+                claimedServer.getCleanupClaimId(),
+                cutoff,
+                now
         );
         if (confirmed.isEmpty()) {
             stats.skippedRace++;
@@ -123,9 +124,9 @@ public class RegistrationCleanupService {
         }
 
         boolean deleted = serverRegistrationCleanupRepository.deleteClaimedExpiredRegistration(
-            confirmedServer.getId(),
-            confirmedServer.getCleanupClaimId(),
-            cutoff
+                confirmedServer.getId(),
+                confirmedServer.getCleanupClaimId(),
+                cutoff
         );
         if (!deleted) {
             stats.finalDeleteFailed++;
@@ -158,21 +159,21 @@ public class RegistrationCleanupService {
 
     private boolean isStillEligible(Server server, Date cutoff) {
         return server != null
-            && Boolean.FALSE.equals(server.getEmailVerified())
-            && server.getProvisioningStatus() == ProvisioningStatus.PENDING
-            && StringUtils.hasText(server.getEmailVerificationToken())
-            && server.getCreatedAt() != null
-            && server.getCreatedAt().before(cutoff)
-            && StringUtils.hasText(server.getDatabaseName())
-            && !hasActivityEvidence(server);
+                && Boolean.FALSE.equals(server.getEmailVerified())
+                && server.getProvisioningStatus() == ProvisioningStatus.PENDING
+                && StringUtils.hasText(server.getEmailVerificationToken())
+                && server.getCreatedAt() != null
+                && server.getCreatedAt().before(cutoff)
+                && StringUtils.hasText(server.getDatabaseName())
+                && !hasActivityEvidence(server);
     }
 
     private boolean hasActivityEvidence(Server server) {
         return server.getLastActivityAt() != null
-            || StringUtils.hasText(server.getApiKey())
-            || positive(server.getUserCount())
-            || positive(server.getTicketCount())
-            || positive(server.getOnlinePlayerCount());
+                || StringUtils.hasText(server.getApiKey())
+                || positive(server.getUserCount())
+                || positive(server.getTicketCount())
+                || positive(server.getOnlinePlayerCount());
     }
 
     private boolean positive(Long value) {

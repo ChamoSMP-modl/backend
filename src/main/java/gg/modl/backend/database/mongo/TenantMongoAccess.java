@@ -19,7 +19,7 @@ public class TenantMongoAccess {
         String databaseName = server.getDatabaseName();
         if (databaseName == null) {
             throw new IllegalStateException(
-                "Server '" + server.getServerName() + "' (id=" + server.getId() + ") has no database name configured"
+                    "Server '" + server.getServerName() + "' (id=" + server.getId() + ") has no database name configured"
             );
         }
         return forDatabase(databaseName);

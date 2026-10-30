@@ -1,11 +1,5 @@
 package gg.modl.backend.realtime.schedule;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.realtime.auth.RealtimePrincipal;
 import gg.modl.backend.realtime.auth.RealtimeTopicAuthorizer;
 import gg.modl.backend.realtime.config.RealtimeProperties;
@@ -16,9 +10,14 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.proto.modl.v1.Topic;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 class RealtimePanelAuthorizationSweeperTest {
 
@@ -28,7 +27,7 @@ class RealtimePanelAuthorizationSweeperTest {
         RealtimeConnectionRegistry registry = new RealtimeConnectionRegistry(properties);
         RealtimeTopicAuthorizer authorizer = mock(RealtimeTopicAuthorizer.class);
         RealtimePanelAuthorizationSweeper sweeper = new RealtimePanelAuthorizationSweeper(
-            properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
+                properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
 
         RealtimePrincipal principal = RealtimePrincipal.panel(server(), "staff@example.com");
         RealtimeConnectionState state = registry.register(session("panel"));
@@ -51,7 +50,7 @@ class RealtimePanelAuthorizationSweeperTest {
         RealtimeConnectionRegistry registry = new RealtimeConnectionRegistry(properties);
         RealtimeTopicAuthorizer authorizer = mock(RealtimeTopicAuthorizer.class);
         RealtimePanelAuthorizationSweeper sweeper = new RealtimePanelAuthorizationSweeper(
-            properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
+                properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
 
         RealtimeConnectionState state = registry.register(session("minecraft"));
         state.authenticate(RealtimePrincipal.minecraft(server(), "instance-1"), 1);
@@ -70,7 +69,7 @@ class RealtimePanelAuthorizationSweeperTest {
         RealtimeConnectionRegistry registry = new RealtimeConnectionRegistry(properties);
         RealtimeTopicAuthorizer authorizer = mock(RealtimeTopicAuthorizer.class);
         RealtimePanelAuthorizationSweeper sweeper = new RealtimePanelAuthorizationSweeper(
-            properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
+                properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
 
         RealtimeConnectionState state = registry.register(session("panel-disabled"));
         state.authenticate(RealtimePrincipal.panel(server(), "staff@example.com"), 1);
@@ -88,7 +87,7 @@ class RealtimePanelAuthorizationSweeperTest {
         RealtimeConnectionRegistry registry = new RealtimeConnectionRegistry(properties);
         RealtimeTopicAuthorizer authorizer = mock(RealtimeTopicAuthorizer.class);
         RealtimePanelAuthorizationSweeper sweeper = new RealtimePanelAuthorizationSweeper(
-            properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
+                properties, registry, authorizer, new RealtimeMetrics(new SimpleMeterRegistry()));
 
         registry.register(session("pending"));
 
@@ -104,7 +103,7 @@ class RealtimePanelAuthorizationSweeperTest {
     }
 
     private Server server() {
-        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
         return server;
     }

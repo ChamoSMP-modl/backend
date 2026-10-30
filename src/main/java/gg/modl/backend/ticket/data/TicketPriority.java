@@ -9,17 +9,17 @@ public enum TicketPriority {
     NORMAL("normal", "Normal"),
     HIGH("high", "High");
 
+    private static final CanonicalAliasIndex<TicketPriority> INDEX = CanonicalAliasIndex
+            .of("ticket priority", values(), TicketPriority::getId)
+            .alias(LOW, "minor")
+            .alias(NORMAL, "medium")
+            .alias(NORMAL, "default")
+            .alias(NORMAL, "standard")
+            .alias(HIGH, "urgent")
+            .alias(HIGH, "critical")
+            .alias(HIGH, "highest");
     private final String id;
     private final String displayName;
-    private static final CanonicalAliasIndex<TicketPriority> INDEX = CanonicalAliasIndex
-        .of("ticket priority", values(), TicketPriority::getId)
-        .alias(LOW, "minor")
-        .alias(NORMAL, "medium")
-        .alias(NORMAL, "default")
-        .alias(NORMAL, "standard")
-        .alias(HIGH, "urgent")
-        .alias(HIGH, "critical")
-        .alias(HIGH, "highest");
 
     TicketPriority(String id, String displayName) {
         this.id = id;

@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.infrastructure.exception.ValidationException;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.ReplayRetentionSettings;
+import org.springframework.stereotype.Service;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.springframework.stereotype.Service;
 
 @Service
 public class ReplayRetentionSettingsService {
@@ -20,7 +21,7 @@ public class ReplayRetentionSettingsService {
     public ReplayRetentionSettingsService(SettingsDocumentService settingsDocumentService, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.support = VersionedSettingsSupport.of(
-            settingsDocumentService, SETTINGS_TYPE_REPLAY_RETENTION, this::mapToSettings);
+                settingsDocumentService, SETTINGS_TYPE_REPLAY_RETENTION, this::mapToSettings);
     }
 
     public ReplayRetentionSettings getReplayRetentionSettings(Server server) {
@@ -32,10 +33,10 @@ public class ReplayRetentionSettingsService {
     }
 
     public VersionedSettings<ReplayRetentionSettings> patchReplayRetentionSettings(
-        Server server,
-        long expectedVersion,
-        Boolean enabled,
-        Integer days
+            Server server,
+            long expectedVersion,
+            Boolean enabled,
+            Integer days
     ) {
         Map<String, Object> data = support.currentData(server);
 

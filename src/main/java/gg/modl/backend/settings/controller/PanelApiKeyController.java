@@ -13,12 +13,7 @@ import gg.modl.proto.modl.v1.ApiKeyRevealResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_SETTINGS)
@@ -30,8 +25,8 @@ public class PanelApiKeyController {
 
     @PostMapping("/api-keys/{type}/generate")
     public ApiKeyGenerateResponse generateApiKey(
-        @PathVariable String type,
-        HttpServletRequest request
+            @PathVariable String type,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         String apiKey = apiKeySettingsService.generateApiKey(server, type);
@@ -41,8 +36,8 @@ public class PanelApiKeyController {
 
     @GetMapping("/api-keys/{type}/reveal")
     public ResponseEntity<ApiKeyRevealResponse> revealApiKey(
-        @PathVariable String type,
-        HttpServletRequest request
+            @PathVariable String type,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         String apiKey = apiKeySettingsService.revealApiKey(server, type);
@@ -56,8 +51,8 @@ public class PanelApiKeyController {
 
     @DeleteMapping("/api-keys/{type}")
     public ResponseEntity<ApiKeyDeleteResponse> deleteApiKey(
-        @PathVariable String type,
-        HttpServletRequest request
+            @PathVariable String type,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         boolean deleted = apiKeySettingsService.deleteApiKey(server, type);
@@ -72,8 +67,8 @@ public class PanelApiKeyController {
 
     @GetMapping("/api-keys/{type}/exists")
     public ApiKeyExistsResponse checkApiKeyExists(
-        @PathVariable String type,
-        HttpServletRequest request
+            @PathVariable String type,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         boolean exists = apiKeySettingsService.hasApiKey(server, type);

@@ -4,15 +4,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import java.util.Map;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.function.Supplier;
 
 public final class SettingsCodec<T> {
     private static final Logger log = LoggerFactory.getLogger(SettingsCodec.class);
     private static final JavaType MAP_TYPE =
-        TypeFactory.defaultInstance().constructMapType(Map.class, String.class, Object.class);
+            TypeFactory.defaultInstance().constructMapType(Map.class, String.class, Object.class);
 
     private final ObjectMapper objectMapper;
     private final JavaType type;

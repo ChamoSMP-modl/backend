@@ -1,6 +1,7 @@
 package gg.modl.backend.storage.service;
 
 import gg.modl.backend.server.data.Server;
+
 import java.util.UUID;
 
 public final class StorageKeyUtils {

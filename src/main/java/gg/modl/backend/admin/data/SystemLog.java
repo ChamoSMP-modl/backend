@@ -1,13 +1,14 @@
 package gg.modl.backend.admin.data;
 
 import gg.modl.backend.database.mongo.codegen.GenerateMongoFields;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @Document(collection = "system_logs")

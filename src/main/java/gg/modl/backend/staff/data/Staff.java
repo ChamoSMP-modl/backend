@@ -4,17 +4,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import gg.modl.backend.database.mongo.codegen.GenerateMongoFields;
 import gg.modl.backend.database.mongo.codegen.MongoFieldAlias;
 import gg.modl.backend.database.mongo.codegen.MongoFieldAliases;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Document
 @Data
@@ -24,10 +24,10 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @GenerateMongoFields
 @MongoFieldAliases({
-    @MongoFieldAlias(name = "SUBSCRIBED_TICKET_TICKET_ID", path = "subscribedTickets.ticketId"),
-    @MongoFieldAlias(name = "SUBSCRIBED_TICKET_ACTIVE", path = "subscribedTickets.active"),
-    @MongoFieldAlias(name = "SUBSCRIBED_TICKET_POS_ACTIVE", path = "subscribedTickets.$.active"),
-    @MongoFieldAlias(name = "SUBSCRIBED_TICKET_POS_LAST_READ_AT", path = "subscribedTickets.$.lastReadAt")
+        @MongoFieldAlias(name = "SUBSCRIBED_TICKET_TICKET_ID", path = "subscribedTickets.ticketId"),
+        @MongoFieldAlias(name = "SUBSCRIBED_TICKET_ACTIVE", path = "subscribedTickets.active"),
+        @MongoFieldAlias(name = "SUBSCRIBED_TICKET_POS_ACTIVE", path = "subscribedTickets.$.active"),
+        @MongoFieldAlias(name = "SUBSCRIBED_TICKET_POS_LAST_READ_AT", path = "subscribedTickets.$.lastReadAt")
 })
 public class Staff {
     public static final String DEFAULT_DATE_FORMAT = "MMM D, YYYY";

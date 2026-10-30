@@ -23,7 +23,7 @@ public class CustomDomainStateWriter {
     public boolean reconcileStatus(String serverId, String domain, CustomDomainStatus status,
                                    String cloudflareHostnameId, String error) {
         boolean updated = serverCustomDomainRepository.updateCustomDomainStatus(
-            serverId, domain, status, cloudflareHostnameId, error);
+                serverId, domain, status, cloudflareHostnameId, error);
         if (updated) {
             evict(domain);
         }

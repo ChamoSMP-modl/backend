@@ -1,16 +1,5 @@
 package gg.modl.backend.role.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.database.mongo.repository.StaffRoleMongoRepository;
 import gg.modl.backend.infrastructure.exception.ForbiddenException;
@@ -21,18 +10,25 @@ import gg.modl.backend.server.service.ServerTimestampService;
 import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.service.StaffLookupCache;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RoleAuthorizationTest {
 
     private static final String ADMIN_EMAIL = "admin@example.com";
     private static final String NO_AUTHORITY_MESSAGE = "You do not have authority to perform this action";
     private static final String HIGHER_AUTHORITY_MESSAGE =
-        "You do not have authority over a role at or above your own level";
+            "You do not have authority over a role at or above your own level";
 
     private StaffRoleMongoRepository roleRepository;
     private StaffMongoRepository staffRepository;
@@ -50,7 +46,7 @@ class RoleAuthorizationTest {
         serverTimestampService = mock(ServerTimestampService.class);
         permissionService = new PermissionService(roleRepository, punishmentTypeService, staffRepository);
         roleAuthorization = new RoleAuthorization(permissionService, staffRepository, mock(StaffLookupCache.class));
-        server = new Server("server", "domain", "db", ADMIN_EMAIL, true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", ADMIN_EMAIL, true, ServerPlan.PREMIUM);
         server.setId("server-id");
         when(punishmentTypeService.getPunishmentTypes(server)).thenReturn(List.of());
     }
@@ -102,7 +98,7 @@ class RoleAuthorizationTest {
     @Test
     void assertCanAssignMinecraftPlayerAllowsSuperAdminForAnyTarget() {
         RoleAuthorization.PerformerAuthority performer =
-            new RoleAuthorization.PerformerAuthority(ADMIN_EMAIL, null, true, true);
+                new RoleAuthorization.PerformerAuthority(ADMIN_EMAIL, null, true, true);
         Staff target = Staff.builder().email("helper@example.com").build();
 
         assertDoesNotThrow(() -> roleAuthorization.assertCanAssignMinecraftPlayer(server, performer, target));
@@ -111,7 +107,7 @@ class RoleAuthorizationTest {
     @Test
     void assertCanAssignMinecraftPlayerAllowsSelfByEmailIgnoringCase() {
         RoleAuthorization.PerformerAuthority performer =
-            new RoleAuthorization.PerformerAuthority("Helper@Example.com", "helper", false, true);
+                new RoleAuthorization.PerformerAuthority("Helper@Example.com", "helper", false, true);
         Staff target = Staff.builder().email("helper@example.com").build();
 
         assertDoesNotThrow(() -> roleAuthorization.assertCanAssignMinecraftPlayer(server, performer, target));
@@ -120,11 +116,11 @@ class RoleAuthorizationTest {
     @Test
     void assertCanAssignMinecraftPlayerDeniesOtherTargetsForNonSuperAdmin() {
         RoleAuthorization.PerformerAuthority performer =
-            new RoleAuthorization.PerformerAuthority("mgr@example.com", "mgr", false, true);
+                new RoleAuthorization.PerformerAuthority("mgr@example.com", "mgr", false, true);
         Staff target = Staff.builder().email("helper@example.com").build();
 
         ForbiddenException error = assertThrows(ForbiddenException.class,
-            () -> roleAuthorization.assertCanAssignMinecraftPlayer(server, performer, target));
+                () -> roleAuthorization.assertCanAssignMinecraftPlayer(server, performer, target));
         assertEquals(NO_AUTHORITY_MESSAGE, error.getMessage());
     }
 
@@ -132,30 +128,30 @@ class RoleAuthorizationTest {
     void requireStaffManagePassesWhenRoleGrantsExactPermission() {
         givenRole("mgr", 1, "admin.staff.manage.roles");
         RoleAuthorization.PerformerAuthority performer =
-            new RoleAuthorization.PerformerAuthority("mgr@example.com", "mgr", false, true);
+                new RoleAuthorization.PerformerAuthority("mgr@example.com", "mgr", false, true);
 
         assertDoesNotThrow(() -> roleAuthorization.requireStaffManage(
-            server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
+                server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
     }
 
     @Test
     void requireStaffManagePassesWhenRoleGrantsViaParentPrefix() {
         givenRole("mgr", 1, "admin.staff.manage");
         RoleAuthorization.PerformerAuthority performer =
-            new RoleAuthorization.PerformerAuthority("mgr@example.com", "mgr", false, true);
+                new RoleAuthorization.PerformerAuthority("mgr@example.com", "mgr", false, true);
 
         assertDoesNotThrow(() -> roleAuthorization.requireStaffManage(
-            server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
+                server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
     }
 
     @Test
     void requireStaffManageDeniesWhenRoleLacksPermission() {
         givenRole("helper", 3, "ticket.reply.all");
         RoleAuthorization.PerformerAuthority performer =
-            new RoleAuthorization.PerformerAuthority("helper@example.com", "helper", false, true);
+                new RoleAuthorization.PerformerAuthority("helper@example.com", "helper", false, true);
 
         ForbiddenException error = assertThrows(ForbiddenException.class,
-            () -> roleAuthorization.requireStaffManage(server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
+                () -> roleAuthorization.requireStaffManage(server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
         assertEquals(NO_AUTHORITY_MESSAGE, error.getMessage());
     }
 
@@ -163,12 +159,12 @@ class RoleAuthorizationTest {
     void requireStaffManageDeniesResolvedPerformerWithNullRoleId() {
         givenStaff("staff-null-role", "orphan@example.com", null);
         RoleAuthorization.PerformerAuthority performer =
-            roleAuthorization.minecraftPerformer(server, "staff-null-role");
+                roleAuthorization.minecraftPerformer(server, "staff-null-role");
         assertTrue(performer.identified());
         assertNull(performer.roleId());
 
         ForbiddenException error = assertThrows(ForbiddenException.class,
-            () -> roleAuthorization.requireStaffManage(server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
+                () -> roleAuthorization.requireStaffManage(server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
         assertEquals(NO_AUTHORITY_MESSAGE, error.getMessage());
     }
 
@@ -177,16 +173,16 @@ class RoleAuthorizationTest {
         RoleAuthorization.PerformerAuthority performer = RoleAuthorization.PerformerAuthority.unidentified();
 
         assertThrows(ForbiddenException.class,
-            () -> roleAuthorization.requireStaffManage(server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
+                () -> roleAuthorization.requireStaffManage(server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
     }
 
     @Test
     void requireStaffManageAllowsSuperAdminRegardlessOfRole() {
         RoleAuthorization.PerformerAuthority performer =
-            new RoleAuthorization.PerformerAuthority("owner@example.com", null, true, true);
+                new RoleAuthorization.PerformerAuthority("owner@example.com", null, true, true);
 
         assertDoesNotThrow(() -> roleAuthorization.requireStaffManage(
-            server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
+                server, performer, RoleAuthorization.MANAGE_ROLES_PERMISSION));
     }
 
     @Test
@@ -197,9 +193,9 @@ class RoleAuthorizationTest {
         when(roleRepository.saveEntity(eq(server), any())).thenAnswer(invocation -> invocation.getArgument(1));
 
         RoleAuthorization.PerformerAuthority performer =
-            roleAuthorization.minecraftPerformer(server, "staff-mgr");
+                roleAuthorization.minecraftPerformer(server, "staff-mgr");
         boolean updated = roleService().updateRolePermissions(
-            server, "helper", helper.getPermissions(), performer);
+                server, "helper", helper.getPermissions(), performer);
 
         assertTrue(updated);
     }
@@ -212,15 +208,15 @@ class RoleAuthorizationTest {
         StaffRole higher = givenRole("higher", 1, "ticket.reply.all");
 
         RoleAuthorization.PerformerAuthority performer =
-            roleAuthorization.minecraftPerformer(server, "staff-mgr");
+                roleAuthorization.minecraftPerformer(server, "staff-mgr");
         RoleService roleService = roleService();
 
         ForbiddenException peerError = assertThrows(ForbiddenException.class,
-            () -> roleService.updateRolePermissions(server, "peer", peer.getPermissions(), performer));
+                () -> roleService.updateRolePermissions(server, "peer", peer.getPermissions(), performer));
         assertEquals(HIGHER_AUTHORITY_MESSAGE, peerError.getMessage());
 
         ForbiddenException higherError = assertThrows(ForbiddenException.class,
-            () -> roleService.updateRolePermissions(server, "higher", higher.getPermissions(), performer));
+                () -> roleService.updateRolePermissions(server, "higher", higher.getPermissions(), performer));
         assertEquals(HIGHER_AUTHORITY_MESSAGE, higherError.getMessage());
     }
 
@@ -236,28 +232,24 @@ class RoleAuthorizationTest {
         assertTrue(effective.contains("admin.settings.view.storage"));
         assertTrue(effective.contains("admin.settings.view.migration"));
         assertTrue(effective.contains(PermissionService.ADMIN_SETTINGS_VIEW_PUNISHMENTS));
-        assertFalse(effective.contains(PermissionService.ADMIN_SETTINGS_VIEW_BILLING));
     }
 
     @Test
     void effectivePermissionIdsForSuperAdminIncludeSuperAdminOnlyPermissions() {
         List<String> effective = roleAuthorization.effectivePermissionIds(server,
-            new RoleAuthorization.PerformerAuthority(ADMIN_EMAIL, null, true, true));
+                new RoleAuthorization.PerformerAuthority(ADMIN_EMAIL, null, true, true));
 
         assertTrue(effective.containsAll(PermissionService.superAdminOnlyPermissionIds()));
     }
 
     @Test
     void effectivePermissionIdsDropStoredSuperAdminOnlyPermissionWithoutMigration() {
-        givenRole("admin", 1, PermissionService.ADMIN_SETTINGS_VIEW_BILLING,
-            PermissionService.ADMIN_AUDIT_ROLLBACK, "ticket.view.all");
+        givenRole("admin", 1, PermissionService.ADMIN_AUDIT_ROLLBACK, "ticket.view.all");
 
         List<String> effective = roleAuthorization.effectivePermissionIds(server, staffPerformer("admin"));
 
-        assertFalse(effective.contains(PermissionService.ADMIN_SETTINGS_VIEW_BILLING));
         assertFalse(effective.contains(PermissionService.ADMIN_AUDIT_ROLLBACK));
         assertTrue(effective.contains("ticket.view.all"));
-        assertFalse(permissionService.hasPermission(server, "admin", PermissionService.ADMIN_SETTINGS_VIEW_BILLING));
         assertFalse(permissionService.hasPermission(server, "admin", PermissionService.ADMIN_AUDIT_ROLLBACK));
     }
 
@@ -272,11 +264,11 @@ class RoleAuthorizationTest {
 
     private RoleService roleService() {
         return new RoleService(
-            roleRepository,
-            staffRepository,
-            permissionService,
-            roleAuthorization,
-            serverTimestampService);
+                roleRepository,
+                staffRepository,
+                permissionService,
+                roleAuthorization,
+                serverTimestampService);
     }
 
     private void givenStaff(String staffId, String email, String roleId) {
@@ -286,11 +278,11 @@ class RoleAuthorizationTest {
 
     private StaffRole givenRole(String roleId, int order, String... permissions) {
         StaffRole role = StaffRole.builder()
-            .id(roleId)
-            .name(roleId)
-            .order(order)
-            .permissions(new ArrayList<>(List.of(permissions)))
-            .build();
+                .id(roleId)
+                .name(roleId)
+                .order(order)
+                .permissions(new ArrayList<>(List.of(permissions)))
+                .build();
         when(roleRepository.findById(server, roleId)).thenReturn(Optional.of(role));
         return role;
     }

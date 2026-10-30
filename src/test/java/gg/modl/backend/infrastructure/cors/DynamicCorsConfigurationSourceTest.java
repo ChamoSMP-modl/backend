@@ -1,9 +1,5 @@
 package gg.modl.backend.infrastructure.cors;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.verifyNoInteractions;
-
 import gg.modl.backend.infrastructure.config.ModlCorsProperties;
 import gg.modl.backend.infrastructure.config.ModlProperties;
 import gg.modl.backend.infrastructure.origin.OriginPolicyFactory;
@@ -11,6 +7,10 @@ import gg.modl.backend.server.ServerService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 class DynamicCorsConfigurationSourceTest {
     private static final String REPLAY_LITE_PATH = "/v1/public/replay-lite/replays/75f4b741-67df-414c-957b-a8a08222fc30";
@@ -52,7 +52,7 @@ class DynamicCorsConfigurationSourceTest {
         properties.setReplayLiteOrigins("https://replays.modl.gg,http://localhost:5173");
 
         DynamicCorsConfigurationSource source = new DynamicCorsConfigurationSource(
-            serverService, properties, new OriginPolicyFactory(properties, new ModlProperties()));
+                serverService, properties, new OriginPolicyFactory(properties, new ModlProperties()));
         source.initParsedOrigins();
         return source;
     }

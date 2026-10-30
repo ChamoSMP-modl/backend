@@ -2,7 +2,6 @@ package gg.modl.backend.infrastructure.turnstile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import gg.modl.backend.infrastructure.config.ModlProperties;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -12,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,9 +47,9 @@ public class TurnstileService {
 
             final HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
             final TurnstileResponse response = restTemplate.postForObject(
-                config.getVerifyUrl(),
-                request,
-                TurnstileResponse.class
+                    config.getVerifyUrl(),
+                    request,
+                    TurnstileResponse.class
             );
 
             if (response == null) {
@@ -81,7 +82,7 @@ public class TurnstileService {
             return true;
         }
         final boolean hostAllowed = host != null
-            && allowed.stream().anyMatch(h -> h.equalsIgnoreCase(host.trim()));
+                && allowed.stream().anyMatch(h -> h.equalsIgnoreCase(host.trim()));
         if (!hostAllowed) {
             log.warn("Turnstile token solved on unexpected hostname '{}', expected one of {}", host, allowed);
             return false;
@@ -102,9 +103,9 @@ public class TurnstileService {
             return List.of();
         }
         return hostnames.stream()
-            .filter(h -> h != null && !h.isBlank())
-            .map(String::trim)
-            .toList();
+                .filter(h -> h != null && !h.isBlank())
+                .map(String::trim)
+                .toList();
     }
 
     private List<String> defaultHostnamesFromAppDomain() {
@@ -125,13 +126,14 @@ public class TurnstileService {
         }
         warnedAboutMissingHostnames = true;
         log.error("Turnstile hostname pinning is not configured and no app domain is available; rejecting token. "
-            + "Set CLOUDFLARE_TURNSTILE_HOSTNAMES (modl.turnstile.expected-hostnames) to the hostname(s) serving the widget.");
+                + "Set CLOUDFLARE_TURNSTILE_HOSTNAMES (modl.turnstile.expected-hostnames) to the hostname(s) serving the widget.");
     }
 
     public record TurnstileResponse(
-        boolean success,
-        @JsonProperty("challenge_ts") String challengeTs,
-        String hostname,
-        @JsonProperty("error-codes") List<String> errorCodes
-    ) {}
+            boolean success,
+            @JsonProperty("challenge_ts") String challengeTs,
+            String hostname,
+            @JsonProperty("error-codes") List<String> errorCodes
+    ) {
+    }
 }

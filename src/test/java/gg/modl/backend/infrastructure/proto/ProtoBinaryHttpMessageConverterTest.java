@@ -1,14 +1,12 @@
 package gg.modl.backend.infrastructure.proto;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.proto.modl.v1.SimpleResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class ProtoBinaryHttpMessageConverterTest {
 
@@ -17,8 +15,8 @@ class ProtoBinaryHttpMessageConverterTest {
     @Test
     void roundTripsGeneratedMessagesAsBinaryProtobuf() throws Exception {
         SimpleResponse original = SimpleResponse.newBuilder()
-            .setSuccess(true)
-            .build();
+                .setSuccess(true)
+                .build();
 
         MockHttpOutputMessage output = new MockHttpOutputMessage();
         converter.write(original, ProtobufMediaTypes.APPLICATION_X_PROTOBUF, output);

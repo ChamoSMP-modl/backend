@@ -3,32 +3,14 @@ package gg.modl.backend.admin.controller;
 import com.google.protobuf.Timestamp;
 import gg.modl.backend.admin.service.AdminServerService;
 import gg.modl.backend.server.data.Server;
-import gg.modl.proto.modl.v1.AdminServerBulkOperationData;
-import gg.modl.proto.modl.v1.AdminServerBulkOperationResponse;
-import gg.modl.proto.modl.v1.AdminServerDetailResponse;
-import gg.modl.proto.modl.v1.AdminServerExportData;
-import gg.modl.proto.modl.v1.AdminServerExportResponse;
-import gg.modl.proto.modl.v1.AdminServerListData;
-import gg.modl.proto.modl.v1.AdminServerListResponse;
-import gg.modl.proto.modl.v1.AdminServerMutationResponse;
-import gg.modl.proto.modl.v1.AdminServerPagination;
-import gg.modl.proto.modl.v1.AdminServerRecord;
-import gg.modl.proto.modl.v1.AdminServerSearchData;
-import gg.modl.proto.modl.v1.AdminServerSearchResponse;
-import gg.modl.proto.modl.v1.AdminServerStats;
-import gg.modl.proto.modl.v1.AdminServerStatsResponse;
-import gg.modl.proto.modl.v1.AdminServerUsageBatchData;
-import gg.modl.proto.modl.v1.AdminServerUsageBatchResponse;
-import gg.modl.proto.modl.v1.AdminServerUsageSummary;
+import gg.modl.proto.modl.v1.*;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.longValue;
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.toTimestamp;
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.*;
 
 final class AdminServerProtoMapper {
 
@@ -37,12 +19,12 @@ final class AdminServerProtoMapper {
 
     static AdminServerRecord toRecord(Server server) {
         AdminServerRecord.Builder builder = AdminServerRecord.newBuilder()
-            .setId(stringValue(server.getId()))
-            .setServerName(stringValue(server.getServerName()))
-            .setCustomDomain(stringValue(server.getCustomDomain()))
-            .setAdminEmail(stringValue(server.getAdminEmail()))
-            .setEmailVerified(server.getEmailVerified() != null && server.getEmailVerified())
-            .setPlan(server.getPlan() != null ? server.getPlan().getValue() : "");
+                .setId(stringValue(server.getId()))
+                .setServerName(stringValue(server.getServerName()))
+                .setCustomDomain(stringValue(server.getCustomDomain()))
+                .setAdminEmail(stringValue(server.getAdminEmail()))
+                .setEmailVerified(server.getEmailVerified() != null && server.getEmailVerified())
+                .setPlan(server.getPlan() != null ? server.getPlan().getValue() : "");
 
         if (server.getDatabaseName() != null) {
             builder.setDatabaseName(server.getDatabaseName());
@@ -58,12 +40,6 @@ final class AdminServerProtoMapper {
         }
         setTimestamp(server.getCurrentPeriodStart(), builder::setCurrentPeriodStart);
         setTimestamp(server.getCurrentPeriodEnd(), builder::setCurrentPeriodEnd);
-        if (server.getStripeCustomerId() != null) {
-            builder.setStripeCustomerId(server.getStripeCustomerId());
-        }
-        if (server.getStripeSubscriptionId() != null) {
-            builder.setStripeSubscriptionId(server.getStripeSubscriptionId());
-        }
         if (server.getAiRequestsCurrentPeriod() != null) {
             builder.setAiRequestsCurrentPeriod(server.getAiRequestsCurrentPeriod());
         }
@@ -119,29 +95,29 @@ final class AdminServerProtoMapper {
 
     static AdminServerListResponse toListResponse(List<Server> servers, int page, int limit, long total, int pages) {
         AdminServerListData.Builder data = AdminServerListData.newBuilder()
-            .setPagination(AdminServerPagination.newBuilder()
-                .setPage(page)
-                .setLimit(limit)
-                .setTotal(total)
-                .setPages(pages)
-                .build());
+                .setPagination(AdminServerPagination.newBuilder()
+                        .setPage(page)
+                        .setLimit(limit)
+                        .setTotal(total)
+                        .setPages(pages)
+                        .build());
         servers.forEach(server -> data.addServers(toRecord(server)));
         return AdminServerListResponse.newBuilder()
-            .setSuccess(true)
-            .setData(data.build())
-            .build();
+                .setSuccess(true)
+                .setData(data.build())
+                .build();
     }
 
     static AdminServerDetailResponse toDetailResponse(Server server) {
         return AdminServerDetailResponse.newBuilder()
-            .setSuccess(true)
-            .setData(toRecord(server))
-            .build();
+                .setSuccess(true)
+                .setData(toRecord(server))
+                .build();
     }
 
     static AdminServerMutationResponse toMutationResponse(Server server, String message) {
         AdminServerMutationResponse.Builder builder = AdminServerMutationResponse.newBuilder()
-            .setSuccess(true);
+                .setSuccess(true);
         if (server != null) {
             builder.setData(toRecord(server));
         }
@@ -153,39 +129,39 @@ final class AdminServerProtoMapper {
 
     static AdminServerStatsResponse toStatsResponse(Map<String, Object> stats) {
         AdminServerStats.Builder data = AdminServerStats.newBuilder()
-            .setTotalPlayers(longValue(stats.get("totalPlayers")))
-            .setTotalTickets(longValue(stats.get("totalTickets")))
-            .setTotalLogs(longValue(stats.get("totalLogs")))
-            .setDatabaseSize(longValue(stats.get("databaseSize")));
+                .setTotalPlayers(longValue(stats.get("totalPlayers")))
+                .setTotalTickets(longValue(stats.get("totalTickets")))
+                .setTotalLogs(longValue(stats.get("totalLogs")))
+                .setDatabaseSize(longValue(stats.get("databaseSize")));
         Object lastActivity = stats.get("lastActivity");
         if (lastActivity != null) {
             data.setLastActivity(toTimestamp(lastActivity));
         }
         return AdminServerStatsResponse.newBuilder()
-            .setSuccess(true)
-            .setData(data.build())
-            .build();
+                .setSuccess(true)
+                .setData(data.build())
+                .build();
     }
 
     static AdminServerUsageBatchResponse toUsageBatchResponse(Map<String, AdminServerService.UsageSummary> usage) {
         AdminServerUsageBatchData.Builder data = AdminServerUsageBatchData.newBuilder();
         usage.forEach((id, summary) -> data.putUsage(id, toUsageSummary(summary)));
         return AdminServerUsageBatchResponse.newBuilder()
-            .setSuccess(true)
-            .setData(data.build())
-            .build();
+                .setSuccess(true)
+                .setData(data.build())
+                .build();
     }
 
     static AdminServerBulkOperationResponse toBulkOperationResponse(String action, long affectedCount,
                                                                     List<String> serverIds, String message) {
         AdminServerBulkOperationData data = AdminServerBulkOperationData.newBuilder()
-            .setAction(stringValue(action))
-            .setAffectedCount(affectedCount)
-            .addAllServerIds(serverIds)
-            .build();
+                .setAction(stringValue(action))
+                .setAffectedCount(affectedCount)
+                .addAllServerIds(serverIds)
+                .build();
         AdminServerBulkOperationResponse.Builder builder = AdminServerBulkOperationResponse.newBuilder()
-            .setSuccess(true)
-            .setData(data);
+                .setSuccess(true)
+                .setData(data);
         if (message != null) {
             builder.setMessage(message);
         }
@@ -196,28 +172,28 @@ final class AdminServerProtoMapper {
         AdminServerSearchData.Builder data = AdminServerSearchData.newBuilder().setTotal(total);
         servers.forEach(server -> data.addServers(toRecord(server)));
         return AdminServerSearchResponse.newBuilder()
-            .setSuccess(true)
-            .setData(data.build())
-            .build();
+                .setSuccess(true)
+                .setData(data.build())
+                .build();
     }
 
     static AdminServerExportResponse toExportResponse(List<Server> servers, Date exportedAt, String format, int count) {
         AdminServerExportData.Builder data = AdminServerExportData.newBuilder()
-            .setExportedAt(toTimestamp(exportedAt))
-            .setFormat(stringValue(format))
-            .setCount(count);
+                .setExportedAt(toTimestamp(exportedAt))
+                .setFormat(stringValue(format))
+                .setCount(count);
         servers.forEach(server -> data.addServers(toRecord(server)));
         return AdminServerExportResponse.newBuilder()
-            .setSuccess(true)
-            .setData(data.build())
-            .build();
+                .setSuccess(true)
+                .setData(data.build())
+                .build();
     }
 
     private static AdminServerUsageSummary toUsageSummary(AdminServerService.UsageSummary summary) {
         AdminServerUsageSummary.Builder builder = AdminServerUsageSummary.newBuilder()
-            .setUserCount(summary.userCount())
-            .setTicketCount(summary.ticketCount())
-            .setFromCache(summary.fromCache());
+                .setUserCount(summary.userCount())
+                .setTicketCount(summary.ticketCount())
+                .setFromCache(summary.fromCache());
         if (summary.updatedAt() != null) {
             builder.setUpdatedAt(toTimestamp(summary.updatedAt()));
         }

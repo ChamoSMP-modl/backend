@@ -1,22 +1,17 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.player.data.IPEntry;
 import gg.modl.backend.player.data.NoteEntry;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.UsernameEntry;
 import gg.modl.backend.player.data.punishment.Punishment;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DuplicatePlayerMergerTest {
     private final DuplicatePlayerMerger merger = new DuplicatePlayerMerger();
@@ -25,19 +20,19 @@ class DuplicatePlayerMergerTest {
     void merge_unions_punishments_notes_and_alt_links_without_loss() {
         UUID uuid = UUID.randomUUID();
         Player winner = player("winner", uuid)
-            .punishments(new ArrayList<>(List.of(punishment("p1"), punishment("p2"), punishment("p3"))))
-            .notes(new ArrayList<>(List.of(note("n1"), note("n2"))))
-            .ipAddresses(new ArrayList<>(List.of(ip("1.1.1.1"), ip("3.3.3.3"))))
-            .usernames(new ArrayList<>(List.of(username("Alpha"), username("Gamma"))))
-            .data(new HashMap<>(Map.of("linkedAccounts", new ArrayList<>(List.of("alt-a")))))
-            .build();
+                .punishments(new ArrayList<>(List.of(punishment("p1"), punishment("p2"), punishment("p3"))))
+                .notes(new ArrayList<>(List.of(note("n1"), note("n2"))))
+                .ipAddresses(new ArrayList<>(List.of(ip("1.1.1.1"), ip("3.3.3.3"))))
+                .usernames(new ArrayList<>(List.of(username("Alpha"), username("Gamma"))))
+                .data(new HashMap<>(Map.of("linkedAccounts", new ArrayList<>(List.of("alt-a")))))
+                .build();
         Player loser = player("loser", uuid)
-            .punishments(new ArrayList<>(List.of(punishment("p3"), punishment("p4"))))
-            .notes(new ArrayList<>(List.of(note("n2"), note("n3"))))
-            .ipAddresses(new ArrayList<>(List.of(ip("2.2.2.2"))))
-            .usernames(new ArrayList<>(List.of(username("Beta"))))
-            .data(new HashMap<>(Map.of("linkedAccounts", new ArrayList<>(List.of("alt-a", "alt-b")))))
-            .build();
+                .punishments(new ArrayList<>(List.of(punishment("p3"), punishment("p4"))))
+                .notes(new ArrayList<>(List.of(note("n2"), note("n3"))))
+                .ipAddresses(new ArrayList<>(List.of(ip("2.2.2.2"))))
+                .usernames(new ArrayList<>(List.of(username("Beta"))))
+                .data(new HashMap<>(Map.of("linkedAccounts", new ArrayList<>(List.of("alt-a", "alt-b")))))
+                .build();
 
         Player merged = merger.merge(List.of(winner, loser));
 
@@ -53,13 +48,13 @@ class DuplicatePlayerMergerTest {
     void merge_is_idempotent_for_entries_without_ids() {
         UUID uuid = UUID.randomUUID();
         Player primary = player("primary", uuid)
-            .punishments(new ArrayList<>(List.of(punishment("p1"))))
-            .notes(new ArrayList<>(List.of(anonNote())))
-            .build();
+                .punishments(new ArrayList<>(List.of(punishment("p1"))))
+                .notes(new ArrayList<>(List.of(anonNote())))
+                .build();
         Player secondary = player("secondary", uuid)
-            .punishments(new ArrayList<>(List.of(punishment("p1"))))
-            .notes(new ArrayList<>(List.of(anonNote())))
-            .build();
+                .punishments(new ArrayList<>(List.of(punishment("p1"))))
+                .notes(new ArrayList<>(List.of(anonNote())))
+                .build();
 
         Player firstPass = merger.merge(List.of(primary, secondary));
         Player secondPass = merger.merge(List.of(firstPass, secondary));

@@ -5,8 +5,9 @@ import gg.modl.backend.infrastructure.exception.ValidationException;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.GeneralSettings;
 import gg.modl.backend.settings.data.SupportedLanguages;
-import java.util.Map;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 
 @Service
 public class GeneralSettingsService {
@@ -20,7 +21,7 @@ public class GeneralSettingsService {
     public GeneralSettingsService(SettingsDocumentService settingsDocumentService, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.support = VersionedSettingsSupport.of(
-            settingsDocumentService, SETTINGS_TYPE_GENERAL, this::mapToGeneralSettings);
+                settingsDocumentService, SETTINGS_TYPE_GENERAL, this::mapToGeneralSettings);
     }
 
     public GeneralSettings getGeneralSettings(Server server) {
@@ -34,12 +35,12 @@ public class GeneralSettingsService {
     private GeneralSettings mapToGeneralSettings(Map<String, Object> data) {
         GeneralSettings mapped = codec().decode(data);
         return GeneralSettings.builder()
-            .serverDisplayName(sanitizeOrEmpty(mapped.getServerDisplayName(), MAX_SERVER_NAME_LENGTH))
-            .discordWebhookUrl(sanitizeOrEmpty(mapped.getDiscordWebhookUrl(), MAX_URL_LENGTH))
-            .homepageIconUrl(sanitizeOrEmpty(mapped.getHomepageIconUrl(), MAX_URL_LENGTH))
-            .panelIconUrl(sanitizeOrEmpty(mapped.getPanelIconUrl(), MAX_URL_LENGTH))
-            .defaultLanguage(resolveLanguage(mapped.getDefaultLanguage()))
-            .build();
+                .serverDisplayName(sanitizeOrEmpty(mapped.getServerDisplayName(), MAX_SERVER_NAME_LENGTH))
+                .discordWebhookUrl(sanitizeOrEmpty(mapped.getDiscordWebhookUrl(), MAX_URL_LENGTH))
+                .homepageIconUrl(sanitizeOrEmpty(mapped.getHomepageIconUrl(), MAX_URL_LENGTH))
+                .panelIconUrl(sanitizeOrEmpty(mapped.getPanelIconUrl(), MAX_URL_LENGTH))
+                .defaultLanguage(resolveLanguage(mapped.getDefaultLanguage()))
+                .build();
     }
 
     private String resolveLanguage(String value) {
@@ -57,12 +58,12 @@ public class GeneralSettingsService {
 
     private GeneralSettings defaultGeneralSettings() {
         return GeneralSettings.builder()
-            .serverDisplayName("")
-            .discordWebhookUrl("")
-            .homepageIconUrl("")
-            .panelIconUrl("")
-            .defaultLanguage(SupportedLanguages.DEFAULT)
-            .build();
+                .serverDisplayName("")
+                .discordWebhookUrl("")
+                .homepageIconUrl("")
+                .panelIconUrl("")
+                .defaultLanguage(SupportedLanguages.DEFAULT)
+                .build();
     }
 
     private String sanitize(String value, int maxLength) {
@@ -78,9 +79,9 @@ public class GeneralSettingsService {
     }
 
     public VersionedSettings<GeneralSettings> patchGeneralSettings(
-        Server server,
-        long expectedVersion,
-        GeneralSettings patch
+            Server server,
+            long expectedVersion,
+            GeneralSettings patch
     ) {
         Map<String, Object> data = support.currentData(server);
 

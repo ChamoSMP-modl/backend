@@ -1,20 +1,21 @@
 package gg.modl.backend.settings.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.infrastructure.exception.ValidationException;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.data.ReplayRetentionSettings;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ReplayRetentionSettingsServiceTest {
     private SettingsDocumentService settingsDocumentService;
@@ -25,13 +26,13 @@ class ReplayRetentionSettingsServiceTest {
     void setUp() {
         settingsDocumentService = mock(SettingsDocumentService.class);
         service = new ReplayRetentionSettingsService(settingsDocumentService, new ObjectMapper());
-        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     }
 
     @Test
     void getReplayRetentionSettingsDefaultsToEnabledTenDays() {
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
 
         VersionedSettings<ReplayRetentionSettings> settings = service.getReplayRetentionSettingsState(server);
 
@@ -51,9 +52,9 @@ class ReplayRetentionSettingsServiceTest {
         expected.put("days", 365);
 
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(current, 2L, updatedAt, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(current, 2L, updatedAt, true));
         when(settingsDocumentService.saveRawState(server, "replayRetention", 2L, expected))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(expected, 3L, updatedAt, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(expected, 3L, updatedAt, true));
 
         VersionedSettings<ReplayRetentionSettings> settings = service.patchReplayRetentionSettings(server, 2L, null, 400);
 
@@ -68,7 +69,7 @@ class ReplayRetentionSettingsServiceTest {
         current.put("days", 14);
 
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(current, 1L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(current, 1L, null, true));
 
         VersionedSettings<ReplayRetentionSettings> settings = service.getReplayRetentionSettingsState(server);
 
@@ -79,11 +80,11 @@ class ReplayRetentionSettingsServiceTest {
     @Test
     void patchReplayRetentionSettingsRejectsEnabledZeroDays() {
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.patchReplayRetentionSettings(server, 0L, true, 0)
+                ValidationException.class,
+                () -> service.patchReplayRetentionSettings(server, 0L, true, 0)
         );
 
         assertEquals("Replay retention days must be at least 1 when enabled", exception.getMessage());
@@ -92,11 +93,11 @@ class ReplayRetentionSettingsServiceTest {
     @Test
     void patchReplayRetentionSettingsRejectsEnabledNegativeDays() {
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.patchReplayRetentionSettings(server, 0L, true, -5)
+                ValidationException.class,
+                () -> service.patchReplayRetentionSettings(server, 0L, true, -5)
         );
 
         assertEquals("Replay retention days must be at least 1 when enabled", exception.getMessage());
@@ -105,11 +106,11 @@ class ReplayRetentionSettingsServiceTest {
     @Test
     void patchReplayRetentionSettingsRejectsEnabledDaysAboveMax() {
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.patchReplayRetentionSettings(server, 0L, true, 366)
+                ValidationException.class,
+                () -> service.patchReplayRetentionSettings(server, 0L, true, 366)
         );
 
         assertEquals("Replay retention days must be at most 365", exception.getMessage());
@@ -122,9 +123,9 @@ class ReplayRetentionSettingsServiceTest {
         expected.put("days", 1);
 
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
         when(settingsDocumentService.saveRawState(server, "replayRetention", 0L, expected))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(expected, 1L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(expected, 1L, null, true));
 
         VersionedSettings<ReplayRetentionSettings> settings = service.patchReplayRetentionSettings(server, 0L, false, 0);
 
@@ -139,9 +140,9 @@ class ReplayRetentionSettingsServiceTest {
         expected.put("days", 1);
 
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(new LinkedHashMap<>(), 0L, null, false));
         when(settingsDocumentService.saveRawState(server, "replayRetention", 0L, expected))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(expected, 1L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(expected, 1L, null, true));
 
         VersionedSettings<ReplayRetentionSettings> settings = service.patchReplayRetentionSettings(server, 0L, false, -3);
 
@@ -156,7 +157,7 @@ class ReplayRetentionSettingsServiceTest {
         current.put("days", 0);
 
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(current, 1L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(current, 1L, null, true));
 
         VersionedSettings<ReplayRetentionSettings> settings = service.getReplayRetentionSettingsState(server);
 
@@ -170,7 +171,7 @@ class ReplayRetentionSettingsServiceTest {
         current.put("days", 500);
 
         when(settingsDocumentService.getRawState(server, "replayRetention"))
-            .thenReturn(new SettingsDocumentService.RawSettingsState(current, 1L, null, true));
+                .thenReturn(new SettingsDocumentService.RawSettingsState(current, 1L, null, true));
 
         VersionedSettings<ReplayRetentionSettings> settings = service.getReplayRetentionSettingsState(server);
 

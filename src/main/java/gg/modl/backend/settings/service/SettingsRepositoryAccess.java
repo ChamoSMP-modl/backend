@@ -4,9 +4,10 @@ import gg.modl.backend.database.mongo.repository.SettingsMongoRepository;
 import gg.modl.backend.infrastructure.util.MongoKeyUtils;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.Settings;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor

@@ -9,20 +9,20 @@ public enum TicketStatus {
     OPEN("open", "Open"),
     CLOSED("closed", "Closed");
 
+    private static final CanonicalAliasIndex<TicketStatus> INDEX = CanonicalAliasIndex
+            .of("ticket status", values(), TicketStatus::getId)
+            .alias(UNFINISHED, "draft")
+            .alias(OPEN, "new")
+            .alias(OPEN, "active")
+            .alias(OPEN, "pending")
+            .alias(OPEN, "in_progress")
+            .alias(OPEN, "inprogress")
+            .alias(CLOSED, "resolved")
+            .alias(CLOSED, "complete")
+            .alias(CLOSED, "completed")
+            .alias(CLOSED, "done");
     private final String id;
     private final String displayName;
-    private static final CanonicalAliasIndex<TicketStatus> INDEX = CanonicalAliasIndex
-        .of("ticket status", values(), TicketStatus::getId)
-        .alias(UNFINISHED, "draft")
-        .alias(OPEN, "new")
-        .alias(OPEN, "active")
-        .alias(OPEN, "pending")
-        .alias(OPEN, "in_progress")
-        .alias(OPEN, "inprogress")
-        .alias(CLOSED, "resolved")
-        .alias(CLOSED, "complete")
-        .alias(CLOSED, "completed")
-        .alias(CLOSED, "done");
 
     TicketStatus(String id, String displayName) {
         this.id = id;

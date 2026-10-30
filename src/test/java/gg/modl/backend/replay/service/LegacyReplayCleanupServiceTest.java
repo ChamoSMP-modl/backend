@@ -1,14 +1,5 @@
 package gg.modl.backend.replay.service;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.ReplayMongoRepository;
 import gg.modl.backend.database.mongo.repository.ReplayMongoRepository.ReplayCursor;
 import gg.modl.backend.database.mongo.repository.ServerLookupRepository;
@@ -21,6 +12,9 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.data.ReplayRetentionSettings;
 import gg.modl.backend.settings.service.ReplayRetentionSettingsService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -28,8 +22,9 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class LegacyReplayCleanupServiceTest {
     private static final Instant NOW = Instant.parse("2026-05-18T12:00:00Z");
@@ -43,6 +38,10 @@ class LegacyReplayCleanupServiceTest {
     private LegacyReplayCleanupService cleanupService;
     private Server server;
 
+    private static Date cutoff(int days) {
+        return Date.from(NOW.minus(Duration.ofDays(days)));
+    }
+
     @BeforeEach
     void setUp() {
         serverRepository = mock(ServerLookupRepository.class);
@@ -52,9 +51,9 @@ class LegacyReplayCleanupServiceTest {
         replayDeletionService = mock(ReplayDeletionService.class);
         schedulerLeaseService = mock(SchedulerLeaseService.class);
         when(replayDeletionService.deleteReplaysWithStorage(any(Server.class), anyList()))
-            .thenReturn(new ReplayBatchDeletionResult(0, 0L));
+                .thenReturn(new ReplayBatchDeletionResult(0, 0L));
         cleanupService = cleanupService(100);
-        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     }
 
     @Test
@@ -64,7 +63,7 @@ class LegacyReplayCleanupServiceTest {
 
         when(serverRepository.findAll()).thenReturn(List.of(server));
         when(replayRetentionSettingsService.getReplayRetentionSettings(server))
-            .thenReturn(new ReplayRetentionSettings(true, 7));
+                .thenReturn(new ReplayRetentionSettings(true, 7));
         when(replayRepository.findExpiredWithStorageKey(server, cutoff, null, 100)).thenReturn(List.of(replay));
 
         cleanupService.runCleanupOnce();
@@ -88,7 +87,7 @@ class LegacyReplayCleanupServiceTest {
 
         when(serverRepository.findAll()).thenReturn(List.of(server));
         when(replayRetentionSettingsService.getReplayRetentionSettings(server))
-            .thenReturn(new ReplayRetentionSettings(true, 7));
+                .thenReturn(new ReplayRetentionSettings(true, 7));
         when(replayRepository.findExpiredWithStorageKey(server, cutoff, null, 2)).thenReturn(List.of(a, b));
         when(replayRepository.findExpiredWithStorageKey(server, cutoff, afterB, 2)).thenReturn(List.of(c, d));
 
@@ -109,10 +108,10 @@ class LegacyReplayCleanupServiceTest {
 
         when(serverRepository.findAll()).thenReturn(List.of(server));
         when(replayRetentionSettingsService.getReplayRetentionSettings(server))
-            .thenReturn(new ReplayRetentionSettings(true, 7));
+                .thenReturn(new ReplayRetentionSettings(true, 7));
         when(replayRepository.findExpiredWithStorageKey(server, cutoff, null, 100)).thenReturn(List.of(a, b));
         when(ticketRepository.findReplayIdsReferencedByUnresolvedTicket(server, List.of("a", "b")))
-            .thenReturn(Set.of("a"));
+                .thenReturn(Set.of("a"));
 
         cleanupService.runCleanupOnce();
 
@@ -122,8 +121,8 @@ class LegacyReplayCleanupServiceTest {
 
     @Test
     void cleanupUsesEachTenantOwnCutoffAndNeverCrossesTenants() {
-        Server serverA = new Server("serverA", "domainA", "dbA", "a@example.com", true, ServerPlan.FREE);
-        Server serverB = new Server("serverB", "domainB", "dbB", "b@example.com", true, ServerPlan.FREE);
+        Server serverA = new Server("serverA", "domainA", "dbA", "a@example.com", true, ServerPlan.PREMIUM);
+        Server serverB = new Server("serverB", "domainB", "dbB", "b@example.com", true, ServerPlan.PREMIUM);
         Date cutoffA = cutoff(7);
         Date cutoffB = cutoff(14);
         ReplayDocument replayA = replay("ra", "dbA/replays/ra.modlreplay", 30);
@@ -131,9 +130,9 @@ class LegacyReplayCleanupServiceTest {
 
         when(serverRepository.findAll()).thenReturn(List.of(serverA, serverB));
         when(replayRetentionSettingsService.getReplayRetentionSettings(serverA))
-            .thenReturn(new ReplayRetentionSettings(true, 7));
+                .thenReturn(new ReplayRetentionSettings(true, 7));
         when(replayRetentionSettingsService.getReplayRetentionSettings(serverB))
-            .thenReturn(new ReplayRetentionSettings(true, 14));
+                .thenReturn(new ReplayRetentionSettings(true, 14));
         when(replayRepository.findExpiredWithStorageKey(serverA, cutoffA, null, 100)).thenReturn(List.of(replayA));
         when(replayRepository.findExpiredWithStorageKey(serverB, cutoffB, null, 100)).thenReturn(List.of(replayB));
 
@@ -151,15 +150,15 @@ class LegacyReplayCleanupServiceTest {
 
     @Test
     void cleanupSkipsDisabledTenantWhileSweepingEnabledTenantInSameRun() {
-        Server disabledServer = new Server("disabled", "disabledDomain", "dbDisabled", "d@example.com", true, ServerPlan.FREE);
+        Server disabledServer = new Server("disabled", "disabledDomain", "dbDisabled", "d@example.com", true, ServerPlan.PREMIUM);
         Date cutoff = cutoff(7);
         ReplayDocument replay = replay("replay-1", "db/replays/replay-1.modlreplay", 8);
 
         when(serverRepository.findAll()).thenReturn(List.of(disabledServer, server));
         when(replayRetentionSettingsService.getReplayRetentionSettings(disabledServer))
-            .thenReturn(new ReplayRetentionSettings(false, 7));
+                .thenReturn(new ReplayRetentionSettings(false, 7));
         when(replayRetentionSettingsService.getReplayRetentionSettings(server))
-            .thenReturn(new ReplayRetentionSettings(true, 7));
+                .thenReturn(new ReplayRetentionSettings(true, 7));
         when(replayRepository.findExpiredWithStorageKey(server, cutoff, null, 100)).thenReturn(List.of(replay));
 
         cleanupService.runCleanupOnce();
@@ -176,19 +175,15 @@ class LegacyReplayCleanupServiceTest {
         properties.setEnabled(true);
         properties.setBatchSize(batchSize);
         return new LegacyReplayCleanupService(
-            properties,
-            serverRepository,
-            replayRepository,
-            ticketRepository,
-            replayRetentionSettingsService,
-            replayDeletionService,
-            schedulerLeaseService,
-            Clock.fixed(NOW, ZoneOffset.UTC)
+                properties,
+                serverRepository,
+                replayRepository,
+                ticketRepository,
+                replayRetentionSettingsService,
+                replayDeletionService,
+                schedulerLeaseService,
+                Clock.fixed(NOW, ZoneOffset.UTC)
         );
-    }
-
-    private static Date cutoff(int days) {
-        return Date.from(NOW.minus(Duration.ofDays(days)));
     }
 
     private ReplayDocument replay(String id, String storageKey, int daysAgo) {

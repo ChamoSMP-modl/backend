@@ -13,11 +13,7 @@ import gg.modl.proto.modl.v1.StartMigrationRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_MIGRATION)
@@ -32,15 +28,15 @@ public class PanelMigrationController {
         Server server = RequestUtil.getRequestServer(request);
         CooldownState cooldown = migrationService.checkCooldown(server);
         return ResponseEntity.ok(mapper.toStatusResponse(
-            migrationService.getLatestMigration(server).orElse(null),
-            cooldown.onCooldown(),
-            cooldown.remainingTime()));
+                migrationService.getLatestMigration(server).orElse(null),
+                cooldown.onCooldown(),
+                cooldown.remainingTime()));
     }
 
     @PostMapping("/start")
     public ResponseEntity<MigrationOperationResponse> startMigration(
-        @RequestBody StartMigrationRequest startRequest,
-        HttpServletRequest request
+            @RequestBody StartMigrationRequest startRequest,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         MigrationOperationResult result = migrationService.startMigration(server, startRequest.getMigrationType());

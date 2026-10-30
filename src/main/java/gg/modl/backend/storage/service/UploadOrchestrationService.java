@@ -6,13 +6,14 @@ import gg.modl.backend.limits.ServerLimits;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.dto.response.PresignUploadResponse;
 import gg.modl.backend.storage.dto.response.UploadResponse;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.unit.DataSize;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -32,11 +33,11 @@ public class UploadOrchestrationService {
 
     public PresignOutcome presign(Server server, UploadPresignRequest request) {
         MediaValidationService.ValidationResult validation = validationService.validateMetadata(
-            request.fileName(),
-            request.contentType(),
-            request.fileSize(),
-            request.uploadType(),
-            request.premium()
+                request.fileName(),
+                request.contentType(),
+                request.fileSize(),
+                request.uploadType(),
+                request.premium()
         );
         if (!validation.valid()) {
             return PresignOutcome.failed(PresignStatus.VALIDATION_FAILED, validation.error());
@@ -45,7 +46,7 @@ public class UploadOrchestrationService {
         ServerLimits limits = serverLimitPolicy.resolve(server);
         if (limits.exceedsUploadLimit(request.fileSize())) {
             return PresignOutcome.failed(PresignStatus.VALIDATION_FAILED,
-                "File exceeds maximum size of " + ByteFormatUtil.formatCompact(limits.getMaxUploadBytes()));
+                    "File exceeds maximum size of " + ByteFormatUtil.formatCompact(limits.getMaxUploadBytes()));
         }
 
         if (request.enforceTempCap() && exceedsTempBudget(server, request.fileSize())) {
@@ -57,12 +58,12 @@ public class UploadOrchestrationService {
         }
 
         PresignUploadResponse response = s3StorageService.createPresignedUploadUrl(
-            server,
-            request.uploadType(),
-            request.fileName(),
-            request.contentType(),
-            request.fileSize(),
-            request.entityId()
+                server,
+                request.uploadType(),
+                request.fileName(),
+                request.contentType(),
+                request.fileSize(),
+                request.entityId()
         );
         return PresignOutcome.success(response);
     }
@@ -81,7 +82,7 @@ public class UploadOrchestrationService {
         }
 
         StorageQuotaService.ConfirmResult result =
-            quotaService.confirmAndRecordFile(server, key, details.size(), details.contentType());
+                quotaService.confirmAndRecordFile(server, key, details.size(), details.contentType());
         switch (result) {
             case QUOTA_EXCEEDED -> {
                 storageMetadataService.cleanupOrphanedUpload(server, key, details.size(), details.contentType());
@@ -110,21 +111,30 @@ public class UploadOrchestrationService {
         return used + additionalBytes > anonymousTempUploadCap.toBytes();
     }
 
-    public record UploadPresignRequest(
-        String uploadType,
-        String fileName,
-        String contentType,
-        long fileSize,
-        String entityId,
-        boolean premium,
-        boolean enforceTempCap
-    ) {}
-
     public enum PresignStatus {
         SUCCESS,
         VALIDATION_FAILED,
         QUOTA_EXCEEDED,
         TEMP_LIMIT_EXCEEDED
+    }
+
+    public enum ConfirmStatus {
+        SUCCESS,
+        UPLOAD_NOT_FOUND,
+        QUOTA_EXCEEDED,
+        TEMP_LIMIT_EXCEEDED,
+        RECORD_FAILED
+    }
+
+    public record UploadPresignRequest(
+            String uploadType,
+            String fileName,
+            String contentType,
+            long fileSize,
+            String entityId,
+            boolean premium,
+            boolean enforceTempCap
+    ) {
     }
 
     public record PresignOutcome(PresignStatus status, String message, PresignUploadResponse upload) {
@@ -135,14 +145,6 @@ public class UploadOrchestrationService {
         static PresignOutcome failed(PresignStatus status, String message) {
             return new PresignOutcome(status, message, null);
         }
-    }
-
-    public enum ConfirmStatus {
-        SUCCESS,
-        UPLOAD_NOT_FOUND,
-        QUOTA_EXCEEDED,
-        TEMP_LIMIT_EXCEEDED,
-        RECORD_FAILED
     }
 
     public record ConfirmOutcome(ConfirmStatus status, UploadResponse upload) {

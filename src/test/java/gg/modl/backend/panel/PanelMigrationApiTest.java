@@ -3,11 +3,12 @@ package gg.modl.backend.panel;
 import gg.modl.backend.support.ApiClient;
 import gg.modl.backend.support.JsonHelper;
 import gg.modl.backend.support.StagingCredentials;
-import java.util.Map;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 class PanelMigrationApiTest {
 
@@ -27,7 +28,8 @@ class PanelMigrationApiTest {
 
     @Disabled("Skipped: would start a real migration on staging")
     @Test
-    void startMigration() throws Exception {}
+    void startMigration() throws Exception {
+    }
 
     @Disabled("Skipped: no active migration to cancel on staging")
     @Test

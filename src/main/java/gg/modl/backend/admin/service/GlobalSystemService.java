@@ -8,12 +8,12 @@ import gg.modl.backend.admin.dto.request.UpdateRateLimitsRequest;
 import gg.modl.backend.admin.dto.request.UpdateSystemConfigRequest;
 import gg.modl.backend.admin.dto.response.AdminMaintenanceStatus;
 import gg.modl.backend.admin.dto.response.AdminRateLimitStatus;
-import gg.modl.backend.ai.service.AITicketAnalysisService;
 import gg.modl.backend.database.mongo.repository.SystemConfigMongoRepository;
 import gg.modl.backend.database.mongo.repository.SystemPromptMongoRepository;
-import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -23,8 +23,8 @@ public class GlobalSystemService {
 
     public SystemConfig.GeneralConfig getGeneralConfigOrDefault() {
         return systemConfigRepository.findMainConfig()
-            .map(SystemConfig::getGeneral)
-            .orElseGet(SystemConfig.GeneralConfig::new);
+                .map(SystemConfig::getGeneral)
+                .orElseGet(SystemConfig.GeneralConfig::new);
     }
 
     public SystemConfig updateConfig(UpdateSystemConfigRequest request) {
@@ -36,14 +36,14 @@ public class GlobalSystemService {
 
     public SystemConfig getOrCreateConfig() {
         return systemConfigRepository.findMainConfig()
-            .orElseGet(() -> systemConfigRepository.saveEntity(new SystemConfig()));
+                .orElseGet(() -> systemConfigRepository.saveEntity(new SystemConfig()));
     }
 
     public AdminMaintenanceStatus getMaintenanceStatus() {
         SystemConfig config = getOrCreateConfig();
         return new AdminMaintenanceStatus(
-            config.getGeneral().isMaintenanceMode(),
-            config.getGeneral().getMaintenanceMessage());
+                config.getGeneral().isMaintenanceMode(),
+                config.getGeneral().getMaintenanceMessage());
     }
 
     public AdminMaintenanceStatus toggleMaintenance(ToggleMaintenanceRequest request) {
@@ -55,16 +55,16 @@ public class GlobalSystemService {
         config.setUpdatedAt(new Date());
         SystemConfig saved = systemConfigRepository.saveEntity(config);
         return new AdminMaintenanceStatus(
-            saved.getGeneral().isMaintenanceMode(),
-            saved.getGeneral().getMaintenanceMessage());
+                saved.getGeneral().isMaintenanceMode(),
+                saved.getGeneral().getMaintenanceMessage());
     }
 
     public AdminRateLimitStatus getRateLimitStatus() {
         SystemConfig config = getOrCreateConfig();
         return new AdminRateLimitStatus(
-            config.getPerformance(),
-            true,
-            new Date(System.currentTimeMillis() + 15 * 60 * 1000));
+                config.getPerformance(),
+                true,
+                new Date(System.currentTimeMillis() + 15 * 60 * 1000));
     }
 
     public SystemConfig.PerformanceConfig updateRateLimits(UpdateRateLimitsRequest request) {
@@ -92,9 +92,5 @@ public class GlobalSystemService {
         }
 
         return systemPromptRepository.upsertPrompt(prompt, new Date());
-    }
-
-    public SystemPrompt resetPrompt() {
-        return systemPromptRepository.upsertPrompt(AITicketAnalysisService.getDefaultPrompt(), new Date());
     }
 }

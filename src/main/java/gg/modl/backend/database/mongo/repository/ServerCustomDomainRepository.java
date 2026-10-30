@@ -6,12 +6,13 @@ import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.ServerFields;
 import gg.modl.backend.server.data.CustomDomainStatus;
 import gg.modl.backend.server.data.Server;
-import java.util.Date;
-import java.util.List;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.Date;
+import java.util.List;
 
 @Repository
 public class ServerCustomDomainRepository extends AbstractGlobalMongoRepository<Server> {
@@ -22,8 +23,8 @@ public class ServerCustomDomainRepository extends AbstractGlobalMongoRepository<
 
     public boolean isCustomDomainOwnedByAnotherServer(String customDomain, String serverId) {
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(ServerFields.CUSTOM_DOMAIN_OVERRIDE).is(customDomain),
-            Criteria.where(ServerFields.ID).ne(serverId)
+                Criteria.where(ServerFields.CUSTOM_DOMAIN_OVERRIDE).is(customDomain),
+                Criteria.where(ServerFields.ID).ne(serverId)
         ));
         return exists(query);
     }
@@ -39,43 +40,43 @@ public class ServerCustomDomainRepository extends AbstractGlobalMongoRepository<
     public void updateCustomDomain(String serverId, String customDomain, CustomDomainStatus status,
                                    String cloudflareHostnameId, String error) {
         updateFirst(
-            Query.query(Criteria.where(ServerFields.ID).is(serverId)),
-            new Update()
-                .set(ServerFields.CUSTOM_DOMAIN_OVERRIDE, customDomain)
-                .set(ServerFields.CUSTOM_DOMAIN_STATUS, status.name())
-                .set(ServerFields.CUSTOM_DOMAIN_CLOUDFLARE_ID, cloudflareHostnameId)
-                .set(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED, new Date())
-                .set(ServerFields.CUSTOM_DOMAIN_ERROR, error)
-                .set(ServerFields.UPDATED_AT, new Date())
+                Query.query(Criteria.where(ServerFields.ID).is(serverId)),
+                new Update()
+                        .set(ServerFields.CUSTOM_DOMAIN_OVERRIDE, customDomain)
+                        .set(ServerFields.CUSTOM_DOMAIN_STATUS, status.name())
+                        .set(ServerFields.CUSTOM_DOMAIN_CLOUDFLARE_ID, cloudflareHostnameId)
+                        .set(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED, new Date())
+                        .set(ServerFields.CUSTOM_DOMAIN_ERROR, error)
+                        .set(ServerFields.UPDATED_AT, new Date())
         );
     }
 
     public boolean updateCustomDomainStatus(String serverId, String expectedDomain, CustomDomainStatus status,
                                             String cloudflareHostnameId, String error) {
         return updateFirst(
-            Query.query(new Criteria().andOperator(
-                Criteria.where(ServerFields.ID).is(serverId),
-                Criteria.where(ServerFields.CUSTOM_DOMAIN_OVERRIDE).is(expectedDomain)
-            )),
-            new Update()
-                .set(ServerFields.CUSTOM_DOMAIN_STATUS, status.name())
-                .set(ServerFields.CUSTOM_DOMAIN_CLOUDFLARE_ID, cloudflareHostnameId)
-                .set(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED, new Date())
-                .set(ServerFields.CUSTOM_DOMAIN_ERROR, error)
-                .set(ServerFields.UPDATED_AT, new Date())
+                Query.query(new Criteria().andOperator(
+                        Criteria.where(ServerFields.ID).is(serverId),
+                        Criteria.where(ServerFields.CUSTOM_DOMAIN_OVERRIDE).is(expectedDomain)
+                )),
+                new Update()
+                        .set(ServerFields.CUSTOM_DOMAIN_STATUS, status.name())
+                        .set(ServerFields.CUSTOM_DOMAIN_CLOUDFLARE_ID, cloudflareHostnameId)
+                        .set(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED, new Date())
+                        .set(ServerFields.CUSTOM_DOMAIN_ERROR, error)
+                        .set(ServerFields.UPDATED_AT, new Date())
         ).getMatchedCount() > 0;
     }
 
     public void clearCustomDomain(String serverId) {
         updateFirst(
-            Query.query(Criteria.where(ServerFields.ID).is(serverId)),
-            new Update()
-                .unset(ServerFields.CUSTOM_DOMAIN_OVERRIDE)
-                .unset(ServerFields.CUSTOM_DOMAIN_STATUS)
-                .unset(ServerFields.CUSTOM_DOMAIN_CLOUDFLARE_ID)
-                .unset(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED)
-                .unset(ServerFields.CUSTOM_DOMAIN_ERROR)
-                .set(ServerFields.UPDATED_AT, new Date())
+                Query.query(Criteria.where(ServerFields.ID).is(serverId)),
+                new Update()
+                        .unset(ServerFields.CUSTOM_DOMAIN_OVERRIDE)
+                        .unset(ServerFields.CUSTOM_DOMAIN_STATUS)
+                        .unset(ServerFields.CUSTOM_DOMAIN_CLOUDFLARE_ID)
+                        .unset(ServerFields.CUSTOM_DOMAIN_LAST_CHECKED)
+                        .unset(ServerFields.CUSTOM_DOMAIN_ERROR)
+                        .set(ServerFields.UPDATED_AT, new Date())
         );
     }
 }

@@ -25,15 +25,14 @@ public class RealtimeTopicAuthorizer {
         if (principal.clientKind() == RealtimeClientKind.PANEL) {
             return switch (topic) {
                 case TOPIC_PANEL_TICKETS, TOPIC_PANEL_ASSIGNED_TICKETS,
-                     TOPIC_PANEL_NOTIFICATIONS, TOPIC_PANEL_APPEALS
-                    -> hasPanelPermission(principal, "ticket.view.all");
+                     TOPIC_PANEL_NOTIFICATIONS, TOPIC_PANEL_APPEALS -> hasPanelPermission(principal, "ticket.view.all");
                 case TOPIC_PANEL_MIGRATIONS -> hasPanelPermission(principal, "admin.settings.view.migration");
                 case TOPIC_PANEL_PLAYERS, TOPIC_PANEL_PUNISHMENTS -> hasPanelPermission(principal, "punishment.modify");
                 case TOPIC_PANEL_STAFF -> hasPanelPermission(principal, "admin.staff.manage.members");
                 case TOPIC_PANEL_ROLES -> hasPanelPermission(principal, "admin.staff.manage.roles");
                 case TOPIC_PANEL_PUNISHMENT_TYPES -> hasPanelPermission(principal, "admin.settings.view.punishments");
-                case TOPIC_PANEL_KNOWLEDGEBASE, TOPIC_PANEL_HOMEPAGE
-                    -> hasPanelPermission(principal, "admin.settings.view.content");
+                case TOPIC_PANEL_KNOWLEDGEBASE, TOPIC_PANEL_HOMEPAGE ->
+                        hasPanelPermission(principal, "admin.settings.view.content");
                 case TOPIC_PANEL_SETTINGS -> hasPanelPermission(principal, "admin.settings.view");
                 case TOPIC_PANEL_AUDIT -> hasPanelPermission(principal, "admin.audit.view.logs");
                 case TOPIC_PANEL_DASHBOARD -> hasPanelPermission(principal, "admin.audit.view.dashboard");

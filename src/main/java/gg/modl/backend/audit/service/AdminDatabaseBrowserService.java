@@ -4,43 +4,38 @@ import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.repository.AdminDatabaseBrowserRepository;
 import gg.modl.backend.infrastructure.exception.ValidationException;
 import gg.modl.backend.server.data.Server;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class AdminDatabaseBrowserService {
 
+    public static final Set<String> ALLOWED_TABLES = Set.of(
+            CollectionName.PLAYERS,
+            CollectionName.SETTINGS,
+            CollectionName.STAFF,
+            CollectionName.STAFF_ROLES,
+            CollectionName.TICKETS,
+            CollectionName.TICKET_VERIFICATIONS,
+            CollectionName.LOGS,
+            CollectionName.KNOWLEDGEBASE_CATEGORIES,
+            CollectionName.KNOWLEDGEBASE_ARTICLES,
+            CollectionName.HOMEPAGE_CARDS
+    );
+    private static final Set<String> SAFE_SETTINGS_TYPES = Set.of(
+            "general", "punishmentTypes", "quickResponses", "replayRetention",
+            "statusThresholds", "ticketForms", "ticketLabels");
+    private static final List<String> SECRET_FIELD_NAMES = List.of(
+            "api_key", "ticket_api_key", "minecraft_api_key", "apiKey", "webhookUrl", "token", "secret", "password");
+    private static final String REDACTED = "[REDACTED]";
     private final AdminDatabaseBrowserRepository databaseBrowserRepository;
 
-    public static final Set<String> ALLOWED_TABLES = Set.of(
-        CollectionName.PLAYERS,
-        CollectionName.SETTINGS,
-        CollectionName.STAFF,
-        CollectionName.STAFF_ROLES,
-        CollectionName.TICKETS,
-        CollectionName.TICKET_VERIFICATIONS,
-        CollectionName.LOGS,
-        CollectionName.KNOWLEDGEBASE_CATEGORIES,
-        CollectionName.KNOWLEDGEBASE_ARTICLES,
-        CollectionName.HOMEPAGE_CARDS
-    );
-
-    private static final Set<String> SAFE_SETTINGS_TYPES = Set.of(
-        "general", "punishmentTypes", "quickResponses", "replayRetention",
-        "statusThresholds", "ticketForms", "ticketLabels");
-    private static final List<String> SECRET_FIELD_NAMES = List.of(
-        "api_key", "ticket_api_key", "minecraft_api_key", "apiKey", "webhookUrl", "token", "secret", "password");
-    private static final String REDACTED = "[REDACTED]";
-
     public Map<String, Object> getDatabaseTable(
-        Server server, String table, int limit, int skip) {
+            Server server, String table, int limit, int skip) {
         if (!ALLOWED_TABLES.contains(table)) {
             throw new ValidationException("Invalid table name");
         }
@@ -49,10 +44,10 @@ public class AdminDatabaseBrowserService {
         long total = databaseBrowserRepository.countCollection(server, table);
 
         return Map.of(
-            "data", redactDocuments(table, documents),
-            "total", total,
-            "limit", limit,
-            "skip", skip
+                "data", redactDocuments(table, documents),
+                "total", total,
+                "limit", limit,
+                "skip", skip
         );
     }
 
@@ -76,7 +71,7 @@ public class AdminDatabaseBrowserService {
             Document copy = new Document();
             for (Map.Entry<String, Object> entry : document.entrySet()) {
                 copy.put(entry.getKey(),
-                    isSecretFieldName(entry.getKey()) ? REDACTED : redactSecretFields(entry.getValue()));
+                        isSecretFieldName(entry.getKey()) ? REDACTED : redactSecretFields(entry.getValue()));
             }
             return copy;
         }

@@ -1,12 +1,5 @@
 package gg.modl.backend.settings.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.storage.service.S3StorageService;
@@ -16,17 +9,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 class IconUploadServiceTest {
     @Test
     void uploadDeletesObjectWhenAtomicQuotaReservationFails() throws Exception {
         S3StorageService s3StorageService = mock(S3StorageService.class);
         StorageQuotaService storageQuotaService = mock(StorageQuotaService.class);
         IconUploadService service = new IconUploadService(
-            s3StorageService,
-            storageQuotaService,
-            mock(StorageMetadataService.class)
+                s3StorageService,
+                storageQuotaService,
+                mock(StorageMetadataService.class)
         );
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
         when(file.getContentType()).thenReturn("image/png");
@@ -36,9 +34,9 @@ class IconUploadServiceTest {
         when(s3StorageService.isConfigured()).thenReturn(true);
         when(storageQuotaService.canUpload(server, 1024L)).thenReturn(true);
         when(s3StorageService.uploadFile(eq(server), eq("icons/homepage"), eq("icon.png"), eq("image/png"), any(byte[].class)))
-            .thenReturn(new S3StorageService.UploadFileResult("db/icons/homepage/icon.png", "https://cdn/icon.png"));
+                .thenReturn(new S3StorageService.UploadFileResult("db/icons/homepage/icon.png", "https://cdn/icon.png"));
         when(storageQuotaService.confirmAndRecordFile(server, "db/icons/homepage/icon.png", 1024L, "image/png"))
-            .thenReturn(StorageQuotaService.ConfirmResult.QUOTA_EXCEEDED);
+                .thenReturn(StorageQuotaService.ConfirmResult.QUOTA_EXCEEDED);
 
         ResponseEntity<?> response = service.uploadIcon(server, file, "homepage");
 

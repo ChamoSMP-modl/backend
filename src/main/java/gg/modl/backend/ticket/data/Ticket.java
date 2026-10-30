@@ -1,13 +1,8 @@
 package gg.modl.backend.ticket.data;
 
-import gg.modl.backend.ai.data.AIAnalysisResult;
 import gg.modl.backend.database.mongo.codegen.GenerateMongoFields;
 import gg.modl.backend.database.mongo.codegen.MongoFieldAlias;
 import gg.modl.backend.database.mongo.codegen.MongoFieldAliases;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +14,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.FieldType;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,10 +26,10 @@ import org.springframework.data.mongodb.core.mapping.FieldType;
 @Document
 @GenerateMongoFields
 @MongoFieldAliases({
-    @MongoFieldAlias(name = "REPLY_NAME", path = "replies.name"),
-    @MongoFieldAlias(name = "REPLY_CONTENT", path = "replies.content"),
-    @MongoFieldAlias(name = "REPLY_CREATED", path = "replies.created"),
-    @MongoFieldAlias(name = "REPLY_STAFF", path = "replies.staff")
+        @MongoFieldAlias(name = "REPLY_NAME", path = "replies.name"),
+        @MongoFieldAlias(name = "REPLY_CONTENT", path = "replies.content"),
+        @MongoFieldAlias(name = "REPLY_CREATED", path = "replies.created"),
+        @MongoFieldAlias(name = "REPLY_STAFF", path = "replies.staff")
 })
 public class Ticket {
     @Id
@@ -87,9 +87,6 @@ public class Ticket {
     @Nullable
     @Field(targetType = FieldType.STRING)
     private AppealWorkflowStatus appealWorkflowStatus;
-
-    @Nullable
-    private AIAnalysisResult aiAnalysis;
 
     @Nullable
     private String replayUrl;

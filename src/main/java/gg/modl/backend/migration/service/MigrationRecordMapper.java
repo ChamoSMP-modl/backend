@@ -8,25 +8,14 @@ import gg.modl.backend.player.data.IPEntry;
 import gg.modl.backend.player.data.NoteEntry;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.UsernameEntry;
-import gg.modl.backend.player.data.punishment.Punishment;
-import gg.modl.backend.player.data.punishment.PunishmentEvidence;
-import gg.modl.backend.player.data.punishment.PunishmentModification;
-import gg.modl.backend.player.data.punishment.PunishmentModificationType;
-import gg.modl.backend.player.data.punishment.PunishmentNote;
-import gg.modl.backend.player.data.punishment.PunishmentStatus;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import gg.modl.backend.player.data.punishment.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Component
 @RequiredArgsConstructor
@@ -38,14 +27,14 @@ public class MigrationRecordMapper {
         try {
             Object ipObj = data.get("ipAddresses") != null ? data.get("ipAddresses") : data.get("ipList");
             Player player = Player.builder()
-                .id(PlayerDocumentIdGenerator.generate())
-                .minecraftUuid(UUID.fromString(uuid))
-                .usernames(parseUsernames(data.get("usernames")))
-                .notes(parseNotes(data.get("notes")))
-                .ipAddresses(parseIpAddresses(ipObj))
-                .punishments(parsePunishments(data.get("punishments")))
-                .data(parseData(data.get("data")))
-                .build();
+                    .id(PlayerDocumentIdGenerator.generate())
+                    .minecraftUuid(UUID.fromString(uuid))
+                    .usernames(parseUsernames(data.get("usernames")))
+                    .notes(parseNotes(data.get("notes")))
+                    .ipAddresses(parseIpAddresses(ipObj))
+                    .punishments(parsePunishments(data.get("punishments")))
+                    .data(parseData(data.get("data")))
+                    .build();
 
             return player;
         } catch (Exception e) {
@@ -184,16 +173,16 @@ public class MigrationRecordMapper {
             if (text != null && date != null && issuerName != null) {
                 String sourceId = validator.sanitizeString((String) map.get("id"), 100);
                 String noteId = (sourceId != null && !sourceId.isBlank())
-                    ? sourceId
-                    : UUID.nameUUIDFromBytes(
-                        (text + "|" + date.getTime() + "|" + issuerName).getBytes(StandardCharsets.UTF_8))
+                        ? sourceId
+                        : UUID.nameUUIDFromBytes(
+                                (text + "|" + date.getTime() + "|" + issuerName).getBytes(StandardCharsets.UTF_8))
                         .toString();
                 result.add(new NoteEntry(
-                    noteId,
-                    text,
-                    date,
-                    issuerName,
-                    null
+                        noteId,
+                        text,
+                        date,
+                        issuerName,
+                        null
                 ));
             }
         }
@@ -234,15 +223,15 @@ public class MigrationRecordMapper {
             }
 
             result.add(IPEntry.builder()
-                .ipAddress(ipAddress)
-                .country(validator.sanitizeString((String) map.get("country"), 100))
-                .region(validator.sanitizeString((String) map.get("region"), 100))
-                .asn(validator.sanitizeString((String) map.get("asn"), 100))
-                .proxy(Boolean.TRUE.equals(map.get("proxy")))
-                .hosting(Boolean.TRUE.equals(map.get("hosting")))
-                .firstLogin(firstLogin)
-                .logins(logins)
-                .build());
+                    .ipAddress(ipAddress)
+                    .country(validator.sanitizeString((String) map.get("country"), 100))
+                    .region(validator.sanitizeString((String) map.get("region"), 100))
+                    .asn(validator.sanitizeString((String) map.get("asn"), 100))
+                    .proxy(Boolean.TRUE.equals(map.get("proxy")))
+                    .hosting(Boolean.TRUE.equals(map.get("hosting")))
+                    .firstLogin(firstLogin)
+                    .logins(logins)
+                    .build());
         }
 
         return result;
@@ -338,17 +327,17 @@ public class MigrationRecordMapper {
 
             if (id == null || id.isBlank()) {
                 id = "import-" + UUID.nameUUIDFromBytes(
-                    (typeOrdinal + "|" + issued.getTime() + "|" + issuerName + "|" + (reason != null ? reason : ""))
-                        .getBytes(StandardCharsets.UTF_8)).toString();
+                        (typeOrdinal + "|" + issued.getTime() + "|" + issuerName + "|" + (reason != null ? reason : ""))
+                                .getBytes(StandardCharsets.UTF_8)).toString();
             }
 
             Object activeObj = punishmentData.get("active");
             Object pardonedBy = punishmentData.get("pardonedBy");
             boolean sourceInactive = Boolean.FALSE.equals(activeObj)
-                || (activeObj instanceof String activeStr && "false".equalsIgnoreCase(activeStr))
-                || pardonedBy != null;
+                    || (activeObj instanceof String activeStr && "false".equalsIgnoreCase(activeStr))
+                    || pardonedBy != null;
             boolean alreadyPardoned = modifications.stream()
-                .anyMatch(m -> PunishmentModificationType.isPardon(m.type()));
+                    .anyMatch(m -> PunishmentModificationType.isPardon(m.type()));
             if (sourceInactive && !alreadyPardoned) {
                 Date pardonDate = validator.parseDate(punishmentData.get("pardonedDate"));
                 if (pardonDate == null) {
@@ -359,31 +348,31 @@ public class MigrationRecordMapper {
                 }
                 String pardonIssuer = pardonedBy instanceof String pardonStr ? pardonStr : "System";
                 modifications.add(new PunishmentModification(
-                    IdGenerator.generateShortId(),
-                    PunishmentModificationType.SYSTEM_PARDON.name(),
-                    pardonDate,
-                    pardonIssuer,
-                    null,
-                    "Imported as already removed/inactive",
-                    null,
-                    null,
-                    null
+                        IdGenerator.generateShortId(),
+                        PunishmentModificationType.SYSTEM_PARDON.name(),
+                        pardonDate,
+                        pardonIssuer,
+                        null,
+                        "Imported as already removed/inactive",
+                        null,
+                        null,
+                        null
                 ));
                 punishmentData.put("status", PunishmentStatus.PARDONED);
             }
 
             Punishment punishment = new Punishment(
-                id,
-                typeOrdinal,
-                issuerName,
-                null,
-                issued,
-                started,
-                modifications,
-                notes,
-                evidence,
-                attachedTicketIds,
-                punishmentData.isEmpty() ? null : punishmentData
+                    id,
+                    typeOrdinal,
+                    issuerName,
+                    null,
+                    issued,
+                    started,
+                    modifications,
+                    notes,
+                    evidence,
+                    attachedTicketIds,
+                    punishmentData.isEmpty() ? null : punishmentData
             );
 
             result.add(punishment);
@@ -443,7 +432,7 @@ public class MigrationRecordMapper {
             }
 
             result.add(new PunishmentModification(
-                id, type, date, issuerName, issuerId, reason, effectiveDuration, appealTicketId, modData));
+                    id, type, date, issuerName, issuerId, reason, effectiveDuration, appealTicketId, modData));
         }
 
         return result;
@@ -481,7 +470,7 @@ public class MigrationRecordMapper {
                 Long fileSize = (m.get("fileSize") instanceof Number n) ? n.longValue() : null;
 
                 result.add(new PunishmentEvidence(
-                    text, url, type, uploadedBy, uploadedById, uploadedAt, fileName, fileType, fileSize));
+                        text, url, type, uploadedBy, uploadedById, uploadedAt, fileName, fileType, fileSize));
             }
         }
 

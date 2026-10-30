@@ -1,9 +1,10 @@
 package gg.modl.backend.infrastructure.origin;
 
 import gg.modl.backend.infrastructure.util.HostExtractionUtil;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Locale;
 import java.util.Set;
-import org.jetbrains.annotations.Nullable;
 
 public final class OriginPolicy {
     private final Set<String> systemOrigins;
@@ -43,8 +44,8 @@ public final class OriginPolicy {
         }
         String normalized = host.toLowerCase(Locale.ROOT);
         return "localhost".equals(normalized)
-            || "0.0.0.0".equals(normalized)
-            || "::1".equals(normalized)
-            || normalized.startsWith("127.");
+                || "0.0.0.0".equals(normalized)
+                || "::1".equals(normalized)
+                || normalized.startsWith("127.");
     }
 }

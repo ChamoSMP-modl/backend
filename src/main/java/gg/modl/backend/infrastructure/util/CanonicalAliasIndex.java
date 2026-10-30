@@ -25,6 +25,15 @@ public final class CanonicalAliasIndex<E extends Enum<E>> {
         return index;
     }
 
+    public static String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        String lowered = value.trim().toLowerCase(Locale.ROOT);
+        String underscored = NON_ALPHANUMERIC.matcher(lowered).replaceAll("_");
+        return EDGE_UNDERSCORES.matcher(underscored).replaceAll("");
+    }
+
     public CanonicalAliasIndex<E> alias(E value, String alias) {
         byCanonicalId.put(normalize(alias), value);
         return this;
@@ -40,14 +49,5 @@ public final class CanonicalAliasIndex<E extends Enum<E>> {
 
     public E resolveOrNull(String value) {
         return byCanonicalId.get(normalize(value));
-    }
-
-    public static String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        String lowered = value.trim().toLowerCase(Locale.ROOT);
-        String underscored = NON_ALPHANUMERIC.matcher(lowered).replaceAll("_");
-        return EDGE_UNDERSCORES.matcher(underscored).replaceAll("");
     }
 }

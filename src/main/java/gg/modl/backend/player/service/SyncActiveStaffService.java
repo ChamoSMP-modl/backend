@@ -6,15 +6,11 @@ import gg.modl.backend.role.data.StaffRole;
 import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.staff.data.Staff;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -35,9 +31,9 @@ public class SyncActiveStaffService {
 
             String currentIp = onlinePlayerIps.get(staff.getAssignedMinecraftUuid());
             boolean sessionValid = staff.getTwoFactorSessionExpiresAt() != null
-                                   && staff.getTwoFactorSessionExpiresAt() > Instant.now().toEpochMilli()
-                                   && staff.getTwoFactorSessionIp() != null
-                                   && staff.getTwoFactorSessionIp().equals(currentIp);
+                    && staff.getTwoFactorSessionExpiresAt() > Instant.now().toEpochMilli()
+                    && staff.getTwoFactorSessionIp() != null
+                    && staff.getTwoFactorSessionIp().equals(currentIp);
 
             Map<String, Object> entry = new HashMap<>();
             entry.put("minecraftUuid", staff.getAssignedMinecraftUuid());

@@ -14,39 +14,73 @@ import gg.modl.minecraft.replay.format.ReplayHeader;
 import gg.modl.minecraft.replay.format.events.PlayerMoveEvent;
 import gg.modl.minecraft.replay.format.events.PlayerSpawnEvent;
 import gg.modl.minecraft.replay.util.BlockSnapshot;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.Binary;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class TrainingDataService {
-    private final S3StorageService s3StorageService;
-    private final TrainingSegmentRepository trainingSegmentRepository;
-
     private static final int BLOCK_FILTER_RADIUS = 16;
     private static final int SUPPORTED_TRAINING_REPLAY_FORMAT_VERSION = 4;
     private static final int MAX_SEGMENTS_PER_SUBMISSION = 64;
-
     private static final String VERDICT_UNSURE = "unsure";
     private static final String VERDICT_CHEATING = "cheating";
     private static final String VERDICT_LEGIT = "legit";
+    private final S3StorageService s3StorageService;
+    private final TrainingSegmentRepository trainingSegmentRepository;
+
+    static boolean supportsTrainingReplayFormat(ReplayHeader header) {
+        return header.getVersion() == SUPPORTED_TRAINING_REPLAY_FORMAT_VERSION;
+    }
+
+    private static int lowerBound(long[] timestamps, long key) {
+        int lo = 0;
+        int hi = timestamps.length;
+        while (lo < hi) {
+            int mid = (lo + hi) >>> 1;
+            if (timestamps[mid] < key) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        return lo;
+    }
+
+    private static int upperBound(long[] timestamps, long key) {
+        int lo = 0;
+        int hi = timestamps.length;
+        while (lo < hi) {
+            int mid = (lo + hi) >>> 1;
+            if (timestamps[mid] <= key) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        return lo;
+    }
+
+    private static long packXZ(int x, int z) {
+        return ((long) x << 32) | (z & 0xFFFFFFFFL);
+    }
+
+    private static int unpackX(long packed) {
+        return (int) (packed >> 32);
+    }
+
+    private static int unpackZ(long packed) {
+        return (int) packed;
+    }
 
     @Async(ReplayExecutorConfig.TRAINING_SEGMENT_TASK_EXECUTOR)
     public void generateSegmentsAsync(Server server, ReplayDocument doc, List<ReplayLabel> labels) {
@@ -54,7 +88,7 @@ public class TrainingDataService {
             generateSegments(server, doc, labels);
         } catch (Exception e) {
             log.error("Failed to generate training segments for replay {} on server {}",
-                doc.getId(), server.getDatabaseName(), e);
+                    doc.getId(), server.getDatabaseName(), e);
         }
     }
 
@@ -69,8 +103,8 @@ public class TrainingDataService {
             header = reader.readHeader();
             if (!supportsTrainingReplayFormat(header)) {
                 log.warn(
-                    "Skipping training segment generation for replay {} on server {}: unsupported replay format version {}",
-                    doc.getId(), server.getDatabaseName(), header.getVersion()
+                        "Skipping training segment generation for replay {} on server {}: unsupported replay format version {}",
+                        doc.getId(), server.getDatabaseName(), header.getVersion()
                 );
                 return;
             }
@@ -91,11 +125,7 @@ public class TrainingDataService {
         }
 
         log.debug("Generated {} training segments for replay {} on server {}",
-            specs.size(), doc.getId(), server.getDatabaseName());
-    }
-
-    static boolean supportsTrainingReplayFormat(ReplayHeader header) {
-        return header.getVersion() == SUPPORTED_TRAINING_REPLAY_FORMAT_VERSION;
+                specs.size(), doc.getId(), server.getDatabaseName());
     }
 
     private EventIndex indexEvents(List<ReplayEvent> allEvents) {
@@ -121,14 +151,14 @@ public class TrainingDataService {
     }
 
     private void recordPosition(
-        Map<UUID, List<PlayerPositionSample>> positionsByPlayer,
-        UUID uuid,
-        long timestampMs,
-        float x,
-        float z
+            Map<UUID, List<PlayerPositionSample>> positionsByPlayer,
+            UUID uuid,
+            long timestampMs,
+            float x,
+            float z
     ) {
         positionsByPlayer.computeIfAbsent(uuid, key -> new ArrayList<>())
-            .add(new PlayerPositionSample(timestampMs, (int) Math.floor(x), (int) Math.floor(z)));
+                .add(new PlayerPositionSample(timestampMs, (int) Math.floor(x), (int) Math.floor(z)));
     }
 
     private List<SegmentSpec> collectSpecs(List<ReplayLabel> labels, long maxTimestampMs) {
@@ -143,7 +173,7 @@ public class TrainingDataService {
         }
         if (truncated) {
             log.warn("Training label submission exceeded the {}-segment cap; extra segments were dropped",
-                MAX_SEGMENTS_PER_SUBMISSION);
+                    MAX_SEGMENTS_PER_SUBMISSION);
         }
         return specs;
     }
@@ -233,18 +263,18 @@ public class TrainingDataService {
     }
 
     private TrainingSegmentDocument buildSegment(
-        ReplayHeader header,
-        List<BlockSnapshot> snapshot,
-        List<ReplayEvent> allEvents,
-        EventIndex index,
-        Server server,
-        ReplayDocument doc,
-        SegmentSpec spec
+            ReplayHeader header,
+            List<BlockSnapshot> snapshot,
+            List<ReplayEvent> allEvents,
+            EventIndex index,
+            Server server,
+            ReplayDocument doc,
+            SegmentSpec spec
     ) throws IOException {
         long[] timestamps = index.timestamps();
         List<ReplayEvent> segmentEvents = allEvents.subList(
-            lowerBound(timestamps, spec.startMs()),
-            upperBound(timestamps, spec.endMs())
+                lowerBound(timestamps, spec.startMs()),
+                upperBound(timestamps, spec.endMs())
         );
 
         Set<Long> playerBlockPositions = collectPlayerBlockPositions(index, spec);
@@ -317,49 +347,13 @@ public class TrainingDataService {
         return false;
     }
 
-    private static int lowerBound(long[] timestamps, long key) {
-        int lo = 0;
-        int hi = timestamps.length;
-        while (lo < hi) {
-            int mid = (lo + hi) >>> 1;
-            if (timestamps[mid] < key) {
-                lo = mid + 1;
-            } else {
-                hi = mid;
-            }
-        }
-        return lo;
+    private record SegmentSpec(UUID playerUuid, ReplayLabel label, String cheatType, long startMs, long endMs) {
     }
 
-    private static int upperBound(long[] timestamps, long key) {
-        int lo = 0;
-        int hi = timestamps.length;
-        while (lo < hi) {
-            int mid = (lo + hi) >>> 1;
-            if (timestamps[mid] <= key) {
-                lo = mid + 1;
-            } else {
-                hi = mid;
-            }
-        }
-        return lo;
+    private record PlayerPositionSample(long timestampMs, int blockX, int blockZ) {
     }
 
-    private static long packXZ(int x, int z) {
-        return ((long) x << 32) | (z & 0xFFFFFFFFL);
+    private record EventIndex(long[] timestamps, Map<UUID, List<PlayerPositionSample>> positionsByPlayer,
+                              long maxTimestampMs) {
     }
-
-    private static int unpackX(long packed) {
-        return (int) (packed >> 32);
-    }
-
-    private static int unpackZ(long packed) {
-        return (int) packed;
-    }
-
-    private record SegmentSpec(UUID playerUuid, ReplayLabel label, String cheatType, long startMs, long endMs) {}
-
-    private record PlayerPositionSample(long timestampMs, int blockX, int blockZ) {}
-
-    private record EventIndex(long[] timestamps, Map<UUID, List<PlayerPositionSample>> positionsByPlayer, long maxTimestampMs) {}
 }

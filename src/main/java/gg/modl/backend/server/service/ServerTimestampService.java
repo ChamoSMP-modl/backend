@@ -8,12 +8,13 @@ import gg.modl.proto.modl.v1.PermissionInvalidatedEvent;
 import gg.modl.proto.modl.v1.PunishmentTypeInvalidatedEvent;
 import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import gg.modl.proto.modl.v1.Topic;
-import java.util.Date;
-import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -30,25 +31,25 @@ public class ServerTimestampService {
         Date timestamp = nextTimestamp();
         serverSettingsTimestampRepository.updateStaffPermissionsTimestamp(server.getId(), timestamp);
         publishInvalidation(server, timestamp, STAFF_PERMISSIONS_TIMESTAMP_FIELD,
-            Topic.TOPIC_MINECRAFT_PERMISSIONS,
-            envelope -> envelope.setPermissionInvalidated(PermissionInvalidatedEvent.newBuilder()),
-            "Failed to dispatch realtime staff permissions invalidation");
+                Topic.TOPIC_MINECRAFT_PERMISSIONS,
+                envelope -> envelope.setPermissionInvalidated(PermissionInvalidatedEvent.newBuilder()),
+                "Failed to dispatch realtime staff permissions invalidation");
     }
 
     public void updatePunishmentTypesTimestamp(@NotNull Server server) {
         Date timestamp = nextTimestamp();
         serverSettingsTimestampRepository.updatePunishmentTypesTimestamp(server.getId(), timestamp);
         publishInvalidation(server, timestamp, PUNISHMENT_TYPES_TIMESTAMP_FIELD,
-            Topic.TOPIC_MINECRAFT_PUNISHMENT_TYPES,
-            envelope -> envelope.setPunishmentTypeInvalidated(PunishmentTypeInvalidatedEvent.newBuilder()),
-            "Failed to dispatch realtime punishment type invalidation");
+                Topic.TOPIC_MINECRAFT_PUNISHMENT_TYPES,
+                envelope -> envelope.setPunishmentTypeInvalidated(PunishmentTypeInvalidatedEvent.newBuilder()),
+                "Failed to dispatch realtime punishment type invalidation");
     }
 
     private void publishInvalidation(Server server, Date timestamp, String timestampField, Topic topic,
                                      Consumer<RealtimeEnvelope.Builder> payloadSetter, String failureMessage) {
         try {
             RealtimeEnvelope.Builder envelope = RealtimeEnvelope.newBuilder()
-                .setEventId(eventId(server, timestampField, timestamp));
+                    .setEventId(eventId(server, timestampField, timestamp));
             payloadSetter.accept(envelope);
             realtimeEventDispatcher.publish(new RealtimeOutboundEvent(server.getId(), topic, envelope.build()));
         } catch (Exception e) {

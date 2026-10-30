@@ -5,9 +5,10 @@ import jakarta.validation.constraints.NotBlank;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record UpdateProgressRequest(
-    @NotBlank String status,
-    @NotBlank String message,
-    Integer recordsProcessed,
-    Integer recordsSkipped,
-    Integer totalRecords
-) {}
+        @NotBlank String status,
+        @NotBlank String message,
+        Integer recordsProcessed,
+        Integer recordsSkipped,
+        Integer totalRecords
+) {
+}

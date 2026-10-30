@@ -1,13 +1,5 @@
 package gg.modl.backend.realtime.schedule;
 
-import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.realtime.auth.RealtimePrincipal;
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.realtime.lifecycle.RealtimeConnectionCleanup;
@@ -19,12 +11,18 @@ import gg.modl.backend.realtime.transport.RealtimeSessionOperations;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 class RealtimeHeartbeatSweeperTest {
 
@@ -35,11 +33,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            new RealtimeConnectionCleanup(registry, rateLimiter, metrics),
-            metrics,
-            new RealtimeSessionOperations(registry, new RealtimeConnectionCleanup(registry, rateLimiter, metrics), metrics)
+                properties,
+                registry,
+                new RealtimeConnectionCleanup(registry, rateLimiter, metrics),
+                metrics,
+                new RealtimeSessionOperations(registry, new RealtimeConnectionCleanup(registry, rateLimiter, metrics), metrics)
         );
         WebSocketSession session = session("closed", false);
         RealtimeConnectionState state = registry.register(session);
@@ -59,11 +57,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMetrics metrics = new RealtimeMetrics(meterRegistry);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("timeout", true);
         when(session.isOpen()).thenReturn(true, true, false);
@@ -91,11 +89,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMetrics metrics = new RealtimeMetrics(meterRegistry);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("unauthenticated", true);
         when(session.isOpen()).thenReturn(true, true, false);
@@ -120,11 +118,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("timeout-close-throws", true);
         when(session.isOpen()).thenReturn(true, true, false);
@@ -149,11 +147,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("handshake-close-throws", true);
         when(session.isOpen()).thenReturn(true, true, false);
@@ -176,11 +174,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMessageRateLimiter rateLimiter = new RealtimeMessageRateLimiter(properties);
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            new RealtimeConnectionCleanup(registry, rateLimiter, metrics),
-            metrics,
-            new RealtimeSessionOperations(registry, new RealtimeConnectionCleanup(registry, rateLimiter, metrics), metrics)
+                properties,
+                registry,
+                new RealtimeConnectionCleanup(registry, rateLimiter, metrics),
+                metrics,
+                new RealtimeSessionOperations(registry, new RealtimeConnectionCleanup(registry, rateLimiter, metrics), metrics)
         );
         WebSocketSession session = session("fresh", true);
         registry.register(session);
@@ -200,11 +198,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMetrics metrics = new RealtimeMetrics(meterRegistry);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("wedged-open", true);
         RealtimeConnectionState state = registry.register(session);
@@ -227,11 +225,11 @@ class RealtimeHeartbeatSweeperTest {
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeHeartbeatSweeper sweeper = new RealtimeHeartbeatSweeper(
-            properties,
-            registry,
-            cleanup,
-            metrics,
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                metrics,
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("fresh-terminal", true);
         RealtimeConnectionState state = registry.register(session);
@@ -261,7 +259,7 @@ class RealtimeHeartbeatSweeperTest {
     }
 
     private Server server() {
-        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
         return server;
     }

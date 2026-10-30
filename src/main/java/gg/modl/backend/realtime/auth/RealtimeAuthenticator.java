@@ -12,12 +12,13 @@ import gg.modl.backend.settings.service.ApiKeySettingsService;
 import gg.modl.proto.modl.v1.ClientHello;
 import gg.modl.proto.modl.v1.ClientKind;
 import gg.modl.proto.modl.v1.ErrorCode;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -119,13 +120,13 @@ public class RealtimeAuthenticator {
         }
 
         return cookieHeaders.stream()
-            .flatMap(header -> List.of(header.split(";")).stream())
-            .map(String::trim)
-            .map(cookie -> cookie.split("=", 2))
-            .filter(parts -> parts.length == 2 && name.equals(parts[0]))
-            .map(parts -> parts[1])
-            .filter(value -> value != null && !value.isBlank())
-            .findFirst();
+                .flatMap(header -> List.of(header.split(";")).stream())
+                .map(String::trim)
+                .map(cookie -> cookie.split("=", 2))
+                .filter(parts -> parts.length == 2 && name.equals(parts[0]))
+                .map(parts -> parts[1])
+                .filter(value -> value != null && !value.isBlank())
+                .findFirst();
     }
 
     @Nullable

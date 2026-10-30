@@ -1,13 +1,14 @@
 package gg.modl.backend.infrastructure.proto;
 
 import com.google.protobuf.Struct;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 public final class PublicDataRedactor {
     public static final Set<String> SYSTEM_DATA_ALLOWLIST = Set.of(
-        "subject", "status", "type", "category", "priority");
+            "subject", "status", "type", "category", "priority");
 
     private PublicDataRedactor() {
     }

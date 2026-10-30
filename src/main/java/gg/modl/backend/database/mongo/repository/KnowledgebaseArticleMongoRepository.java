@@ -6,17 +6,18 @@ import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.KnowledgebaseArticleFields;
 import gg.modl.backend.knowledgebase.data.KnowledgebaseArticle;
 import gg.modl.backend.server.data.Server;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Repository
 public class KnowledgebaseArticleMongoRepository extends AbstractServerMongoRepository<KnowledgebaseArticle> {
@@ -26,14 +27,14 @@ public class KnowledgebaseArticleMongoRepository extends AbstractServerMongoRepo
 
     public List<KnowledgebaseArticle> findByCategoryOrdered(Server server, String categoryId) {
         Query query = Query.query(Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).is(categoryId))
-            .with(Sort.by(Sort.Direction.ASC, KnowledgebaseArticleFields.ORDINAL));
+                .with(Sort.by(Sort.Direction.ASC, KnowledgebaseArticleFields.ORDINAL));
         return find(server, query);
     }
 
     public List<KnowledgebaseArticle> findVisibleByCategoryOrdered(Server server, String categoryId) {
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).is(categoryId),
-            Criteria.where(KnowledgebaseArticleFields.IS_VISIBLE).is(true)
+                Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).is(categoryId),
+                Criteria.where(KnowledgebaseArticleFields.IS_VISIBLE).is(true)
         )).with(Sort.by(Sort.Direction.ASC, KnowledgebaseArticleFields.ORDINAL));
         return find(server, query);
     }
@@ -43,8 +44,8 @@ public class KnowledgebaseArticleMongoRepository extends AbstractServerMongoRepo
             return List.of();
         }
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).in(categoryIds),
-            Criteria.where(KnowledgebaseArticleFields.IS_VISIBLE).is(true)
+                Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).in(categoryIds),
+                Criteria.where(KnowledgebaseArticleFields.IS_VISIBLE).is(true)
         )).with(Sort.by(Sort.Direction.ASC, KnowledgebaseArticleFields.ORDINAL));
         return find(server, query);
     }
@@ -59,11 +60,11 @@ public class KnowledgebaseArticleMongoRepository extends AbstractServerMongoRepo
 
     public int findMaxOrdinalInCategory(Server server, String categoryId) {
         Query query = Query.query(Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).is(categoryId))
-            .with(Sort.by(Sort.Direction.DESC, KnowledgebaseArticleFields.ORDINAL))
-            .limit(1);
+                .with(Sort.by(Sort.Direction.DESC, KnowledgebaseArticleFields.ORDINAL))
+                .limit(1);
         return findOne(server, query)
-            .map(KnowledgebaseArticle::getOrdinal)
-            .orElse(-1);
+                .map(KnowledgebaseArticle::getOrdinal)
+                .orElse(-1);
     }
 
     public boolean existsBySlug(Server server, String slug, String excludeId) {
@@ -75,13 +76,13 @@ public class KnowledgebaseArticleMongoRepository extends AbstractServerMongoRepo
     }
 
     public Optional<KnowledgebaseArticle> updateArticle(
-        Server server,
-        String id,
-        String title,
-        String slug,
-        String content,
-        Boolean isVisible,
-        Date updatedAt
+            Server server,
+            String id,
+            String title,
+            String slug,
+            String content,
+            Boolean isVisible,
+            Date updatedAt
     ) {
         Update update = new Update().set(KnowledgebaseArticleFields.UPDATED_AT, updatedAt);
         if (title != null) {
@@ -98,10 +99,10 @@ public class KnowledgebaseArticleMongoRepository extends AbstractServerMongoRepo
         }
 
         KnowledgebaseArticle updated = findAndModify(
-            server,
-            Query.query(Criteria.where(KnowledgebaseArticleFields.ID).is(id)),
-            update,
-            FindAndModifyOptions.options().returnNew(true)
+                server,
+                Query.query(Criteria.where(KnowledgebaseArticleFields.ID).is(id)),
+                update,
+                FindAndModifyOptions.options().returnNew(true)
         );
         return Optional.ofNullable(updated);
     }
@@ -117,24 +118,24 @@ public class KnowledgebaseArticleMongoRepository extends AbstractServerMongoRepo
     public List<KnowledgebaseArticle> searchVisibleArticles(Server server, String searchQuery, int limit) {
         String escapedQuery = Pattern.quote(searchQuery);
         Criteria criteria = new Criteria().andOperator(
-            Criteria.where(KnowledgebaseArticleFields.IS_VISIBLE).is(true),
-            new Criteria().orOperator(
-                Criteria.where(KnowledgebaseArticleFields.TITLE).regex(Pattern.compile(escapedQuery, Pattern.CASE_INSENSITIVE)),
-                Criteria.where(KnowledgebaseArticleFields.CONTENT).regex(Pattern.compile(escapedQuery, Pattern.CASE_INSENSITIVE))
-            )
+                Criteria.where(KnowledgebaseArticleFields.IS_VISIBLE).is(true),
+                new Criteria().orOperator(
+                        Criteria.where(KnowledgebaseArticleFields.TITLE).regex(Pattern.compile(escapedQuery, Pattern.CASE_INSENSITIVE)),
+                        Criteria.where(KnowledgebaseArticleFields.CONTENT).regex(Pattern.compile(escapedQuery, Pattern.CASE_INSENSITIVE))
+                )
         );
         Query query = Query.query(criteria)
-            .with(Sort.by(Sort.Direction.ASC, KnowledgebaseArticleFields.ORDINAL))
-            .limit(limit);
+                .with(Sort.by(Sort.Direction.ASC, KnowledgebaseArticleFields.ORDINAL))
+                .limit(limit);
         return find(server, query);
     }
 
     public void reorderArticles(Server server, String categoryId, List<String> ids) {
         bulkUpdateByIds(server, ids,
-            (id, index) -> new Criteria().andOperator(
-                Criteria.where(KnowledgebaseArticleFields.ID).is(id),
-                Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).is(categoryId)
-            ),
-            (id, index) -> new Update().set(KnowledgebaseArticleFields.ORDINAL, index));
+                (id, index) -> new Criteria().andOperator(
+                        Criteria.where(KnowledgebaseArticleFields.ID).is(id),
+                        Criteria.where(KnowledgebaseArticleFields.CATEGORY_ID).is(categoryId)
+                ),
+                (id, index) -> new Update().set(KnowledgebaseArticleFields.ORDINAL, index));
     }
 }

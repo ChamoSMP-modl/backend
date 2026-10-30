@@ -4,9 +4,9 @@ import gg.modl.backend.auth.AuthConfiguration;
 import gg.modl.backend.infrastructure.origin.OriginPolicy;
 import gg.modl.backend.infrastructure.origin.OriginPolicyFactory;
 import gg.modl.backend.infrastructure.rest.RESTSecurityRole;
-import gg.modl.backend.infrastructure.rest.RouteGroups;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
 import gg.modl.backend.infrastructure.rest.RequestHeader;
+import gg.modl.backend.infrastructure.rest.RouteGroups;
 import gg.modl.backend.infrastructure.util.HostExtractionUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
@@ -14,14 +14,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -45,7 +46,7 @@ public class OriginCsrfFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain filterChain)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         final String origin = request.getHeader("Origin");
         if (origin != null) {
             if (isAllowedOrigin(request, origin)) {
@@ -83,8 +84,8 @@ public class OriginCsrfFilter extends OncePerRequestFilter {
 
         String panelSessionCookie = authConfiguration.getSessionCookieName();
         return Arrays.stream(cookies)
-            .map(Cookie::getName)
-            .anyMatch(name -> panelSessionCookie.equals(name) || RESTSecurityRole.ADMIN_SESSION_COOKIE.equals(name));
+                .map(Cookie::getName)
+                .anyMatch(name -> panelSessionCookie.equals(name) || RESTSecurityRole.ADMIN_SESSION_COOKIE.equals(name));
     }
 
     @PostConstruct
@@ -108,7 +109,7 @@ public class OriginCsrfFilter extends OncePerRequestFilter {
         }
 
         return originPolicy.isSystemOrigin(origin)
-               || originPolicy.isDevLocalhost(HostExtractionUtil.extractHost(origin));
+                || originPolicy.isDevLocalhost(HostExtractionUtil.extractHost(origin));
     }
 
     private boolean isAllowedReferer(HttpServletRequest request, String referer) {
@@ -121,9 +122,9 @@ public class OriginCsrfFilter extends OncePerRequestFilter {
             }
 
             StringBuilder originBuilder = new StringBuilder()
-                .append(scheme)
-                .append("://")
-                .append(host);
+                    .append(scheme)
+                    .append("://")
+                    .append(host);
             if (uri.getPort() != -1) {
                 originBuilder.append(":").append(uri.getPort());
             }

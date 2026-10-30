@@ -1,8 +1,9 @@
 package gg.modl.backend.audit.service;
 
-import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.bson.Document;
+
+import java.util.List;
 
 @UtilityClass
 class AuditDocumentUtil {

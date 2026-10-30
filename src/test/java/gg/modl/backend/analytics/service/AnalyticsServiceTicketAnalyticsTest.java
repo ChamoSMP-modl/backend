@@ -1,11 +1,5 @@
 package gg.modl.backend.analytics.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.analytics.dto.response.TicketAnalyticsResponse;
 import gg.modl.backend.database.mongo.repository.AnalyticsMongoRepository;
 import gg.modl.backend.player.service.IssuerNameResolver;
@@ -13,10 +7,17 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.staff.service.StaffService;
-import java.util.Date;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class AnalyticsServiceTicketAnalyticsTest {
 
@@ -28,12 +29,12 @@ class AnalyticsServiceTicketAnalyticsTest {
     void setUp() {
         analyticsRepository = mock(AnalyticsMongoRepository.class);
         service = new AnalyticsService(
-            analyticsRepository,
-            mock(PunishmentTypeService.class),
-            mock(IssuerNameResolver.class),
-            mock(StaffService.class)
+                analyticsRepository,
+                mock(PunishmentTypeService.class),
+                mock(IssuerNameResolver.class),
+                mock(StaffService.class)
         );
-        server = new Server("Server", "server", "server_db", "owner@example.com", true, ServerPlan.FREE);
+        server = new Server("Server", "server", "server_db", "owner@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
     }
 
@@ -43,9 +44,9 @@ class AnalyticsServiceTicketAnalyticsTest {
         when(analyticsRepository.aggregateTicketCategoryCounts(eq(server), any())).thenReturn(List.of());
         when(analyticsRepository.aggregateDailyTicketCounts(eq(server), any(), any())).thenReturn(List.of());
         when(analyticsRepository.aggregateAvgResolutionByCategory(eq(server), any(Date.class)))
-            .thenReturn(List.of(
-                new AnalyticsMongoRepository.CategoryAvgResolution("bug", 7_200_000.0),
-                new AnalyticsMongoRepository.CategoryAvgResolution("support", 1_800_000.0)));
+                .thenReturn(List.of(
+                        new AnalyticsMongoRepository.CategoryAvgResolution("bug", 7_200_000.0),
+                        new AnalyticsMongoRepository.CategoryAvgResolution("support", 1_800_000.0)));
 
         TicketAnalyticsResponse response = service.getTicketAnalytics(server, "30d");
 

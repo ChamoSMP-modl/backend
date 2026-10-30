@@ -1,15 +1,16 @@
 package gg.modl.backend.replay.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.nullToEmpty;
-
 import gg.modl.backend.infrastructure.exception.ValidationException;
 import gg.modl.backend.replay.data.ReplayLabel;
 import gg.modl.proto.modl.v1.PublicReplayResponse;
 import gg.modl.proto.modl.v1.ReplayLabelResponse;
 import gg.modl.proto.modl.v1.SubmitReplayLabelsRequest;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.stereotype.Component;
+
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.nullToEmpty;
 
 @Component
 public class ReplayProtoMapper {
@@ -18,20 +19,20 @@ public class ReplayProtoMapper {
 
     public PublicReplayResponse toReplayResponse(gg.modl.backend.replay.dto.PublicReplayResponse replay) {
         return PublicReplayResponse.newBuilder()
-            .setReplayId(nullToEmpty(replay.replayId()))
-            .setMcVersion(nullToEmpty(replay.mcVersion()))
-            .setFileSize(replay.fileSize())
-            .setTimestamp(replay.timestamp())
-            .setReplayUrl(nullToEmpty(replay.replayUrl()))
-            .setStatus(nullToEmpty(replay.status()))
-            .setLabeled(replay.labeled())
-            .build();
+                .setReplayId(nullToEmpty(replay.replayId()))
+                .setMcVersion(nullToEmpty(replay.mcVersion()))
+                .setFileSize(replay.fileSize())
+                .setTimestamp(replay.timestamp())
+                .setReplayUrl(nullToEmpty(replay.replayUrl()))
+                .setStatus(nullToEmpty(replay.status()))
+                .setLabeled(replay.labeled())
+                .build();
     }
 
     public ReplayLabelResponse labelResponse(String status) {
         return ReplayLabelResponse.newBuilder()
-            .setStatus(nullToEmpty(status))
-            .build();
+                .setStatus(nullToEmpty(status))
+                .build();
     }
 
     public List<ReplayLabel> toReplayLabels(SubmitReplayLabelsRequest request) {

@@ -1,15 +1,7 @@
 package gg.modl.backend.player.data;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.player.data.punishment.Punishment;
 import gg.modl.backend.player.data.punishment.PunishmentStatus;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
 import org.bson.Document;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +9,12 @@ import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.convert.NoOpDbRefResolver;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerPersistenceRoundTripTest {
 
@@ -37,17 +35,17 @@ class PlayerPersistenceRoundTripTest {
     @Test
     void punishmentDataRoundTripPreservesUnknownKeysAndTypes() {
         Document storedData = new Document()
-            .append("status", "Active")
-            .append("duration", 5000L)
-            .append("altBlocking", true)
-            .append("offenseLevel", "habitual")
-            .append("legacyPluginFlag", "keep-me")
-            .append("legacyCount", 3);
+                .append("status", "Active")
+                .append("duration", 5000L)
+                .append("altBlocking", true)
+                .append("offenseLevel", "habitual")
+                .append("legacyPluginFlag", "keep-me")
+                .append("legacyCount", 3);
         Document storedPunishment = new Document()
-            .append("id", "p1")
-            .append("typeOrdinal", 2)
-            .append("issued", new Date(1_000L))
-            .append("data", storedData);
+                .append("id", "p1")
+                .append("typeOrdinal", 2)
+                .append("issued", new Date(1_000L))
+                .append("data", storedData);
 
         Punishment loaded = converter.read(Punishment.class, storedPunishment);
         assertEquals("Active", loaded.data().status());
@@ -71,9 +69,9 @@ class PlayerPersistenceRoundTripTest {
     @Test
     void punishmentWithAbsentDataRoundTripsWithoutCrash() {
         Document storedPunishment = new Document()
-            .append("id", "p2")
-            .append("typeOrdinal", 1)
-            .append("issued", new Date(2_000L));
+                .append("id", "p2")
+                .append("typeOrdinal", 1)
+                .append("issued", new Date(2_000L));
 
         Punishment loaded = converter.read(Punishment.class, storedPunishment);
         assertNull(loaded.data().status());
@@ -87,14 +85,14 @@ class PlayerPersistenceRoundTripTest {
     @Test
     void playerDataRoundTripPreservesUnknownKeys() {
         Document storedData = new Document()
-            .append("isOnline", true)
-            .append("lastServer", "hub")
-            .append("totalPlaytimeSeconds", 120L)
-            .append("customPluginCounter", 9);
+                .append("isOnline", true)
+                .append("lastServer", "hub")
+                .append("totalPlaytimeSeconds", 120L)
+                .append("customPluginCounter", 9);
         Document storedPlayer = new Document()
-            .append("_id", "player-1")
-            .append("minecraftUuid", "11111111-2222-3333-4444-555555555555")
-            .append("data", storedData);
+                .append("_id", "player-1")
+                .append("minecraftUuid", "11111111-2222-3333-4444-555555555555")
+                .append("data", storedData);
 
         Player loaded = converter.read(Player.class, storedPlayer);
         assertEquals("hub", loaded.data().lastServer());

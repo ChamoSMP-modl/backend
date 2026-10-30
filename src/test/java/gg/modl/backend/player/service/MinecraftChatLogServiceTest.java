@@ -1,25 +1,24 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.ChatLogMongoRepository;
 import gg.modl.backend.database.mongo.repository.CommandLogMongoRepository;
 import gg.modl.backend.player.data.log.ChatLogDocument;
 import gg.modl.backend.player.data.log.CommandLogDocument;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MinecraftChatLogServiceTest {
@@ -39,10 +38,10 @@ class MinecraftChatLogServiceTest {
 
     @Test
     void submitChatLogsPersistsTypedDocuments() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
 
         minecraftChatLogService.submitChatLogs(server, List.of(
-            new MinecraftChatLogService.ChatLogCommand("uuid-1", "PlayerOne", "hello", 10L, "lobby")
+                new MinecraftChatLogService.ChatLogCommand("uuid-1", "PlayerOne", "hello", 10L, "lobby")
         ));
 
         @SuppressWarnings("unchecked")
@@ -55,10 +54,10 @@ class MinecraftChatLogServiceTest {
 
     @Test
     void submitChatLogsLowercasesUuidBeforePersisting() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
 
         minecraftChatLogService.submitChatLogs(server, List.of(
-            new MinecraftChatLogService.ChatLogCommand("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "PlayerOne", "hi", 1L, "lobby")
+                new MinecraftChatLogService.ChatLogCommand("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "PlayerOne", "hi", 1L, "lobby")
         ));
 
         @SuppressWarnings("unchecked")
@@ -69,10 +68,10 @@ class MinecraftChatLogServiceTest {
 
     @Test
     void submitCommandLogsLowercasesUuidBeforePersisting() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
 
         minecraftChatLogService.submitCommandLogs(server, List.of(
-            new MinecraftChatLogService.CommandLogCommand("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "PlayerOne", "/help", 1L, "lobby")
+                new MinecraftChatLogService.CommandLogCommand("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", "PlayerOne", "/help", 1L, "lobby")
         ));
 
         @SuppressWarnings("unchecked")
@@ -83,7 +82,7 @@ class MinecraftChatLogServiceTest {
 
     @Test
     void getChatLogsLowercasesUuidBeforeQueryingRepository() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(chatLogRepository.findByUuidRecent(any(Server.class), any(), anyInt())).thenReturn(List.of());
 
         minecraftChatLogService.getChatLogs(server, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", 100);
@@ -93,7 +92,7 @@ class MinecraftChatLogServiceTest {
 
     @Test
     void getCommandLogsLowercasesUuidBeforeQueryingRepository() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(commandLogRepository.findByUuidRecent(any(Server.class), any(), anyInt())).thenReturn(List.of());
 
         minecraftChatLogService.getCommandLogs(server, "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", 100);
@@ -103,15 +102,15 @@ class MinecraftChatLogServiceTest {
 
     @Test
     void getCommandLogsMapsTypedDocumentsToApiView() {
-        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         when(commandLogRepository.findByUuidRecent(any(Server.class), any(), anyInt())).thenReturn(List.of(
-            CommandLogDocument.builder()
-                .uuid("uuid-2")
-                .username("PlayerTwo")
-                .command("/msg hi")
-                .timestamp(42L)
-                .server("survival")
-                .build()
+                CommandLogDocument.builder()
+                        .uuid("uuid-2")
+                        .username("PlayerTwo")
+                        .command("/msg hi")
+                        .timestamp(42L)
+                        .server("survival")
+                        .build()
         ));
 
         List<MinecraftChatLogService.CommandLogEntryView> response = minecraftChatLogService.getCommandLogs(server, "uuid-2", 200);

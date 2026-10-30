@@ -1,14 +1,5 @@
 package gg.modl.backend.server.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
-
 import gg.modl.backend.database.mongo.repository.ServerSettingsTimestampRepository;
 import gg.modl.backend.realtime.dispatch.RealtimeEventDispatcher;
 import gg.modl.backend.realtime.dispatch.RealtimeOutboundEvent;
@@ -16,12 +7,18 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import gg.modl.proto.modl.v1.Topic;
-import java.util.Date;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Date;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ServerTimestampServiceTest {
@@ -75,16 +72,16 @@ class ServerTimestampServiceTest {
         verify(realtimeEventDispatcher, times(2)).publish(eventCaptor.capture());
 
         assertEquals(
-            "server-4::staffPermissionsUpdatedAt::" + timestampCaptor.getAllValues().get(0).toInstant(),
-            eventCaptor.getAllValues().get(0).envelope().getEventId()
+                "server-4::staffPermissionsUpdatedAt::" + timestampCaptor.getAllValues().get(0).toInstant(),
+                eventCaptor.getAllValues().get(0).envelope().getEventId()
         );
         assertEquals(
-            "server-4::staffPermissionsUpdatedAt::" + timestampCaptor.getAllValues().get(1).toInstant(),
-            eventCaptor.getAllValues().get(1).envelope().getEventId()
+                "server-4::staffPermissionsUpdatedAt::" + timestampCaptor.getAllValues().get(1).toInstant(),
+                eventCaptor.getAllValues().get(1).envelope().getEventId()
         );
         assertNotEquals(
-            eventCaptor.getAllValues().get(0).envelope().getEventId(),
-            eventCaptor.getAllValues().get(1).envelope().getEventId()
+                eventCaptor.getAllValues().get(0).envelope().getEventId(),
+                eventCaptor.getAllValues().get(1).envelope().getEventId()
         );
     }
 
@@ -102,16 +99,16 @@ class ServerTimestampServiceTest {
         verify(realtimeEventDispatcher, times(2)).publish(eventCaptor.capture());
 
         assertEquals(
-            "server-5::punishmentTypesUpdatedAt::" + timestampCaptor.getAllValues().get(0).toInstant(),
-            eventCaptor.getAllValues().get(0).envelope().getEventId()
+                "server-5::punishmentTypesUpdatedAt::" + timestampCaptor.getAllValues().get(0).toInstant(),
+                eventCaptor.getAllValues().get(0).envelope().getEventId()
         );
         assertEquals(
-            "server-5::punishmentTypesUpdatedAt::" + timestampCaptor.getAllValues().get(1).toInstant(),
-            eventCaptor.getAllValues().get(1).envelope().getEventId()
+                "server-5::punishmentTypesUpdatedAt::" + timestampCaptor.getAllValues().get(1).toInstant(),
+                eventCaptor.getAllValues().get(1).envelope().getEventId()
         );
         assertNotEquals(
-            eventCaptor.getAllValues().get(0).envelope().getEventId(),
-            eventCaptor.getAllValues().get(1).envelope().getEventId()
+                eventCaptor.getAllValues().get(0).envelope().getEventId(),
+                eventCaptor.getAllValues().get(1).envelope().getEventId()
         );
     }
 
@@ -145,7 +142,7 @@ class ServerTimestampServiceTest {
     }
 
     private Server server(String id) {
-        Server server = new Server("Demo", "demo", "demo_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Demo", "demo", "demo_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId(id);
         return server;
     }

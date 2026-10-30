@@ -4,12 +4,9 @@ import gg.modl.backend.realtime.config.RealtimeProperties;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PreDestroy;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.*;
 
 @Component
 public class RealtimeDispatchExecutor {
@@ -37,16 +34,16 @@ public class RealtimeDispatchExecutor {
 
     private ExecutorService createWorker(int workerIndex, int queueCapacity) {
         Counter dropped = Counter.builder(DROPPED_EVENTS_COUNTER)
-            .tag("worker", Integer.toString(workerIndex))
-            .register(meterRegistry);
+                .tag("worker", Integer.toString(workerIndex))
+                .register(meterRegistry);
         return new ThreadPoolExecutor(
-            1,
-            1,
-            0L,
-            TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(queueCapacity),
-            daemonThreadFactory(workerIndex),
-            (rejected, executor) -> dropped.increment()
+                1,
+                1,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(queueCapacity),
+                daemonThreadFactory(workerIndex),
+                (rejected, executor) -> dropped.increment()
         );
     }
 

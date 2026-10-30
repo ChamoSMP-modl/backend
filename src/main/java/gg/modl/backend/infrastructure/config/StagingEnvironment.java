@@ -1,9 +1,10 @@
 package gg.modl.backend.infrastructure.config;
 
-import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor
@@ -14,6 +15,6 @@ public class StagingEnvironment {
 
     public boolean isStaging() {
         return Arrays.stream(environment.getActiveProfiles())
-            .anyMatch(STAGING_PROFILE::equalsIgnoreCase);
+                .anyMatch(STAGING_PROFILE::equalsIgnoreCase);
     }
 }

@@ -1,20 +1,8 @@
 package gg.modl.backend.replaylite.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
+import gg.modl.backend.infrastructure.exception.ConflictException;
 import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
 import gg.modl.backend.infrastructure.exception.ValidationException;
-import gg.modl.backend.infrastructure.exception.ConflictException;
 import gg.modl.backend.replaylite.data.ReplayLiteDocument;
 import gg.modl.backend.replaylite.data.ReplayLiteLabel;
 import gg.modl.backend.replaylite.data.ReplayLiteStatus;
@@ -26,6 +14,13 @@ import gg.modl.backend.replaylite.repository.ReplayLiteQuotaMongoRepository.Quot
 import gg.modl.backend.replaylite.storage.ReplayLiteStorageService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
@@ -39,12 +34,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReplayLiteServiceTest {
@@ -70,24 +64,24 @@ class ReplayLiteServiceTest {
     @BeforeEach
     void setUp() {
         service = new ReplayLiteService(
-            repository,
-            quotaRepository,
-            storageService,
-            abuseGuard,
-            Clock.fixed(NOW, ZoneOffset.UTC)
+                repository,
+                quotaRepository,
+                storageService,
+                abuseGuard,
+                Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
 
     @Test
     void initUploadRejectsRequestedSizeAboveTenMegabytes() {
         ReplayLiteUploadInitRequest request = new ReplayLiteUploadInitRequest(
-            MAX_SIZE + 1,
-            "1.21.4"
+                MAX_SIZE + 1,
+                "1.21.4"
         );
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.initUpload(authenticatedServer(), request, "203.0.113.10")
+                ValidationException.class,
+                () -> service.initUpload(authenticatedServer(), request, "203.0.113.10")
         );
 
         assertEquals("Replay Lite uploads cannot exceed 10 MB", exception.getMessage());
@@ -99,12 +93,12 @@ class ReplayLiteServiceTest {
         ReplayLiteUploadInitRequest request = new ReplayLiteUploadInitRequest(2048, "1.21.4");
         when(repository.countPendingForServerSince(eq(SERVER_UUID), any())).thenReturn(2L);
         when(storageService.createPresignedUpload(any(), eq(2048L)))
-            .thenReturn(new ReplayLiteStorageService.PresignedUpload(
-                "https://uploads.example/replay",
-                "PUT",
-                java.util.Map.of("Content-Type", "application/octet-stream"),
-                NOW.plusSeconds(900)
-            ));
+                .thenReturn(new ReplayLiteStorageService.PresignedUpload(
+                        "https://uploads.example/replay",
+                        "PUT",
+                        java.util.Map.of("Content-Type", "application/octet-stream"),
+                        NOW.plusSeconds(900)
+                ));
 
         service.initUpload(authenticatedServer(), request, "203.0.113.10");
 
@@ -122,13 +116,13 @@ class ReplayLiteServiceTest {
         ReplayLiteDocument document = pendingDocument(NOW.minusSeconds(60), MAX_SIZE);
         when(repository.findByReplayId(document.getId())).thenReturn(Optional.of(document));
         when(storageService.headObject(document.getObjectKey()))
-            .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(MAX_SIZE, NOW)));
+                .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(MAX_SIZE, NOW)));
         when(quotaRepository.reserveConfirmedUpload(eq(SERVER_UUID), any(), eq(document.getId()), eq(100), eq(NOW)))
-            .thenReturn(QuotaReservationResult.LIMIT_REACHED);
+                .thenReturn(QuotaReservationResult.LIMIT_REACHED);
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
+                ValidationException.class,
+                () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
         );
 
         assertEquals("Replay Lite daily upload limit reached", exception.getMessage());
@@ -142,8 +136,8 @@ class ReplayLiteServiceTest {
         when(storageService.headObject(document.getObjectKey())).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(
-            ResourceNotFoundException.class,
-            () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
+                ResourceNotFoundException.class,
+                () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
         );
 
         assertEquals("Replay upload object was not found", exception.getMessage());
@@ -157,8 +151,8 @@ class ReplayLiteServiceTest {
         when(repository.findByReplayId(document.getId())).thenReturn(Optional.of(document));
 
         ResourceNotFoundException exception = assertThrows(
-            ResourceNotFoundException.class,
-            () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
+                ResourceNotFoundException.class,
+                () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
         );
 
         assertEquals("Replay not found", exception.getMessage());
@@ -171,11 +165,11 @@ class ReplayLiteServiceTest {
         ReplayLiteDocument document = pendingDocument(NOW.minusSeconds(60), MAX_SIZE);
         when(repository.findByReplayId(document.getId())).thenReturn(Optional.of(document));
         when(storageService.headObject(document.getObjectKey()))
-            .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(MAX_SIZE + 1, NOW)));
+                .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(MAX_SIZE + 1, NOW)));
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
+                ValidationException.class,
+                () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
         );
 
         assertEquals("Replay Lite upload exceeds 10 MB", exception.getMessage());
@@ -188,8 +182,8 @@ class ReplayLiteServiceTest {
         when(repository.findByReplayId(document.getId())).thenReturn(Optional.of(document));
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
+                ValidationException.class,
+                () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
         );
 
         assertEquals("Replay Lite upload has expired", exception.getMessage());
@@ -233,9 +227,9 @@ class ReplayLiteServiceTest {
         when(repository.findByReplayId(document.getId())).thenReturn(Optional.of(document));
         Instant presignExpiry = NOW.plusSeconds(300);
         when(storageService.createPresignedDownload(
-            eq(document.getObjectKey()),
-            eq(document.getId() + ".modlreplay"),
-            eq(Duration.ofMinutes(5))
+                eq(document.getObjectKey()),
+                eq(document.getId() + ".modlreplay"),
+                eq(Duration.ofMinutes(5))
         )).thenReturn(new ReplayLiteStorageService.PresignedDownload("https://cdn.example/download", presignExpiry));
 
         Optional<ReplayLiteService.ReplayLiteDownload> download = service.getPublicReplayDownload(document.getId(), "203.0.113.10");
@@ -285,8 +279,8 @@ class ReplayLiteServiceTest {
         ReplayLiteLabel label = new ReplayLiteLabel("player", "legit", List.of(), "notes");
 
         ConflictException exception = assertThrows(
-            ConflictException.class,
-            () -> service.submitLabels(document.getId(), List.of(label), "203.0.113.10")
+                ConflictException.class,
+                () -> service.submitLabels(document.getId(), List.of(label), "203.0.113.10")
         );
 
         assertEquals("This replay has already been labeled", exception.getMessage());
@@ -301,8 +295,8 @@ class ReplayLiteServiceTest {
         ReplayLiteLabel label = new ReplayLiteLabel("player", "cheating", List.of(), "notes");
 
         ValidationException exception = assertThrows(
-            ValidationException.class,
-            () -> service.submitLabels(document.getId(), List.of(label), "203.0.113.10")
+                ValidationException.class,
+                () -> service.submitLabels(document.getId(), List.of(label), "203.0.113.10")
         );
 
         assertEquals("Replay Lite label verdict is invalid", exception.getMessage());
@@ -327,16 +321,16 @@ class ReplayLiteServiceTest {
 
         AtomicInteger reservedCount = new AtomicInteger(0);
         when(quotaRepository.reserveConfirmedUpload(eq(SERVER_UUID), any(), any(), eq(100), eq(NOW)))
-            .thenAnswer(invocation -> reservedCount.incrementAndGet() == 1
-                ? QuotaReservationResult.RESERVED
-                : QuotaReservationResult.LIMIT_REACHED);
+                .thenAnswer(invocation -> reservedCount.incrementAndGet() == 1
+                        ? QuotaReservationResult.RESERVED
+                        : QuotaReservationResult.LIMIT_REACHED);
         when(repository.confirmPendingUpload(
-            any(),
-            eq(2048L),
-            eq(NOW),
-            eq(NOW.plusSeconds(24 * 60 * 60)),
-            eq("203.0.113.10"),
-            any()
+                any(),
+                eq(2048L),
+                eq(NOW),
+                eq(NOW.plusSeconds(24 * 60 * 60)),
+                eq("203.0.113.10"),
+                any()
         )).thenReturn(true);
 
         CountDownLatch ready = new CountDownLatch(2);
@@ -374,12 +368,12 @@ class ReplayLiteServiceTest {
         ReplayLiteDocument document = pendingDocument(NOW.minusSeconds(60), 2048);
         when(repository.findByReplayId(document.getId())).thenReturn(Optional.of(document));
         when(storageService.headObject(document.getObjectKey()))
-            .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(2048, NOW)));
+                .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(2048, NOW)));
         when(quotaRepository.reserveConfirmedUpload(eq(SERVER_UUID), any(), eq(document.getId()), eq(100), eq(NOW)))
-            .thenReturn(QuotaReservationResult.ALREADY_RESERVED);
+                .thenReturn(QuotaReservationResult.ALREADY_RESERVED);
         ConflictException exception = assertThrows(
-            ConflictException.class,
-            () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
+                ConflictException.class,
+                () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
         );
 
         assertEquals("Replay Lite upload is not pending", exception.getMessage());
@@ -392,24 +386,24 @@ class ReplayLiteServiceTest {
         ReplayLiteDocument pending = pendingDocument(NOW.minusSeconds(60), 2048);
         ReplayLiteDocument confirmed = confirmedDocument(NOW, 2048);
         when(repository.findByReplayId(pending.getId()))
-            .thenReturn(Optional.of(pending))
-            .thenReturn(Optional.of(confirmed));
+                .thenReturn(Optional.of(pending))
+                .thenReturn(Optional.of(confirmed));
         when(storageService.headObject(pending.getObjectKey()))
-            .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(2048, NOW)));
+                .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(2048, NOW)));
         when(quotaRepository.reserveConfirmedUpload(eq(SERVER_UUID), any(), eq(pending.getId()), eq(100), eq(NOW)))
-            .thenReturn(QuotaReservationResult.RESERVED);
+                .thenReturn(QuotaReservationResult.RESERVED);
         when(repository.confirmPendingUpload(
-            eq(pending.getId()),
-            eq(2048L),
-            eq(NOW),
-            eq(NOW.plusSeconds(24 * 60 * 60)),
-            eq("203.0.113.10"),
-            any()
+                eq(pending.getId()),
+                eq(2048L),
+                eq(NOW),
+                eq(NOW.plusSeconds(24 * 60 * 60)),
+                eq("203.0.113.10"),
+                any()
         )).thenThrow(new IllegalStateException("ambiguous write"));
 
         IllegalStateException exception = assertThrows(
-            IllegalStateException.class,
-            () -> service.confirmUpload(authenticatedServer(), pending.getId(), "203.0.113.10")
+                IllegalStateException.class,
+                () -> service.confirmUpload(authenticatedServer(), pending.getId(), "203.0.113.10")
         );
 
         assertEquals("ambiguous write", exception.getMessage());
@@ -421,22 +415,22 @@ class ReplayLiteServiceTest {
         ReplayLiteDocument document = pendingDocument(NOW.minusSeconds(60), 2048);
         when(repository.findByReplayId(document.getId())).thenReturn(Optional.of(document));
         when(storageService.headObject(document.getObjectKey()))
-            .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(2048, NOW)));
+                .thenReturn(Optional.of(new ReplayLiteStorageService.ObjectMetadata(2048, NOW)));
         when(quotaRepository.reserveConfirmedUpload(eq(SERVER_UUID), any(), eq(document.getId()), eq(100), eq(NOW)))
-            .thenReturn(QuotaReservationResult.RESERVED);
+                .thenReturn(QuotaReservationResult.RESERVED);
         IllegalStateException failure = new IllegalStateException("mongo failed");
         when(repository.confirmPendingUpload(
-            eq(document.getId()),
-            eq(2048L),
-            eq(NOW),
-            eq(NOW.plusSeconds(24 * 60 * 60)),
-            eq("203.0.113.10"),
-            any()
+                eq(document.getId()),
+                eq(2048L),
+                eq(NOW),
+                eq(NOW.plusSeconds(24 * 60 * 60)),
+                eq("203.0.113.10"),
+                any()
         )).thenThrow(failure);
 
         IllegalStateException exception = assertThrows(
-            IllegalStateException.class,
-            () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
+                IllegalStateException.class,
+                () -> service.confirmUpload(authenticatedServer(), document.getId(), "203.0.113.10")
         );
 
         assertEquals(failure, exception);
@@ -467,7 +461,7 @@ class ReplayLiteServiceTest {
     }
 
     private Server authenticatedServer() {
-        Server server = new Server("Demo", "demo", "server_demo", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Demo", "demo", "server_demo", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId(SERVER_ID);
         return server;
     }

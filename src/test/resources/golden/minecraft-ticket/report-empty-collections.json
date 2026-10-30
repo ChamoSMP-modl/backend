@@ -1,1 +1,12 @@
-{"id":"TICKET-EMPTY","type":"chat","reporterName":"Chatter","reporterUuid":"33333333-4444-5555-6666-777777777777","subject":"Empty collections","status":"open","priority":"normal","createdAt":1700000000000,"assignedTo":[],"chatMessages":[]}
+{
+  "id": "TICKET-EMPTY",
+  "type": "chat",
+  "reporterName": "Chatter",
+  "reporterUuid": "33333333-4444-5555-6666-777777777777",
+  "subject": "Empty collections",
+  "status": "open",
+  "priority": "normal",
+  "createdAt": 1700000000000,
+  "assignedTo": [],
+  "chatMessages": []
+}

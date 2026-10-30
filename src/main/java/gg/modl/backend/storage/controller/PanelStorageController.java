@@ -9,28 +9,14 @@ import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
 import gg.modl.backend.replay.service.ReplayDeletionService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.dto.response.StorageFileResponse;
-import gg.modl.backend.storage.service.MediaValidationService;
-import gg.modl.backend.storage.service.S3StorageService;
-import gg.modl.backend.storage.service.StorageKeyUtils;
-import gg.modl.backend.storage.service.StorageMetadataService;
-import gg.modl.backend.storage.service.StorageQuotaService;
-import gg.modl.backend.storage.service.StorageSyncService;
-import gg.modl.proto.modl.v1.BulkDeleteRequest;
-import gg.modl.proto.modl.v1.StorageBulkDeleteResponse;
-import gg.modl.proto.modl.v1.StorageFilesResponse;
-import gg.modl.proto.modl.v1.StorageQuotaResponse;
-import gg.modl.proto.modl.v1.StorageSyncResponse;
+import gg.modl.backend.storage.service.*;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_STORAGE)
@@ -52,8 +38,8 @@ public class PanelStorageController {
 
     @GetMapping("/files")
     public ResponseEntity<StorageFilesResponse> getFiles(
-        @RequestParam(required = false) String prefix,
-        HttpServletRequest request
+            @RequestParam(required = false) String prefix,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         List<StorageFileResponse> files = storageMetadataService.listFiles(server, prefix);
@@ -62,8 +48,8 @@ public class PanelStorageController {
 
     @PostMapping("/bulk-delete")
     public ResponseEntity<StorageBulkDeleteResponse> bulkDelete(
-        @RequestBody BulkDeleteRequest body,
-        HttpServletRequest request
+            @RequestBody BulkDeleteRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         List<String> keys = body.getKeysList();
@@ -91,8 +77,8 @@ public class PanelStorageController {
 
     @GetMapping("/download/{*key}")
     public ResponseEntity<?> getDownloadUrl(
-        @PathVariable String key,
-        HttpServletRequest request
+            @PathVariable String key,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 

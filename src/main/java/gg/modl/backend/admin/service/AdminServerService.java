@@ -15,24 +15,21 @@ import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.server.data.SubscriptionStatus;
 import gg.modl.backend.server.service.ServerProvisioningService;
 import gg.modl.backend.staff.service.StaffService;
-import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.*;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AdminServerService {
+    private static final long USAGE_STATS_TTL_MILLIS = 10 * 60 * 1000L;
+    private static final int MAX_USAGE_BATCH_SIZE = 50;
     private final ServerAdminRepository serverAdminRepository;
     private final ServerProvisioningRepository serverProvisioningRepository;
     private final ServerUsageRepository serverUsageRepository;
@@ -40,8 +37,6 @@ public class AdminServerService {
     private final ServerProvisioningService provisioningService;
     private final ServerService serverService;
     private final StaffService staffService;
-    private static final long USAGE_STATS_TTL_MILLIS = 10 * 60 * 1000L;
-    private static final int MAX_USAGE_BATCH_SIZE = 50;
 
     public long countServers(String search, String plan, String status) {
         return serverAdminRepository.countAdminServers(search, plan, status);
@@ -102,12 +97,12 @@ public class AdminServerService {
         }
 
         List<String> filteredIds = serverIds.stream()
-            .filter(Objects::nonNull)
-            .map(String::trim)
-            .filter(id -> !id.isEmpty())
-            .distinct()
-            .limit(MAX_USAGE_BATCH_SIZE)
-            .toList();
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(id -> !id.isEmpty())
+                .distinct()
+                .limit(MAX_USAGE_BATCH_SIZE)
+                .toList();
 
         if (filteredIds.isEmpty()) {
             return Map.of();
@@ -120,10 +115,10 @@ public class AdminServerService {
         for (Server server : servers) {
             ComputedUsage usage = getOrComputeUsageStats(server, now, forceRefresh);
             usageByServerId.put(server.getId(), new UsageSummary(
-                usage.userCount(),
-                usage.ticketCount(),
-                usage.updatedAt(),
-                usage.fromCache()
+                    usage.userCount(),
+                    usage.ticketCount(),
+                    usage.updatedAt(),
+                    usage.fromCache()
             ));
         }
 
@@ -131,7 +126,7 @@ public class AdminServerService {
     }
 
     public Server createServer(String serverName, String customDomain, String adminEmail, String plan) {
-        ServerPlan serverPlan = plan != null ? ServerPlan.valueOf(plan.trim().toUpperCase(Locale.ROOT)) : ServerPlan.FREE;
+        ServerPlan serverPlan = plan != null ? ServerPlan.valueOf(plan.trim().toUpperCase(Locale.ROOT)) : ServerPlan.PREMIUM;
         return serverService.createServer(serverName, customDomain, adminEmail, null, serverPlan);
     }
 
@@ -146,7 +141,7 @@ public class AdminServerService {
         String previousAdminEmail = server.getAdminEmail();
         serverService.changeAdminEmail(server, normalizedEmail);
         if (previousAdminEmail != null && !previousAdminEmail.equalsIgnoreCase(normalizedEmail)
-            && server.getDatabaseName() != null && !server.getDatabaseName().isBlank()) {
+                && server.getDatabaseName() != null && !server.getDatabaseName().isBlank()) {
             staffService.offboardPreviousAdminEmail(server, previousAdminEmail);
         }
     }
@@ -157,8 +152,8 @@ public class AdminServerService {
         csv.append(CsvUtil.row("id", "serverName", "customDomain", "adminEmail", "plan", "provisioningStatus", "emailVerified", "createdAt"));
         for (Server s : servers) {
             csv.append(CsvUtil.row(
-                s.getId(), s.getServerName(), s.getCustomDomain(), s.getAdminEmail(),
-                s.getPlan(), s.getProvisioningStatus(), s.getEmailVerified(), s.getCreatedAt()));
+                    s.getId(), s.getServerName(), s.getCustomDomain(), s.getAdminEmail(),
+                    s.getPlan(), s.getProvisioningStatus(), s.getEmailVerified(), s.getCreatedAt()));
         }
         return csv.toString();
     }
@@ -187,10 +182,12 @@ public class AdminServerService {
             switch (key) {
                 case ServerFields.ADMIN_EMAIL -> update.set(ServerFields.ADMIN_EMAIL, value);
                 case ServerFields.EMAIL_VERIFIED -> update.set(ServerFields.EMAIL_VERIFIED, value);
-                case ServerFields.PROVISIONING_STATUS -> update.set(ServerFields.PROVISIONING_STATUS, normalizeProvisioningStatus(value));
+                case ServerFields.PROVISIONING_STATUS ->
+                        update.set(ServerFields.PROVISIONING_STATUS, normalizeProvisioningStatus(value));
                 case ServerFields.PROVISIONING_NOTES -> update.set(ServerFields.PROVISIONING_NOTES, value);
                 case ServerFields.PLAN -> update.set(ServerFields.PLAN, normalizePlan(value));
-                case ServerFields.SUBSCRIPTION_STATUS -> update.set(ServerFields.SUBSCRIPTION_STATUS, normalizeSubscriptionStatus(value));
+                case ServerFields.SUBSCRIPTION_STATUS ->
+                        update.set(ServerFields.SUBSCRIPTION_STATUS, normalizeSubscriptionStatus(value));
                 case ServerFields.LAST_ACTIVITY_AT -> update.set(ServerFields.LAST_ACTIVITY_AT, normalizeDate(value));
                 case ServerFields.UPDATED_AT -> update.set(ServerFields.UPDATED_AT, normalizeDate(value));
                 default -> {
@@ -235,7 +232,7 @@ public class AdminServerService {
             return Date.from(Instant.parse(s.trim()));
         }
         throw new IllegalArgumentException("Unsupported value type for date field: "
-            + (value == null ? "null" : value.getClass()));
+                + (value == null ? "null" : value.getClass()));
     }
 
     public boolean deleteById(String id) {
@@ -326,7 +323,9 @@ public class AdminServerService {
         serverProvisioningRepository.resetAfterDatabaseDrop(server.getId(), new Date());
     }
 
-    private record ComputedUsage(long userCount, long ticketCount, Date updatedAt, boolean fromCache) {}
+    private record ComputedUsage(long userCount, long ticketCount, Date updatedAt, boolean fromCache) {
+    }
 
-    public record UsageSummary(long userCount, long ticketCount, Date updatedAt, boolean fromCache) {}
+    public record UsageSummary(long userCount, long ticketCount, Date updatedAt, boolean fromCache) {
+    }
 }

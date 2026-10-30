@@ -1,23 +1,24 @@
 package gg.modl.backend.staff.service;
 
-import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
-import gg.modl.backend.server.data.Server;
 import gg.modl.backend.infrastructure.util.UuidUtils;
+import gg.modl.backend.server.data.Server;
+import gg.modl.backend.server.service.PanelDomainResolver;
 import gg.modl.backend.staff.data.Staff;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class StaffTwoFactorService {
-    private final StaffMongoRepository staffRepository;
-    private final PanelDomainResolver panelDomainResolver;
     private static final long SESSION_DURATION_MILLIS = 7L * 24 * 60 * 60 * 1000;
     private static final long TOKEN_TTL_MILLIS = 10L * 60 * 1000;
+    private final StaffMongoRepository staffRepository;
+    private final PanelDomainResolver panelDomainResolver;
 
     public Optional<TwoFactorTokenResult> generateToken(Server server, String minecraftUuid, String ip) {
         String token = UUID.randomUUID().toString();
@@ -39,7 +40,7 @@ public class StaffTwoFactorService {
         }
 
         if (sessionEmail != null && !sessionEmail.isBlank()
-            && (staff.getEmail() == null || !staff.getEmail().equalsIgnoreCase(sessionEmail))) {
+                && (staff.getEmail() == null || !staff.getEmail().equalsIgnoreCase(sessionEmail))) {
             return Optional.empty();
         }
 
@@ -51,11 +52,11 @@ public class StaffTwoFactorService {
 
         String sessionIp = staff.getTwoFactorTokenIp();
         boolean activated = staffRepository.activateTwoFactorSession(
-            server,
-            staff.getId(),
-            token,
-            sessionIp,
-            now + SESSION_DURATION_MILLIS
+                server,
+                staff.getId(),
+                token,
+                sessionIp,
+                now + SESSION_DURATION_MILLIS
         );
         if (!activated) {
             return Optional.empty();
@@ -63,7 +64,7 @@ public class StaffTwoFactorService {
 
         String minecraftUuid = staff.getAssignedMinecraftUuid();
         return Optional.of(new VerificationResult(
-            minecraftUuid != null && !minecraftUuid.isBlank() ? minecraftUuid : null));
+                minecraftUuid != null && !minecraftUuid.isBlank() ? minecraftUuid : null));
     }
 
     public record VerificationResult(String minecraftUuid) {

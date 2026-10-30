@@ -4,17 +4,13 @@ import gg.modl.backend.database.mongo.repository.StorageFileMongoRepository;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.data.StorageFileDocument;
 import gg.modl.backend.storage.dto.response.StorageFileResponse;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +30,7 @@ public class StorageMetadataService {
             return Map.of();
         }
         return storageFileRepository.findByKeys(server, new ArrayList<>(keys)).stream()
-            .collect(Collectors.toMap(StorageFileDocument::getKey, doc -> doc, (existing, replacement) -> existing));
+                .collect(Collectors.toMap(StorageFileDocument::getKey, doc -> doc, (existing, replacement) -> existing));
     }
 
     public Set<String> existingKeys(Server server, Collection<String> keys) {
@@ -42,8 +38,8 @@ public class StorageMetadataService {
             return Set.of();
         }
         return storageFileRepository.findByKeys(server, new ArrayList<>(keys)).stream()
-            .map(StorageFileDocument::getKey)
-            .collect(Collectors.toSet());
+                .map(StorageFileDocument::getKey)
+                .collect(Collectors.toSet());
     }
 
     public boolean isMetadataAuthoritative(Server server) {
@@ -61,7 +57,7 @@ public class StorageMetadataService {
         RecordFileResult result = recordReservedFile(server, key, size, contentType);
         if (result == RecordFileResult.FAILED) {
             log.error("Orphaned upload: S3 delete failed and metadata write failed key={} serverDb={} size={} contentType={}; next StorageSyncService run will reconcile, manual cleanup may be needed sooner",
-                key, server.getDatabaseName(), size, contentType);
+                    key, server.getDatabaseName(), size, contentType);
         } else {
             log.warn("Failed to delete orphaned upload object key={}, recorded metadata to keep it trackable result={}", key, result);
         }
@@ -97,16 +93,10 @@ public class StorageMetadataService {
         }
     }
 
-    public enum RecordFileResult {
-        INSERTED,
-        ALREADY_EXISTS,
-        FAILED
-    }
-
     public boolean removeFile(Server server, String key) {
         try {
             storageFileRepository.findAndRemoveByKey(server, key)
-                .ifPresent(doc -> storageUsageAccountant.recordRemoval(server, doc.getSize()));
+                    .ifPresent(doc -> storageUsageAccountant.recordRemoval(server, doc.getSize()));
             return true;
         } catch (Exception e) {
             log.warn("Failed to remove file metadata for key: {}", key, e);
@@ -144,14 +134,20 @@ public class StorageMetadataService {
         List<StorageFileDocument> docs = storageFileRepository.findByKeyPrefix(server, fullPrefix, 1000);
 
         return docs.stream()
-            .map(doc -> new StorageFileResponse(
-                doc.getKey(),
-                doc.getFileName(),
-                doc.getSize(),
-                doc.getContentType() != null ? doc.getContentType() : "application/octet-stream",
-                doc.getCreatedAt(),
-                s3StorageService.getCdnUrl(doc.getKey())
-            ))
-            .toList();
+                .map(doc -> new StorageFileResponse(
+                        doc.getKey(),
+                        doc.getFileName(),
+                        doc.getSize(),
+                        doc.getContentType() != null ? doc.getContentType() : "application/octet-stream",
+                        doc.getCreatedAt(),
+                        s3StorageService.getCdnUrl(doc.getKey())
+                ))
+                .toList();
+    }
+
+    public enum RecordFileResult {
+        INSERTED,
+        ALREADY_EXISTS,
+        FAILED
     }
 }

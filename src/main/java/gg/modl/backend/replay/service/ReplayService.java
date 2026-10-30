@@ -1,6 +1,7 @@
 package gg.modl.backend.replay.service;
 
 import gg.modl.backend.database.mongo.repository.ReplayMongoRepository;
+import gg.modl.backend.infrastructure.exception.ExternalServiceException;
 import gg.modl.backend.infrastructure.exception.ValidationException;
 import gg.modl.backend.infrastructure.validation.BeanValidationRunner;
 import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
@@ -13,15 +14,15 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.dto.response.PresignUploadResponse;
 import gg.modl.backend.storage.service.S3StorageService;
 import gg.modl.backend.storage.service.StorageQuotaService;
-import gg.modl.backend.infrastructure.exception.ExternalServiceException;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -37,11 +38,11 @@ public class ReplayService {
     private long maxFileSize;
 
     public InitReplayUploadResponse initUpload(
-        Server server,
-        String mcVersion,
-        long fileSize,
-        String targetUuid,
-        String targetName
+            Server server,
+            String mcVersion,
+            long fileSize,
+            String targetUuid,
+            String targetName
     ) {
         if (fileSize > maxFileSize) {
             throw new ValidationException("File size exceeds maximum of " + (maxFileSize / 1024 / 1024) + " MB");
@@ -57,7 +58,7 @@ public class ReplayService {
         String replayId = UUID.randomUUID().toString();
 
         PresignUploadResponse presign = s3StorageService.createPresignedUploadUrl(
-            server, "replays", "replay.modlreplay", "application/octet-stream", fileSize
+                server, "replays", "replay.modlreplay", "application/octet-stream", fileSize
         );
 
         ReplayDocument doc = new ReplayDocument();
@@ -73,10 +74,10 @@ public class ReplayService {
         replayRepository.saveEntity(server, doc);
 
         return new InitReplayUploadResponse(
-            replayId,
-            presign.presignedUrl(),
-            presign.method(),
-            presign.requiredHeaders()
+                replayId,
+                presign.presignedUrl(),
+                presign.method(),
+                presign.requiredHeaders()
         );
     }
 
@@ -93,7 +94,7 @@ public class ReplayService {
 
         if (exists) {
             StorageQuotaService.ConfirmResult confirmResult = storageQuotaService.confirmAndRecordFile(
-                server, doc.getStorageKey(), doc.getFileSize(), "application/octet-stream");
+                    server, doc.getStorageKey(), doc.getFileSize(), "application/octet-stream");
             switch (confirmResult) {
                 case SUCCESS -> log.debug("Replay {} confirmed for server {}", replayId, server.getDatabaseName());
                 case QUOTA_EXCEEDED -> {
@@ -113,8 +114,6 @@ public class ReplayService {
 
         return exists;
     }
-
-    public enum SubmitLabelsResult { OK, NOT_FOUND }
 
     public SubmitLabelsResult submitLabels(Server server, String replayId, List<ReplayLabel> labels) {
         validateLabels(labels);
@@ -144,16 +143,16 @@ public class ReplayService {
 
     public Optional<PublicReplayResponse> getPublicReplay(Server server, String replayId) {
         return replayRepository.findByReplayId(server, replayId)
-            .filter(doc -> ReplayDocument.STATUS_COMPLETE.equals(doc.getStatus()))
-            .map(doc -> new PublicReplayResponse(
-                doc.getId(),
-                doc.getMcVersion(),
-                doc.getFileSize(),
-                doc.getCreatedAt() == null ? 0L : doc.getCreatedAt().getTime(),
-                s3StorageService.getCdnUrl(doc.getStorageKey()),
-                doc.getStatus(),
-                doc.getLabels() != null && !doc.getLabels().isEmpty()
-            ));
+                .filter(doc -> ReplayDocument.STATUS_COMPLETE.equals(doc.getStatus()))
+                .map(doc -> new PublicReplayResponse(
+                        doc.getId(),
+                        doc.getMcVersion(),
+                        doc.getFileSize(),
+                        doc.getCreatedAt() == null ? 0L : doc.getCreatedAt().getTime(),
+                        s3StorageService.getCdnUrl(doc.getStorageKey()),
+                        doc.getStatus(),
+                        doc.getLabels() != null && !doc.getLabels().isEmpty()
+                ));
     }
 
     private String normalizeTargetName(String value) {
@@ -166,4 +165,6 @@ public class ReplayService {
         }
         return normalized;
     }
+
+    public enum SubmitLabelsResult {OK, NOT_FOUND}
 }

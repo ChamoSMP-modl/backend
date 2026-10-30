@@ -1,10 +1,11 @@
 package gg.modl.backend.realtime.rate;
 
 import gg.modl.backend.realtime.config.RealtimeProperties;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -15,6 +16,10 @@ public class RealtimeUnauthenticatedConnectionLimiter {
     private final Object lock = new Object();
     private final Map<String, Integer> perIpCounts = new HashMap<>();
     private int totalCount;
+
+    private static String normalize(String clientIp) {
+        return clientIp == null || clientIp.isBlank() ? UNKNOWN_IP : clientIp;
+    }
 
     public Admission tryAcquire(String clientIp) {
         String ip = normalize(clientIp);
@@ -47,10 +52,6 @@ public class RealtimeUnauthenticatedConnectionLimiter {
                 }
             }
         }
-    }
-
-    private static String normalize(String clientIp) {
-        return clientIp == null || clientIp.isBlank() ? UNKNOWN_IP : clientIp;
     }
 
     public enum Admission {

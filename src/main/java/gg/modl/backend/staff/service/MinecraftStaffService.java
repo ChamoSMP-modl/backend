@@ -20,16 +20,11 @@ import gg.modl.backend.staff.dto.response.AvailablePlayerResponse;
 import gg.modl.backend.staff.dto.response.MinecraftStaffPermissionsResponse;
 import gg.modl.backend.staff.dto.response.MinecraftStaffSummaryResponse;
 import gg.modl.backend.staff.dto.response.StaffResponse;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +39,19 @@ public class MinecraftStaffService {
     private final ServerTimestampService serverTimestampService;
     private final StaffLookupCache staffLookupCache;
 
+    private static String roleNameOrFallback(Map<String, StaffRole> rolesById, String roleId) {
+        StaffRole role = roleId != null ? rolesById.get(roleId) : null;
+        if (role != null) {
+            return role.getName();
+        }
+        return roleId != null ? roleId : "";
+    }
+
+    private static List<String> rolePermissions(Map<String, StaffRole> rolesById, String roleId) {
+        StaffRole role = roleId != null ? rolesById.get(roleId) : null;
+        return role != null ? PermissionService.grantedPermissionIds(role) : List.of();
+    }
+
     public List<MinecraftStaffSummaryResponse> getMinecraftStaffSummary(Server server) {
         List<Staff> allStaff = staffRepository.findAll(server);
 
@@ -52,53 +60,43 @@ public class MinecraftStaffService {
         Map<String, StaffRole> rolesById = loadRolesByStaffRoleId(server, allStaff);
 
         return allStaff.stream()
-            .map(staff -> {
-                int punishmentsIssuedCount = 0;
-                Set<String> keys = new LinkedHashSet<>();
-                if (staff.getId() != null) keys.add(staff.getId());
-                if (staff.getAssignedMinecraftUsername() != null) keys.add(staff.getAssignedMinecraftUsername());
-                if (staff.getUsername() != null) keys.add(staff.getUsername());
-                for (String k : keys) {
-                    punishmentsIssuedCount += punishmentCounts.getOrDefault(k, 0);
-                }
+                .map(staff -> {
+                    int punishmentsIssuedCount = 0;
+                    Set<String> keys = new LinkedHashSet<>();
+                    if (staff.getId() != null) keys.add(staff.getId());
+                    if (staff.getAssignedMinecraftUsername() != null) keys.add(staff.getAssignedMinecraftUsername());
+                    if (staff.getUsername() != null) keys.add(staff.getUsername());
+                    for (String k : keys) {
+                        punishmentsIssuedCount += punishmentCounts.getOrDefault(k, 0);
+                    }
 
-                String assignedUuid = staff.getAssignedMinecraftUuid();
-                String roleId = RoleAuthorization.effectiveRoleId(server, staff);
-                return new MinecraftStaffSummaryResponse(
-                    staff.getId(),
-                    staff.getUsername(),
-                    staff.getEmail(),
-                    roleNameOrFallback(rolesById, roleId),
-                    assignedUuid,
-                    staff.getAssignedMinecraftUsername(),
-                    rolePermissions(rolesById, roleId),
-                    staff.getLastSeen(),
-                    playerStaffData.playtimeMsFor(assignedUuid),
-                    playerStaffData.lastServerFor(assignedUuid),
-                    punishmentsIssuedCount,
-                    staff.getCreatedAt(),
-                    staff.getUpdatedAt()
-                );
-            })
-            .toList();
-    }
-
-    private record PlayerStaffData(Map<String, Long> playtimeMap, Map<String, String> lastServerMap) {
-        long playtimeMsFor(String minecraftUuid) {
-            return minecraftUuid == null ? 0L : playtimeMap.getOrDefault(minecraftUuid, 0L);
-        }
-
-        String lastServerFor(String minecraftUuid) {
-            return minecraftUuid == null ? null : lastServerMap.get(minecraftUuid);
-        }
+                    String assignedUuid = staff.getAssignedMinecraftUuid();
+                    String roleId = RoleAuthorization.effectiveRoleId(server, staff);
+                    return new MinecraftStaffSummaryResponse(
+                            staff.getId(),
+                            staff.getUsername(),
+                            staff.getEmail(),
+                            roleNameOrFallback(rolesById, roleId),
+                            assignedUuid,
+                            staff.getAssignedMinecraftUsername(),
+                            rolePermissions(rolesById, roleId),
+                            staff.getLastSeen(),
+                            playerStaffData.playtimeMsFor(assignedUuid),
+                            playerStaffData.lastServerFor(assignedUuid),
+                            punishmentsIssuedCount,
+                            staff.getCreatedAt(),
+                            staff.getUpdatedAt()
+                    );
+                })
+                .toList();
     }
 
     private PlayerStaffData loadPlayerStaffData(Server server, List<Staff> allStaff) {
         List<String> assignedUuids = allStaff.stream()
-            .map(Staff::getAssignedMinecraftUuid)
-            .filter(uuid -> uuid != null && !uuid.isBlank())
-            .distinct()
-            .toList();
+                .map(Staff::getAssignedMinecraftUuid)
+                .filter(uuid -> uuid != null && !uuid.isBlank())
+                .distinct()
+                .toList();
 
         if (assignedUuids.isEmpty()) {
             return new PlayerStaffData(Map.of(), Map.of());
@@ -139,22 +137,9 @@ public class MinecraftStaffService {
 
     private Map<String, StaffRole> loadRolesByStaffRoleId(Server server, List<Staff> staffMembers) {
         List<String> roleIds = staffMembers.stream()
-            .map(Staff::getRoleId)
-            .toList();
+                .map(Staff::getRoleId)
+                .toList();
         return permissionService.getRolesByIds(server, roleIds);
-    }
-
-    private static String roleNameOrFallback(Map<String, StaffRole> rolesById, String roleId) {
-        StaffRole role = roleId != null ? rolesById.get(roleId) : null;
-        if (role != null) {
-            return role.getName();
-        }
-        return roleId != null ? roleId : "";
-    }
-
-    private static List<String> rolePermissions(Map<String, StaffRole> rolesById, String roleId) {
-        StaffRole role = roleId != null ? rolesById.get(roleId) : null;
-        return role != null ? PermissionService.grantedPermissionIds(role) : List.of();
     }
 
     public List<MinecraftStaffPermissionsResponse> getMinecraftStaffPermissions(Server server) {
@@ -162,19 +147,19 @@ public class MinecraftStaffService {
         Map<String, StaffRole> rolesById = loadRolesByStaffRoleId(server, staffWithMinecraft);
 
         return staffWithMinecraft.stream()
-            .map(staff -> {
-                String roleId = RoleAuthorization.effectiveRoleId(server, staff);
-                return new MinecraftStaffPermissionsResponse(
-                    staff.getAssignedMinecraftUuid(),
-                    staff.getAssignedMinecraftUsername() != null ? staff.getAssignedMinecraftUsername() : "",
-                    staff.getUsername() != null ? staff.getUsername() : "",
-                    staff.getId(),
-                    roleNameOrFallback(rolesById, roleId),
-                    rolePermissions(rolesById, roleId),
-                    staff.getEmail() != null ? staff.getEmail() : ""
-                );
-            })
-            .toList();
+                .map(staff -> {
+                    String roleId = RoleAuthorization.effectiveRoleId(server, staff);
+                    return new MinecraftStaffPermissionsResponse(
+                            staff.getAssignedMinecraftUuid(),
+                            staff.getAssignedMinecraftUsername() != null ? staff.getAssignedMinecraftUsername() : "",
+                            staff.getUsername() != null ? staff.getUsername() : "",
+                            staff.getId(),
+                            roleNameOrFallback(rolesById, roleId),
+                            rolePermissions(rolesById, roleId),
+                            staff.getEmail() != null ? staff.getEmail() : ""
+                    );
+                })
+                .toList();
     }
 
     public boolean updateMinecraftStaffRole(Server server, String id, String roleName,
@@ -207,7 +192,7 @@ public class MinecraftStaffService {
         roleAuthorization.requireStaffManage(server, performer, RoleAuthorization.MANAGE_MEMBERS_PERMISSION);
 
         Staff staff = staffRepository.findByEmailIgnoreCase(server, email)
-            .orElseGet(() -> SuperAdminStaffSynthesizer.synthesizeIfAdminEmail(server, email));
+                .orElseGet(() -> SuperAdminStaffSynthesizer.synthesizeIfAdminEmail(server, email));
 
         if (staff == null) {
             return Optional.empty();
@@ -216,7 +201,7 @@ public class MinecraftStaffService {
         roleAuthorization.assertCanAssignMinecraftPlayer(server, performer, staff);
 
         if ((request.minecraftUuid() == null || request.minecraftUuid().isEmpty()) &&
-            (request.minecraftUsername() == null || request.minecraftUsername().isEmpty())) {
+                (request.minecraftUsername() == null || request.minecraftUsername().isEmpty())) {
             if (staff.getId() == null) {
                 return Optional.of(toStaffResponse(server, staff, "Active"));
             }
@@ -230,15 +215,15 @@ public class MinecraftStaffService {
         }
 
         Player player = request.minecraftUuid() != null && !request.minecraftUuid().isEmpty()
-                        ? playerRepository.findByMinecraftUuid(server, UuidUtils.normalize(request.minecraftUuid())).orElse(null)
-                        : playerService.findBestByUsername(server, request.minecraftUsername()).orElse(null);
+                ? playerRepository.findByMinecraftUuid(server, UuidUtils.normalize(request.minecraftUuid())).orElse(null)
+                : playerService.findBestByUsername(server, request.minecraftUsername()).orElse(null);
         if (player == null) {
             throw new ResourceNotFoundException("Minecraft player not found");
         }
 
         Staff existingAssignment = staffRepository
-            .findByAssignedMinecraftUuidExcludingId(server, player.getMinecraftUuid().toString(), staff.getId())
-            .orElse(null);
+                .findByAssignedMinecraftUuidExcludingId(server, player.getMinecraftUuid().toString(), staff.getId())
+                .orElse(null);
         if (existingAssignment != null) {
             throw new ConflictException("This Minecraft player is already assigned to " + existingAssignment.getUsername());
         }
@@ -258,21 +243,31 @@ public class MinecraftStaffService {
         List<Staff> staffWithPlayers = staffRepository.findAssignedMinecraftStaff(server);
 
         List<String> assignedUuids = staffWithPlayers.stream()
-            .map(Staff::getAssignedMinecraftUuid)
-            .filter(uuid -> uuid != null && !uuid.isEmpty())
-            .toList();
+                .map(Staff::getAssignedMinecraftUuid)
+                .filter(uuid -> uuid != null && !uuid.isEmpty())
+                .toList();
 
         List<Player> players = playerRepository.findAvailablePlayers(server, assignedUuids, 100);
 
         return players.stream()
-            .map(player -> new AvailablePlayerResponse(
-                player.getMinecraftUuid().toString(),
-                PlayerDataUtils.extractLatestUsername(player.getUsernames())
-            ))
-            .toList();
+                .map(player -> new AvailablePlayerResponse(
+                        player.getMinecraftUuid().toString(),
+                        PlayerDataUtils.extractLatestUsername(player.getUsernames())
+                ))
+                .toList();
     }
 
     private StaffResponse toStaffResponse(Server server, Staff staff, String status) {
         return StaffResponseFactory.of(staff, status, permissionService.assignedRoleName(server, staff));
+    }
+
+    private record PlayerStaffData(Map<String, Long> playtimeMap, Map<String, String> lastServerMap) {
+        long playtimeMsFor(String minecraftUuid) {
+            return minecraftUuid == null ? 0L : playtimeMap.getOrDefault(minecraftUuid, 0L);
+        }
+
+        String lastServerFor(String minecraftUuid) {
+            return minecraftUuid == null ? null : lastServerMap.get(minecraftUuid);
+        }
     }
 }

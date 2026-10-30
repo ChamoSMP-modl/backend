@@ -16,6 +16,6 @@ public enum AppealReplyPolicy implements PanelAccessPolicy {
             return permissions.has(PermissionService.TICKET_VIEW_ALL);
         }
         return permissions.has(PermissionService.APPEAL_MODIFY)
-            || permissions.has(PermissionService.TICKET_REPLY_ALL);
+                || permissions.has(PermissionService.TICKET_REPLY_ALL);
     }
 }

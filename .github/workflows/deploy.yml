@@ -3,7 +3,7 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-permissions: {}
+permissions: { }
 
 on:
   push:

@@ -3,7 +3,6 @@ package gg.modl.backend.migration.data;
 import gg.modl.backend.database.mongo.codegen.GenerateMongoFields;
 import gg.modl.backend.database.mongo.codegen.MongoFieldAlias;
 import gg.modl.backend.database.mongo.codegen.MongoFieldAliases;
-import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +11,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.util.Date;
+
 @Document(collection = "migrations")
 @Data
 @NoArgsConstructor
@@ -19,10 +20,10 @@ import org.springframework.data.mongodb.core.mapping.Field;
 @Builder
 @GenerateMongoFields
 @MongoFieldAliases({
-    @MongoFieldAlias(name = "PROGRESS_MESSAGE", path = "progress.message"),
-    @MongoFieldAlias(name = "PROGRESS_RECORDS_PROCESSED", path = "progress.recordsProcessed"),
-    @MongoFieldAlias(name = "PROGRESS_RECORDS_SKIPPED", path = "progress.recordsSkipped"),
-    @MongoFieldAlias(name = "PROGRESS_TOTAL_RECORDS", path = "progress.totalRecords")
+        @MongoFieldAlias(name = "PROGRESS_MESSAGE", path = "progress.message"),
+        @MongoFieldAlias(name = "PROGRESS_RECORDS_PROCESSED", path = "progress.recordsProcessed"),
+        @MongoFieldAlias(name = "PROGRESS_RECORDS_SKIPPED", path = "progress.recordsSkipped"),
+        @MongoFieldAlias(name = "PROGRESS_TOTAL_RECORDS", path = "progress.totalRecords")
 })
 public class MigrationStatus {
     @Id

@@ -1,37 +1,24 @@
 package gg.modl.backend.settings.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.cloudflare.config.CloudflareConfiguration;
 import gg.modl.backend.cloudflare.external.CloudflareClient;
 import gg.modl.backend.database.mongo.repository.ServerCustomDomainRepository;
 import gg.modl.backend.infrastructure.config.ModlCorsProperties;
-import gg.modl.backend.infrastructure.exception.ConflictException;
-import gg.modl.backend.infrastructure.exception.ExternalServiceException;
-import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
-import gg.modl.backend.infrastructure.exception.ServiceUnavailableException;
-import gg.modl.backend.infrastructure.exception.ValidationException;
+import gg.modl.backend.infrastructure.exception.*;
 import gg.modl.backend.server.data.CustomDomainStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.data.DomainSettings;
-import java.util.Date;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DuplicateKeyException;
+
+import java.util.Date;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 class DomainSettingsServiceTest {
     private static final String SETTINGS_TYPE = "domain";
@@ -44,6 +31,12 @@ class DomainSettingsServiceTest {
     private CustomDomainStateWriter stateWriter;
     private DomainSettingsService domainSettingsService;
 
+    private static Server server() {
+        Server server = new Server("server", "tenant", "db", "admin@example.com", true, ServerPlan.PREMIUM);
+        server.setId("server-id");
+        return server;
+    }
+
     @BeforeEach
     void setUp() {
         settingsDocumentService = mock(SettingsDocumentService.class);
@@ -54,15 +47,15 @@ class DomainSettingsServiceTest {
         stateWriter = mock(CustomDomainStateWriter.class);
         when(cloudflareConfiguration.isConfigured()).thenReturn(true);
         domainSettingsService = new DomainSettingsService(
-            settingsDocumentService,
-            serverRepository,
-            cloudflareClient,
-            cloudflareConfiguration,
-            customDomainAccessService,
-            new CustomDomainStatusMapper(),
-            stateWriter,
-            new CustomDomainLockRegistry(),
-            new ModlCorsProperties()
+                settingsDocumentService,
+                serverRepository,
+                cloudflareClient,
+                cloudflareConfiguration,
+                customDomainAccessService,
+                new CustomDomainStatusMapper(),
+                stateWriter,
+                new CustomDomainLockRegistry(),
+                new ModlCorsProperties()
         );
     }
 
@@ -85,7 +78,7 @@ class DomainSettingsServiceTest {
         when(cloudflareConfiguration.isConfigured()).thenReturn(false);
 
         assertThrows(ServiceUnavailableException.class,
-            () -> domainSettingsService.configureDomain(server(), "example.org"));
+                () -> domainSettingsService.configureDomain(server(), "example.org"));
 
         verify(cloudflareClient, never()).createCustomHostname(any());
     }
@@ -96,7 +89,7 @@ class DomainSettingsServiceTest {
         when(serverRepository.isCustomDomainOwnedByAnotherServer("example.org", "server-id")).thenReturn(false);
         when(cloudflareClient.findCustomHostnameByName("example.org")).thenReturn(null);
         when(cloudflareClient.createCustomHostname("example.org"))
-            .thenReturn(new CloudflareClient.CustomHostnameResult("cf-id", "example.org", "pending", null, null, null));
+                .thenReturn(new CloudflareClient.CustomHostnameResult("cf-id", "example.org", "pending", null, null, null));
 
         domainSettingsService.configureDomain(server, "Example.ORG");
 
@@ -123,7 +116,7 @@ class DomainSettingsServiceTest {
         when(cloudflareClient.createCustomHostname("example.org")).thenReturn(null);
 
         assertThrows(ExternalServiceException.class,
-            () -> domainSettingsService.configureDomain(server, "example.org"));
+                () -> domainSettingsService.configureDomain(server, "example.org"));
 
         verify(stateWriter, never()).persist(any(), any(), any(), any(), any());
     }
@@ -137,7 +130,7 @@ class DomainSettingsServiceTest {
         when(serverRepository.isCustomDomainOwnedByAnotherServer("new.example.com", "server-id")).thenReturn(false);
         when(cloudflareClient.findCustomHostnameByName("new.example.com")).thenReturn(null);
         when(cloudflareClient.createCustomHostname("new.example.com"))
-            .thenReturn(new CloudflareClient.CustomHostnameResult("new-id", "new.example.com", "pending", null, null, null));
+                .thenReturn(new CloudflareClient.CustomHostnameResult("new-id", "new.example.com", "pending", null, null, null));
         when(cloudflareClient.deleteCustomHostname("old-id")).thenReturn(true);
 
         domainSettingsService.configureDomain(server, "new.example.com");
@@ -158,7 +151,7 @@ class DomainSettingsServiceTest {
         when(serverRepository.isCustomDomainOwnedByAnotherServer("new.example.com", "server-id")).thenReturn(false);
         when(cloudflareClient.findCustomHostnameByName("new.example.com")).thenReturn(null);
         when(cloudflareClient.createCustomHostname("new.example.com"))
-            .thenReturn(new CloudflareClient.CustomHostnameResult("new-id", "new.example.com", "pending", null, null, null));
+                .thenReturn(new CloudflareClient.CustomHostnameResult("new-id", "new.example.com", "pending", null, null, null));
         when(cloudflareClient.deleteCustomHostname("old-id")).thenReturn(true);
 
         domainSettingsService.configureDomain(stale, "new.example.com");
@@ -173,9 +166,9 @@ class DomainSettingsServiceTest {
         when(serverRepository.isCustomDomainOwnedByAnotherServer("example.org", "server-id")).thenReturn(false);
         when(cloudflareClient.findCustomHostnameByName("example.org")).thenReturn(null);
         when(cloudflareClient.createCustomHostname("example.org"))
-            .thenReturn(new CloudflareClient.CustomHostnameResult("new-id", "example.org", "pending", null, null, null));
+                .thenReturn(new CloudflareClient.CustomHostnameResult("new-id", "example.org", "pending", null, null, null));
         doThrow(new DuplicateKeyException("dup")).when(stateWriter)
-            .persist("server-id", "example.org", CustomDomainStatus.PENDING, "new-id", null);
+                .persist("server-id", "example.org", CustomDomainStatus.PENDING, "new-id", null);
 
         assertThrows(ConflictException.class, () -> domainSettingsService.configureDomain(server, "example.org"));
 
@@ -191,8 +184,8 @@ class DomainSettingsServiceTest {
         server.setCustomDomainStatus(CustomDomainStatus.ACTIVE);
         when(serverRepository.isCustomDomainOwnedByAnotherServer("example.org", "server-id")).thenReturn(false);
         when(cloudflareClient.getCustomHostname("cf-id"))
-            .thenReturn(new CloudflareClient.CustomHostnameResult("cf-id", "example.org", "active",
-                new CloudflareClient.CustomHostnameResult.SslStatus("active", null, null), null, null));
+                .thenReturn(new CloudflareClient.CustomHostnameResult("cf-id", "example.org", "active",
+                        new CloudflareClient.CustomHostnameResult.SslStatus("active", null, null), null, null));
 
         domainSettingsService.configureDomain(server, "example.org");
 
@@ -239,10 +232,10 @@ class DomainSettingsServiceTest {
         server.setCustomDomainOverride("example.org");
         server.setCustomDomainCloudflareId("cf-id");
         when(cloudflareClient.getCustomHostname("cf-id")).thenReturn(new CloudflareClient.CustomHostnameResult(
-            "cf-id", "example.org", "active",
-            new CloudflareClient.CustomHostnameResult.SslStatus("active", null, null), null, null));
+                "cf-id", "example.org", "active",
+                new CloudflareClient.CustomHostnameResult.SslStatus("active", null, null), null, null));
         when(stateWriter.reconcileStatus("server-id", "example.org", CustomDomainStatus.ACTIVE, "cf-id", null))
-            .thenReturn(true);
+                .thenReturn(true);
 
         DomainSettings result = domainSettingsService.verifyDomain(server, "example.org");
 
@@ -256,13 +249,13 @@ class DomainSettingsServiceTest {
         server.setCustomDomainOverride("example.org");
         server.setCustomDomainCloudflareId("cf-id");
         when(cloudflareClient.getCustomHostname("cf-id")).thenReturn(new CloudflareClient.CustomHostnameResult(
-            "cf-id", "example.org", "active",
-            new CloudflareClient.CustomHostnameResult.SslStatus("active", null, null), null, null));
+                "cf-id", "example.org", "active",
+                new CloudflareClient.CustomHostnameResult.SslStatus("active", null, null), null, null));
         when(stateWriter.reconcileStatus("server-id", "example.org", CustomDomainStatus.ACTIVE, "cf-id", null))
-            .thenReturn(false);
+                .thenReturn(false);
 
         assertThrows(ResourceNotFoundException.class,
-            () -> domainSettingsService.verifyDomain(server, "example.org"));
+                () -> domainSettingsService.verifyDomain(server, "example.org"));
     }
 
     @Test
@@ -291,12 +284,6 @@ class DomainSettingsServiceTest {
     private Server stubbedFreshServer() {
         Server server = server();
         when(serverRepository.findById("server-id")).thenReturn(Optional.of(server));
-        return server;
-    }
-
-    private static Server server() {
-        Server server = new Server("server", "tenant", "db", "admin@example.com", true, ServerPlan.PREMIUM);
-        server.setId("server-id");
         return server;
     }
 }

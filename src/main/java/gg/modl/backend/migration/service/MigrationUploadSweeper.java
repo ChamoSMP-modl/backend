@@ -1,6 +1,11 @@
 package gg.modl.backend.migration.service;
 
 import gg.modl.backend.migration.config.MigrationConfiguration;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -10,10 +15,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
@@ -25,8 +26,8 @@ public class MigrationUploadSweeper {
     private final Duration staleness;
 
     public MigrationUploadSweeper(
-        MigrationConfiguration migrationConfiguration,
-        @Value("${modl.migration.sweep.staleness:PT30M}") Duration staleness
+            MigrationConfiguration migrationConfiguration,
+            @Value("${modl.migration.sweep.staleness:PT30M}") Duration staleness
     ) {
         this.migrationConfiguration = migrationConfiguration;
         this.staleness = staleness;

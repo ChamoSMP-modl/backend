@@ -9,27 +9,23 @@ import gg.modl.backend.ticket.data.TicketReply;
 import gg.modl.backend.ticket.dto.response.SubscriptionUpdateResponse;
 import gg.modl.backend.ticket.dto.response.TicketSubscriptionResponse;
 import gg.modl.backend.ticket.util.TicketAssigneeUtil;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TicketSubscriptionService {
-    private final StaffMongoRepository staffRepository;
-    private final TicketMongoRepository ticketRepository;
     private static final int MAX_UPDATES_LIMIT = 25;
     private static final int MAX_TICKETS_TO_SCAN = 250;
     private static final long ASSIGNED_NO_CURSOR_WINDOW_MS = 7L * 24 * 60 * 60 * 1000;
+    private final StaffMongoRepository staffRepository;
+    private final TicketMongoRepository ticketRepository;
 
     public List<TicketSubscriptionResponse> getSubscriptions(Server server, String staffEmail) {
         Staff staff = staffRepository.findByEmailExact(server, staffEmail).orElse(null);
@@ -38,17 +34,17 @@ public class TicketSubscriptionService {
         }
 
         List<String> activeTicketIds = staff.getSubscribedTickets()
-            .stream()
-            .filter(Staff.TicketSubscription::isActive)
-            .map(Staff.TicketSubscription::getTicketId)
-            .toList();
+                .stream()
+                .filter(Staff.TicketSubscription::isActive)
+                .map(Staff.TicketSubscription::getTicketId)
+                .toList();
         if (activeTicketIds.isEmpty()) {
             return Collections.emptyList();
         }
 
         Map<String, Ticket> ticketsById = ticketRepository.findByIds(server, activeTicketIds)
-            .stream()
-            .collect(Collectors.toMap(Ticket::getId, Function.identity()));
+                .stream()
+                .collect(Collectors.toMap(Ticket::getId, Function.identity()));
 
         List<TicketSubscriptionResponse> subscriptions = new ArrayList<>();
         for (Staff.TicketSubscription subscription : staff.getSubscribedTickets()) {
@@ -59,9 +55,9 @@ public class TicketSubscriptionService {
             Ticket ticket = ticketsById.get(subscription.getTicketId());
             if (ticket != null) {
                 subscriptions.add(new TicketSubscriptionResponse(
-                    subscription.getTicketId(),
-                    buildTicketTitle(ticket),
-                    subscription.getSubscribedAt()
+                        subscription.getTicketId(),
+                        buildTicketTitle(ticket),
+                        subscription.getSubscribedAt()
                 ));
             }
         }
@@ -81,41 +77,41 @@ public class TicketSubscriptionService {
         }
 
         List<String> subscribedTicketIds = staff.getSubscribedTickets()
-            .stream()
-            .filter(Staff.TicketSubscription::isActive)
-            .map(Staff.TicketSubscription::getTicketId)
-            .toList();
+                .stream()
+                .filter(Staff.TicketSubscription::isActive)
+                .map(Staff.TicketSubscription::getTicketId)
+                .toList();
         if (subscribedTicketIds.isEmpty()) {
             return Collections.emptyList();
         }
 
         List<Ticket> tickets = ticketRepository.findRecentActiveTicketsWithRepliesByIds(
-            server,
-            subscribedTicketIds,
-            ticketScanLimit(safeLimit)
+                server,
+                subscribedTicketIds,
+                ticketScanLimit(safeLimit)
         );
 
         List<SubscriptionUpdateResponse> updates = new ArrayList<>();
         for (Ticket ticket : tickets) {
             Staff.TicketSubscription subscription = staff.getSubscribedTickets()
-                .stream()
-                .filter(sub -> sub.getTicketId().equals(ticket.getId()))
-                .findFirst()
-                .orElse(null);
+                    .stream()
+                    .filter(sub -> sub.getTicketId().equals(ticket.getId()))
+                    .findFirst()
+                    .orElse(null);
 
             if (subscription == null || ticket.getReplies() == null) {
                 continue;
             }
 
             List<TicketReply> recentReplies = ticket.getReplies()
-                .stream()
-                .filter(reply -> reply.getCreated() != null && reply.getCreated().after(subscription.getSubscribedAt()))
-                .sorted((a, b) -> b.getCreated().compareTo(a.getCreated()))
-                .toList();
+                    .stream()
+                    .filter(reply -> reply.getCreated() != null && reply.getCreated().after(subscription.getSubscribedAt()))
+                    .sorted((a, b) -> b.getCreated().compareTo(a.getCreated()))
+                    .toList();
 
             List<TicketReply> unreadReplies = recentReplies.stream()
-                .filter(reply -> subscription.getLastReadAt() == null || reply.getCreated().after(subscription.getLastReadAt()))
-                .toList();
+                    .filter(reply -> subscription.getLastReadAt() == null || reply.getCreated().after(subscription.getLastReadAt()))
+                    .toList();
 
             if (!unreadReplies.isEmpty()) {
                 updates.add(toSubscriptionUpdate(ticket, unreadReplies));
@@ -153,8 +149,8 @@ public class TicketSubscriptionService {
 
         if (staff.getSubscribedTickets() != null) {
             boolean alreadySubscribed = staff.getSubscribedTickets()
-                .stream()
-                .anyMatch(sub -> sub.getTicketId().equals(ticketId) && sub.isActive());
+                    .stream()
+                    .anyMatch(sub -> sub.getTicketId().equals(ticketId) && sub.isActive());
             if (alreadySubscribed) {
                 return;
             }
@@ -186,9 +182,9 @@ public class TicketSubscriptionService {
         }
 
         List<Ticket> tickets = ticketRepository.findRecentAssignedTicketsWithReplies(
-            server,
-            staffIdentifier,
-            ticketScanLimit(safeLimit)
+                server,
+                staffIdentifier,
+                ticketScanLimit(safeLimit)
         );
 
         List<SubscriptionUpdateResponse> updates = new ArrayList<>();
@@ -208,21 +204,21 @@ public class TicketSubscriptionService {
 
             Date lastSeen = lastSeenMap.get(ticket.getId());
             Date unreadFloor = lastSeen != null
-                ? lastSeen
-                : new Date(System.currentTimeMillis() - ASSIGNED_NO_CURSOR_WINDOW_MS);
+                    ? lastSeen
+                    : new Date(System.currentTimeMillis() - ASSIGNED_NO_CURSOR_WINDOW_MS);
             List<TicketReply> unreadReplies = ticket.getReplies()
-                .stream()
-                .filter(reply -> reply.getCreated() != null)
-                .filter(reply -> {
-                    if (!reply.isStaff()) {
-                        return true;
-                    }
-                    String replyName = TicketAssigneeUtil.normalizeSingle(reply.getName());
-                    return !staffIdentifier.equals(replyName);
-                })
-                .filter(reply -> reply.getCreated().after(unreadFloor))
-                .sorted((a, b) -> b.getCreated().compareTo(a.getCreated()))
-                .toList();
+                    .stream()
+                    .filter(reply -> reply.getCreated() != null)
+                    .filter(reply -> {
+                        if (!reply.isStaff()) {
+                            return true;
+                        }
+                        String replyName = TicketAssigneeUtil.normalizeSingle(reply.getName());
+                        return !staffIdentifier.equals(replyName);
+                    })
+                    .filter(reply -> reply.getCreated().after(unreadFloor))
+                    .sorted((a, b) -> b.getCreated().compareTo(a.getCreated()))
+                    .toList();
 
             if (!unreadReplies.isEmpty()) {
                 updates.add(toSubscriptionUpdate(ticket, unreadReplies));
@@ -236,15 +232,15 @@ public class TicketSubscriptionService {
     private SubscriptionUpdateResponse toSubscriptionUpdate(Ticket ticket, List<TicketReply> unreadReplies) {
         TicketReply latestReply = unreadReplies.get(0);
         return new SubscriptionUpdateResponse(
-            ticket.getId() + "::" + latestReply.getId(),
-            ticket.getId(),
-            buildTicketTitle(ticket),
-            latestReply.getContent(),
-            latestReply.getName(),
-            latestReply.getCreated(),
-            latestReply.isStaff(),
-            false,
-            unreadReplies.size() > 1 ? unreadReplies.size() - 1 : null
+                ticket.getId() + "::" + latestReply.getId(),
+                ticket.getId(),
+                buildTicketTitle(ticket),
+                latestReply.getContent(),
+                latestReply.getName(),
+                latestReply.getCreated(),
+                latestReply.isStaff(),
+                false,
+                unreadReplies.size() > 1 ? unreadReplies.size() - 1 : null
         );
     }
 

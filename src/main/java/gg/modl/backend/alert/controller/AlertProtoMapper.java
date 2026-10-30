@@ -1,8 +1,5 @@
 package gg.modl.backend.alert.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.longValue;
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
-
 import gg.modl.backend.alert.data.SystemAlert;
 import gg.modl.backend.alert.data.SystemAlertAudience;
 import gg.modl.backend.alert.data.SystemAlertSeverity;
@@ -11,9 +8,13 @@ import gg.modl.proto.modl.v1.AdminSystemAlertResponse;
 import gg.modl.proto.modl.v1.AdminSystemAlertsResponse;
 import gg.modl.proto.modl.v1.PanelSystemAlertResponse;
 import gg.modl.proto.modl.v1.PanelSystemAlertsResponse;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Date;
 import java.util.List;
-import org.jetbrains.annotations.Nullable;
+
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.longValue;
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.stringValue;
 
 final class AlertProtoMapper {
 
@@ -34,14 +35,14 @@ final class AlertProtoMapper {
 
     static AdminSystemAlertResponse toAdminAlert(SystemAlert alert) {
         return AdminSystemAlertResponse.newBuilder()
-            .setId(stringValue(alert.getId()))
-            .setMessage(stringValue(alert.getMessage()))
-            .setSeverity(severityName(alert.getSeverity()))
-            .setAudience(audienceName(alert.getAudience()))
-            .setExpiresAt(longValue(alert.getExpiresAt()))
-            .setCreatedAt(longValue(alert.getCreatedAt()))
-            .setUpdatedAt(longValue(alert.getUpdatedAt()))
-            .build();
+                .setId(stringValue(alert.getId()))
+                .setMessage(stringValue(alert.getMessage()))
+                .setSeverity(severityName(alert.getSeverity()))
+                .setAudience(audienceName(alert.getAudience()))
+                .setExpiresAt(longValue(alert.getExpiresAt()))
+                .setCreatedAt(longValue(alert.getCreatedAt()))
+                .setUpdatedAt(longValue(alert.getUpdatedAt()))
+                .build();
     }
 
     static SystemAlertSeverity parseSeverity(@Nullable String value) {
@@ -87,12 +88,12 @@ final class AlertProtoMapper {
 
     private static PanelSystemAlertResponse toPanelAlert(SystemAlert alert) {
         return PanelSystemAlertResponse.newBuilder()
-            .setId(stringValue(alert.getId()))
-            .setMessage(stringValue(alert.getMessage()))
-            .setSeverity(severityName(alert.getSeverity()))
-            .setAudience(audienceName(alert.getAudience()))
-            .setExpiresAt(longValue(alert.getExpiresAt()))
-            .build();
+                .setId(stringValue(alert.getId()))
+                .setMessage(stringValue(alert.getMessage()))
+                .setSeverity(severityName(alert.getSeverity()))
+                .setAudience(audienceName(alert.getAudience()))
+                .setExpiresAt(longValue(alert.getExpiresAt()))
+                .build();
     }
 
     private static String severityName(@Nullable SystemAlertSeverity severity) {

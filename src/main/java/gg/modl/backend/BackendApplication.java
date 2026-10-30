@@ -19,12 +19,12 @@ public class BackendApplication {
         try {
             final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
             dotenv.entries(Dotenv.Filter.DECLARED_IN_ENV_FILE).forEach(entry ->
-                System.setProperty(entry.getKey(), entry.getValue())
+                    System.setProperty(entry.getKey(), entry.getValue())
             );
         } catch (DotenvException e) {
             System.err.println("[BackendApplication] Could not read .env file (it may be a "
-                + "directory or unreadable, e.g. an empty bind-mount). Continuing with "
-                + "environment/-e variables only. Cause: " + e.getMessage());
+                    + "directory or unreadable, e.g. an empty bind-mount). Continuing with "
+                    + "environment/-e variables only. Cause: " + e.getMessage());
         }
     }
 }

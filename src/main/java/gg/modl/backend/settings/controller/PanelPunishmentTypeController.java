@@ -3,9 +3,9 @@ package gg.modl.backend.settings.controller;
 import gg.modl.backend.infrastructure.authorization.PanelAccessRule;
 import gg.modl.backend.infrastructure.authorization.RequiresPanelPermission;
 import gg.modl.backend.infrastructure.exception.ValidationException;
-import gg.modl.backend.infrastructure.validation.BeanValidationRunner;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
+import gg.modl.backend.infrastructure.validation.BeanValidationRunner;
 import gg.modl.backend.realtime.publish.RealtimeEventPublisher;
 import gg.modl.backend.role.service.PermissionService;
 import gg.modl.backend.server.data.Server;
@@ -16,18 +16,12 @@ import gg.modl.proto.modl.v1.PanelPunishmentTypesResponse;
 import gg.modl.proto.modl.v1.PanelResource;
 import gg.modl.proto.modl.v1.PunishmentTypeRequest;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_SETTINGS + "/punishment-types")
@@ -48,29 +42,29 @@ public class PanelPunishmentTypeController {
 
     @GetMapping("/{ordinal}")
     public ResponseEntity<gg.modl.proto.modl.v1.PunishmentType> getPunishmentType(
-        @PathVariable int ordinal,
-        HttpServletRequest request
+            @PathVariable int ordinal,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         return punishmentTypeService.getPunishmentTypeByOrdinal(server, ordinal)
-            .map(PanelSettingsProtoMapper::toPunishmentType)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+                .map(PanelSettingsProtoMapper::toPunishmentType)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @PatchMapping("/{ordinal}")
     public gg.modl.proto.modl.v1.PunishmentType updatePunishmentType(
-        @PathVariable int ordinal,
-        @RequestBody PunishmentTypeRequest requestBody,
-        HttpServletRequest request
+            @PathVariable int ordinal,
+            @RequestBody PunishmentTypeRequest requestBody,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         PunishmentType updatedType = PanelSettingsProtoMapper.fromPunishmentTypeRequest(requestBody);
         validationRunner.validate(updatedType);
 
         String previousName = punishmentTypeService.getPunishmentTypeByOrdinal(server, ordinal)
-            .map(PunishmentType::getName)
-            .orElse(null);
+                .map(PunishmentType::getName)
+                .orElse(null);
 
         PunishmentType result = punishmentTypeService.updatePunishmentType(server, ordinal, updatedType);
 
@@ -84,8 +78,8 @@ public class PanelPunishmentTypeController {
 
     @PostMapping
     public gg.modl.proto.modl.v1.PunishmentType createPunishmentType(
-        @RequestBody PunishmentTypeRequest requestBody,
-        HttpServletRequest request
+            @RequestBody PunishmentTypeRequest requestBody,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         PunishmentType newType = PanelSettingsProtoMapper.fromPunishmentTypeRequest(requestBody);
@@ -105,8 +99,8 @@ public class PanelPunishmentTypeController {
 
     @DeleteMapping("/{ordinal}")
     public ResponseEntity<?> deletePunishmentType(
-        @PathVariable int ordinal,
-        HttpServletRequest request
+            @PathVariable int ordinal,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -124,9 +118,9 @@ public class PanelPunishmentTypeController {
 
     private void invalidatePunishmentTypes(Server server, Integer ordinal) {
         realtimeEventPublisher.invalidatePanel(
-            server,
-            PanelResource.PANEL_RESOURCE_PUNISHMENT_TYPES,
-            ordinal != null ? String.valueOf(ordinal) : null
+                server,
+                PanelResource.PANEL_RESOURCE_PUNISHMENT_TYPES,
+                ordinal != null ? String.valueOf(ordinal) : null
         );
     }
 

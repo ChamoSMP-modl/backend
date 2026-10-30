@@ -9,12 +9,7 @@ import gg.modl.proto.modl.v1.GenerateReportRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(RESTMappingV1.ADMIN_ANALYTICS)
@@ -39,8 +34,8 @@ public class AdminAnalyticsController {
 
     @GetMapping("/historical")
     public ResponseEntity<?> getHistorical(
-        @RequestParam(required = false) String metric,
-        @RequestParam(defaultValue = "30d") String range) {
+            @RequestParam(required = false) String metric,
+            @RequestParam(defaultValue = "30d") String range) {
         return ResponseEntity.ok(AdminAnalyticsProtoMapper.toHistoricalResponse(adminAnalyticsService.getHistorical(metric, range)));
     }
 
@@ -51,9 +46,9 @@ public class AdminAnalyticsController {
 
         if ("csv".equals(type)) {
             return ResponseEntity.ok()
-                .header("Content-Type", "text/csv")
-                .header("Content-Disposition", "attachment; filename=\"modl-analytics-" + range + ".csv\"")
-                .body(adminAnalyticsService.exportCsv(range));
+                    .header("Content-Type", "text/csv")
+                    .header("Content-Disposition", "attachment; filename=\"modl-analytics-" + range + ".csv\"")
+                    .body(adminAnalyticsService.exportCsv(range));
         }
         if ("json".equals(type)) {
             return ResponseEntity.ok(AdminAnalyticsProtoMapper.toExportResponse(adminAnalyticsService.exportJson(range)));
@@ -65,8 +60,8 @@ public class AdminAnalyticsController {
     @PostMapping("/report")
     public ResponseEntity<?> generateReport(@RequestBody GenerateReportRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(AdminAnalyticsReportResponse.newBuilder()
-            .setSuccess(false)
-            .setError("Report generation not implemented")
-            .build());
+                .setSuccess(false)
+                .setError("Report generation not implemented")
+                .build());
     }
 }

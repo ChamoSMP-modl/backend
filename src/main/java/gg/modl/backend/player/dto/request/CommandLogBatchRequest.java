@@ -4,11 +4,12 @@ import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+
 import java.util.List;
 
 public record CommandLogBatchRequest(
-    @NotEmpty
-    @Size(max = RequestValidationLimits.CHAT_LOG_BATCH_MAX_ENTRIES)
-    List<@Valid CommandLogEntryRequest> entries
+        @NotEmpty
+        @Size(max = RequestValidationLimits.CHAT_LOG_BATCH_MAX_ENTRIES)
+        List<@Valid CommandLogEntryRequest> entries
 ) {
 }

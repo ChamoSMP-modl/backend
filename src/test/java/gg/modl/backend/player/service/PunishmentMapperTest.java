@@ -1,21 +1,18 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-
 import gg.modl.backend.player.data.punishment.Punishment;
 import gg.modl.backend.player.data.punishment.PunishmentNote;
 import gg.modl.backend.player.dto.response.SimplePunishmentView;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.OffenderThresholdSettingsService;
 import gg.modl.backend.settings.service.PunishmentTypeService;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
 class PunishmentMapperTest {
 
@@ -25,14 +22,14 @@ class PunishmentMapperTest {
     @BeforeEach
     void setUp() {
         statusCalculator = new PlayerStatusCalculator(
-            mock(PunishmentTypeService.class),
-            mock(OffenderThresholdSettingsService.class)
+                mock(PunishmentTypeService.class),
+                mock(OffenderThresholdSettingsService.class)
         );
         types = List.of(PunishmentType.builder()
-            .ordinal(6)
-            .name("Chat Abuse")
-            .category("Social")
-            .build());
+                .ordinal(6)
+                .name("Chat Abuse")
+                .category("Social")
+                .build());
     }
 
     @Test
@@ -79,17 +76,17 @@ class PunishmentMapperTest {
 
     private Punishment punishment(int typeOrdinal, List<PunishmentNote> notes, Map<String, Object> data) {
         return new Punishment(
-            "p-1",
-            typeOrdinal,
-            "Mod",
-            null,
-            new Date(),
-            new Date(),
-            new ArrayList<>(),
-            new ArrayList<>(notes),
-            new ArrayList<>(),
-            new ArrayList<>(),
-            data
+                "p-1",
+                typeOrdinal,
+                "Mod",
+                null,
+                new Date(),
+                new Date(),
+                new ArrayList<>(),
+                new ArrayList<>(notes),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                data
         );
     }
 }

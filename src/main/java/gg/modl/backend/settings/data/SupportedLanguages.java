@@ -6,7 +6,7 @@ public final class SupportedLanguages {
     public static final String DEFAULT = "en";
 
     private static final Set<String> CODES = Set.of(
-        "en", "de", "es", "fr", "hi", "it", "ja", "nl", "pt", "ru", "zh"
+            "en", "de", "es", "fr", "hi", "it", "ja", "nl", "pt", "ru", "zh"
     );
 
     private SupportedLanguages() {

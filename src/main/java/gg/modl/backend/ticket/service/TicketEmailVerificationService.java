@@ -4,30 +4,50 @@ import gg.modl.backend.database.mongo.repository.TicketVerificationMongoReposito
 import gg.modl.backend.email.EmailAddressUtil;
 import gg.modl.backend.email.EmailHTMLTemplate;
 import gg.modl.backend.email.EmailService;
-import gg.modl.backend.infrastructure.onetimecode.OneTimeCodeCodec;
-import gg.modl.backend.server.data.Server;
-import gg.modl.backend.ticket.data.Ticket;
-import gg.modl.backend.ticket.data.TicketVerification;
 import gg.modl.backend.infrastructure.exception.ExternalServiceException;
 import gg.modl.backend.infrastructure.exception.ValidationException;
-import java.util.Date;
-import java.util.UUID;
+import gg.modl.backend.infrastructure.onetimecode.OneTimeCodeCodec;
+import gg.modl.backend.server.data.Server;
 import gg.modl.backend.ticket.config.TicketEmailVerificationConfiguration;
+import gg.modl.backend.ticket.data.Ticket;
+import gg.modl.backend.ticket.data.TicketVerification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TicketEmailVerificationService {
+    private static final int CODE_LENGTH = 6;
+    private static final String CREATOR_EMAIL_KEY = "creatorEmail";
+    private static final String CONTACT_EMAIL_KEY = "contactEmail";
     private final TicketVerificationMongoRepository ticketVerificationRepository;
     private final EmailService emailService;
     private final TicketEmailVerificationConfiguration verificationConfig;
     private final OneTimeCodeCodec oneTimeCodeCodec;
-    private static final int CODE_LENGTH = 6;
-    private static final String CREATOR_EMAIL_KEY = "creatorEmail";
-    private static final String CONTACT_EMAIL_KEY = "contactEmail";
+
+    public static String resolveContactEmail(Ticket ticket) {
+        if (ticket.getData() == null) {
+            return null;
+        }
+        Object email = ticket.getData().get(CREATOR_EMAIL_KEY);
+        if (email == null) {
+            email = ticket.getData().get(CONTACT_EMAIL_KEY);
+        }
+        if (email == null) {
+            return null;
+        }
+        String value = email.toString();
+        return value.isBlank() ? null : value;
+    }
+
+    private static String appealCreateSubject(String punishmentId, String playerUuid) {
+        return "appeal-create:" + punishmentId + ":" + (playerUuid == null ? "" : playerUuid);
+    }
 
     public String sendVerificationCode(Server server, Ticket ticket) {
         String email = getCreatorEmail(ticket);
@@ -39,12 +59,12 @@ public class TicketEmailVerificationService {
         String codeHash = hash(code);
 
         TicketVerification verification = TicketVerification.builder()
-            .id(UUID.randomUUID().toString())
-            .ticketId(ticket.getId())
-            .codeHash(codeHash)
-            .email(email)
-            .expiresAt(new Date(System.currentTimeMillis() + (verificationConfig.getCodeExpirySeconds() * 1000L)))
-            .build();
+                .id(UUID.randomUUID().toString())
+                .ticketId(ticket.getId())
+                .codeHash(codeHash)
+                .email(email)
+                .expiresAt(new Date(System.currentTimeMillis() + (verificationConfig.getCodeExpirySeconds() * 1000L)))
+                .build();
         ticketVerificationRepository.replaceCodeVerification(server, verification);
 
         try {
@@ -73,21 +93,6 @@ public class TicketEmailVerificationService {
         return normalizedEmail;
     }
 
-    public static String resolveContactEmail(Ticket ticket) {
-        if (ticket.getData() == null) {
-            return null;
-        }
-        Object email = ticket.getData().get(CREATOR_EMAIL_KEY);
-        if (email == null) {
-            email = ticket.getData().get(CONTACT_EMAIL_KEY);
-        }
-        if (email == null) {
-            return null;
-        }
-        String value = email.toString();
-        return value.isBlank() ? null : value;
-    }
-
     private String hash(String code) {
         return oneTimeCodeCodec.hash(code, verificationConfig.getCodeHashSecret());
     }
@@ -96,7 +101,7 @@ public class TicketEmailVerificationService {
         String codeHash = hash(code);
         Date now = new Date();
         TicketVerification verification = ticketVerificationRepository.consumeMatchingCode(server, ticketId, codeHash, now)
-            .orElse(null);
+                .orElse(null);
         if (verification == null) {
             ticketVerificationRepository.incrementFailedAttempts(server, ticketId, now);
             return null;
@@ -104,12 +109,12 @@ public class TicketEmailVerificationService {
 
         String token = UUID.randomUUID().toString();
         TicketVerification tokenVerification = TicketVerification.builder()
-            .id(UUID.randomUUID().toString())
-            .ticketId(ticketId)
-            .token(token)
-            .email(verification.getEmail())
-            .expiresAt(new Date(System.currentTimeMillis() + (verificationConfig.getTokenExpirySeconds() * 1000L)))
-            .build();
+                .id(UUID.randomUUID().toString())
+                .ticketId(ticketId)
+                .token(token)
+                .email(verification.getEmail())
+                .expiresAt(new Date(System.currentTimeMillis() + (verificationConfig.getTokenExpirySeconds() * 1000L)))
+                .build();
         ticketVerificationRepository.saveEntity(server, tokenVerification);
         return token;
     }
@@ -123,9 +128,5 @@ public class TicketEmailVerificationService {
 
     public boolean validateAppealCreateToken(Server server, String punishmentId, String playerUuid, String token) {
         return validateToken(server, appealCreateSubject(punishmentId, playerUuid), token);
-    }
-
-    private static String appealCreateSubject(String punishmentId, String playerUuid) {
-        return "appeal-create:" + punishmentId + ":" + (playerUuid == null ? "" : playerUuid);
     }
 }

@@ -32,11 +32,11 @@ public class ProtobufErrorResponseWriter {
         response.setStatus(status);
         response.setContentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE);
         ApiError.newBuilder()
-            .setStatusCode(status)
-            .setCode(code)
-            .setMessage(message)
-            .build()
-            .writeTo(response.getOutputStream());
+                .setStatusCode(status)
+                .setCode(code)
+                .setMessage(message)
+                .build()
+                .writeTo(response.getOutputStream());
     }
 
     private boolean acceptsProtobuf(List<String> acceptHeaders) {
@@ -47,7 +47,7 @@ public class ProtobufErrorResponseWriter {
             try {
                 for (MediaType mediaType : MediaType.parseMediaTypes(header)) {
                     if (mediaType.isCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                        || mediaType.isCompatibleWith(ProtobufMediaTypes.APPLICATION_PROTOBUF)) {
+                            || mediaType.isCompatibleWith(ProtobufMediaTypes.APPLICATION_PROTOBUF)) {
                         return true;
                     }
                 }

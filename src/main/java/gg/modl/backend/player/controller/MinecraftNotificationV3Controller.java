@@ -23,20 +23,20 @@ public class MinecraftNotificationV3Controller {
     private final MinecraftPlayerService minecraftPlayerService;
 
     @PostMapping(
-        value = "/acknowledge",
-        consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+            value = "/acknowledge",
+            consumes = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE,
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
     )
     public ResponseEntity<SimpleResponse> acknowledgeNotifications(
-        @RequestBody @Valid AcknowledgeNotificationsRequest request,
-        HttpServletRequest httpRequest
+            @RequestBody @Valid AcknowledgeNotificationsRequest request,
+            HttpServletRequest httpRequest
     ) {
         Server server = RequestUtil.getRequestServer(httpRequest);
         minecraftPlayerService.acknowledgeNotifications(
-            server,
-            request.getPlayerUuid(),
-            request.getNotificationIdsList(),
-            request.getAcknowledgedAt().isEmpty() ? null : request.getAcknowledgedAt()
+                server,
+                request.getPlayerUuid(),
+                request.getNotificationIdsList(),
+                request.getAcknowledgedAt().isEmpty() ? null : request.getAcknowledgedAt()
         );
 
         return ResponseEntity.ok(MinecraftPlayerProtoMapper.toSimpleResponse(true));

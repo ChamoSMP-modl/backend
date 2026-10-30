@@ -1,7 +1,5 @@
 package gg.modl.backend.appeal.controller;
 
-import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.valuesToObjects;
-
 import gg.modl.backend.appeal.service.AppealService;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
@@ -15,23 +13,16 @@ import gg.modl.backend.ticket.service.PublicRecordAccessService;
 import gg.modl.backend.ticket.service.PublicRecordAccessService.Access;
 import gg.modl.backend.ticket.service.PublicRecordAccessService.AccessResult;
 import gg.modl.backend.ticket.service.PublicRecordVerificationService;
-import gg.modl.proto.modl.v1.AddAppealReplyRequest;
-import gg.modl.proto.modl.v1.CreateAppealRequest;
-import gg.modl.proto.modl.v1.CreatePublicAppealResponse;
-import gg.modl.proto.modl.v1.PanelResource;
-import gg.modl.proto.modl.v1.VerifyTicketCodeRequest;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static gg.modl.backend.infrastructure.proto.ProtoMapperSupport.valuesToObjects;
 
 @RestController
 @RequestMapping(RESTMappingV1.PUBLIC_APPEALS)
@@ -44,9 +35,9 @@ public class PublicAppealController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAppeal(
-        @PathVariable String id,
-        @RequestParam(value = "token", required = false) String appealToken,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestParam(value = "token", required = false) String appealToken,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -57,7 +48,7 @@ public class PublicAppealController {
         }
         if (access.access() == Access.TOKEN_REQUIRED) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(PublicVerificationProtoMapper.toVerificationRequiredResponse(id, access.emailHint()));
+                    .body(PublicVerificationProtoMapper.toVerificationRequiredResponse(id, access.emailHint()));
         }
 
         TicketResponse appealResponse = appealService.toResponse(appeal);
@@ -66,9 +57,9 @@ public class PublicAppealController {
 
     @PostMapping
     public ResponseEntity<CreatePublicAppealResponse> createAppeal(
-        @RequestBody CreateAppealRequest createRequest,
-        @RequestParam(value = "token", required = false) String appealToken,
-        HttpServletRequest request
+            @RequestBody CreateAppealRequest createRequest,
+            @RequestParam(value = "token", required = false) String appealToken,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -79,10 +70,10 @@ public class PublicAppealController {
 
     @PostMapping("/{id}/replies")
     public ResponseEntity<?> addReply(
-        @PathVariable String id,
-        @RequestBody AddAppealReplyRequest replyRequest,
-        @RequestParam(value = "token", required = false) String appealToken,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody AddAppealReplyRequest replyRequest,
+            @RequestParam(value = "token", required = false) String appealToken,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -93,7 +84,7 @@ public class PublicAppealController {
         }
         if (access.access() == Access.TOKEN_REQUIRED) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(PublicVerificationProtoMapper.toVerificationRequiredResponse(id, access.emailHint()));
+                    .body(PublicVerificationProtoMapper.toVerificationRequiredResponse(id, access.emailHint()));
         }
 
         List<Object> attachments = valuesToObjects(replyRequest.getAttachmentsList());
@@ -117,9 +108,9 @@ public class PublicAppealController {
 
     @PostMapping("/{id}/verify")
     public ResponseEntity<?> verifyCode(
-        @PathVariable String id,
-        @RequestBody VerifyTicketCodeRequest body,
-        HttpServletRequest request
+            @PathVariable String id,
+            @RequestBody VerifyTicketCodeRequest body,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 

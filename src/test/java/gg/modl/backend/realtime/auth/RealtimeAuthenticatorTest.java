@@ -1,11 +1,5 @@
 package gg.modl.backend.realtime.auth;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.auth.AuthConfiguration;
 import gg.modl.backend.auth.session.AuthSessionData;
 import gg.modl.backend.auth.session.SessionService;
@@ -17,10 +11,15 @@ import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.settings.service.ApiKeySettingsService;
 import gg.modl.proto.modl.v1.ClientHello;
 import gg.modl.proto.modl.v1.ClientKind;
-import java.util.Date;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+
+import java.util.Date;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class RealtimeAuthenticatorTest {
 
@@ -30,20 +29,20 @@ class RealtimeAuthenticatorTest {
         Server server = server();
         when(apiKeySettingsService.findServerByApiKey("api-key")).thenReturn(server);
         RealtimeAuthenticator authenticator = new RealtimeAuthenticator(
-            apiKeySettingsService,
-            mock(SessionService.class),
-            mock(ServerService.class),
-            mock(AuthConfiguration.class),
-            mock(RealtimeOriginValidator.class),
-            mock(StagingEnvironment.class)
+                apiKeySettingsService,
+                mock(SessionService.class),
+                mock(ServerService.class),
+                mock(AuthConfiguration.class),
+                mock(RealtimeOriginValidator.class),
+                mock(StagingEnvironment.class)
         );
 
         HttpHeaders headers = new HttpHeaders();
         headers.set(RequestHeader.API_KEY, "api-key");
         ClientHello hello = ClientHello.newBuilder()
-            .setClientKind(ClientKind.CLIENT_KIND_MINECRAFT_PLUGIN)
-            .setServerName("Server 1")
-            .build();
+                .setClientKind(ClientKind.CLIENT_KIND_MINECRAFT_PLUGIN)
+                .setServerName("Server 1")
+                .build();
 
         RealtimePrincipal principal = assertDoesNotThrow(() -> authenticator.authenticate(headers, hello));
 
@@ -63,12 +62,12 @@ class RealtimeAuthenticatorTest {
         when(originValidator.isAllowedPanelOrigin("https://panel.modl.gg", "tenant.modl.gg")).thenReturn(true);
         when(sessionService.findAndRefreshSession(server, "session-token")).thenReturn(Optional.of(session()));
         RealtimeAuthenticator authenticator = new RealtimeAuthenticator(
-            apiKeySettingsService,
-            sessionService,
-            serverService,
-            authConfiguration,
-            originValidator,
-            mock(StagingEnvironment.class)
+                apiKeySettingsService,
+                sessionService,
+                serverService,
+                authConfiguration,
+                originValidator,
+                mock(StagingEnvironment.class)
         );
 
         HttpHeaders headers = new HttpHeaders();
@@ -76,9 +75,9 @@ class RealtimeAuthenticatorTest {
         headers.add(HttpHeaders.COOKIE, authConfiguration.getSessionCookieName() + "=session-token");
         headers.set(HttpHeaders.HOST, "panel.modl.gg");
         ClientHello hello = ClientHello.newBuilder()
-            .setClientKind(ClientKind.CLIENT_KIND_PANEL)
-            .setServerName("tenant.modl.gg")
-            .build();
+                .setClientKind(ClientKind.CLIENT_KIND_PANEL)
+                .setServerName("tenant.modl.gg")
+                .build();
 
         RealtimePrincipal principal = assertDoesNotThrow(() -> authenticator.authenticate(headers, hello));
 
@@ -89,24 +88,24 @@ class RealtimeAuthenticatorTest {
     @Test
     void panelAuthenticationRejectsMissingClientHelloTenantDomain() {
         RealtimeAuthenticator authenticator = new RealtimeAuthenticator(
-            mock(ApiKeySettingsService.class),
-            mock(SessionService.class),
-            mock(ServerService.class),
-            new AuthConfiguration(),
-            mock(RealtimeOriginValidator.class),
-            mock(StagingEnvironment.class)
+                mock(ApiKeySettingsService.class),
+                mock(SessionService.class),
+                mock(ServerService.class),
+                new AuthConfiguration(),
+                mock(RealtimeOriginValidator.class),
+                mock(StagingEnvironment.class)
         );
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.HOST, "tenant.modl.gg");
         ClientHello hello = ClientHello.newBuilder()
-            .setClientKind(ClientKind.CLIENT_KIND_PANEL)
-            .build();
+                .setClientKind(ClientKind.CLIENT_KIND_PANEL)
+                .build();
 
         assertThrows(RealtimeAuthenticationException.class, () -> authenticator.authenticate(headers, hello));
     }
 
     private Server server() {
-        Server server = new Server("Tenant Display Name", "tenant", "tenant_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Tenant Display Name", "tenant", "tenant_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
         return server;
     }

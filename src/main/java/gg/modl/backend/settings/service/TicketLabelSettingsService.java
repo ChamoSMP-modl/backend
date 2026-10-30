@@ -4,18 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.Label;
 import gg.modl.backend.settings.data.TicketLabelSettings;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -33,7 +27,7 @@ public class TicketLabelSettingsService {
     public TicketLabelSettingsService(SettingsDocumentService settingsDocumentService, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.support = VersionedSettingsSupport.of(
-            settingsDocumentService, SETTINGS_TYPE_TICKET_LABELS, this::mapToTicketLabelSettings);
+                settingsDocumentService, SETTINGS_TYPE_TICKET_LABELS, this::mapToTicketLabelSettings);
     }
 
     public TicketLabelSettings getTicketLabelSettings(Server server) {
@@ -45,16 +39,16 @@ public class TicketLabelSettingsService {
     }
 
     public VersionedSettings<TicketLabelSettings> patchTicketLabelSettings(
-        Server server,
-        long expectedVersion,
-        List<Label> labels
+            Server server,
+            long expectedVersion,
+            List<Label> labels
     ) {
         Map<String, Object> data = support.currentData(server);
 
         if (labels != null) {
             List<Map<String, Object>> normalizedLabels = normalizeLabels(labels).stream()
-                .map(this::labelToMap)
-                .collect(Collectors.toCollection(ArrayList::new));
+                    .map(this::labelToMap)
+                    .collect(Collectors.toCollection(ArrayList::new));
             data.put("labels", normalizedLabels);
         }
 
@@ -86,8 +80,8 @@ public class TicketLabelSettingsService {
         }
 
         return TicketLabelSettings.builder()
-            .labels(normalizeLabels(labels))
-            .build();
+                .labels(normalizeLabels(labels))
+                .build();
     }
 
     private List<Label> normalizeLabels(List<Label> labels) {
@@ -96,10 +90,10 @@ public class TicketLabelSettingsService {
         }
 
         List<Label> normalized = labels.stream()
-            .filter(Objects::nonNull)
-            .map(this::normalizeLabel)
-            .filter(label -> label.getName() != null && !label.getName().isBlank())
-            .collect(Collectors.toCollection(ArrayList::new));
+                .filter(Objects::nonNull)
+                .map(this::normalizeLabel)
+                .filter(label -> label.getName() != null && !label.getName().isBlank())
+                .collect(Collectors.toCollection(ArrayList::new));
 
         LinkedHashSet<String> seenNames = new LinkedHashSet<>();
         List<Label> deduped = new ArrayList<>();
@@ -122,11 +116,11 @@ public class TicketLabelSettingsService {
             seenIds.add(resolvedId);
 
             normalizedIds.add(Label.builder()
-                .id(resolvedId)
-                .name(label.getName())
-                .color(label.getColor())
-                .description(label.getDescription())
-                .build());
+                    .id(resolvedId)
+                    .name(label.getName())
+                    .color(label.getColor())
+                    .description(label.getDescription())
+                    .build());
         }
 
         if (normalizedIds.size() > MAX_LABELS) {
@@ -143,8 +137,8 @@ public class TicketLabelSettingsService {
         }
 
         String normalizedColor = label.getColor() != null && !label.getColor().isBlank()
-                                 ? label.getColor().trim()
-                                 : "#6b7280";
+                ? label.getColor().trim()
+                : "#6b7280";
         if (!HEX_COLOR_PATTERN.matcher(normalizedColor).matches()) {
             normalizedColor = "#6b7280";
         }
@@ -152,15 +146,15 @@ public class TicketLabelSettingsService {
 
         String normalizedName = truncate(label.getName() != null ? label.getName().trim() : "", MAX_LABEL_NAME_LENGTH);
         String normalizedDescription = label.getDescription() != null
-                                       ? truncate(label.getDescription().trim(), MAX_LABEL_DESCRIPTION_LENGTH)
-                                       : null;
+                ? truncate(label.getDescription().trim(), MAX_LABEL_DESCRIPTION_LENGTH)
+                : null;
 
         return Label.builder()
-            .id(normalizedId)
-            .name(normalizedName)
-            .color(normalizedColor)
-            .description(normalizedDescription)
-            .build();
+                .id(normalizedId)
+                .name(normalizedName)
+                .color(normalizedColor)
+                .description(normalizedDescription)
+                .build();
     }
 
     private String sanitizeId(String value) {
@@ -182,11 +176,11 @@ public class TicketLabelSettingsService {
 
     private Label mapToLabel(Map<String, Object> map) {
         return normalizeLabel(Label.builder()
-            .id(map.get("id") != null ? map.get("id").toString() : null)
-            .name(map.get("name") != null ? map.get("name").toString() : "")
-            .color(map.get("color") != null ? map.get("color").toString() : "#6b7280")
-            .description(map.get("description") != null ? map.get("description").toString() : null)
-            .build());
+                .id(map.get("id") != null ? map.get("id").toString() : null)
+                .name(map.get("name") != null ? map.get("name").toString() : "")
+                .color(map.get("color") != null ? map.get("color").toString() : "#6b7280")
+                .description(map.get("description") != null ? map.get("description").toString() : null)
+                .build());
     }
 
     private Map<String, Object> labelToMap(Label label) {

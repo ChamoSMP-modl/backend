@@ -1,11 +1,6 @@
 package gg.modl.backend.player.service;
 
-import gg.modl.backend.player.data.punishment.EnforcementCategory;
-import gg.modl.backend.player.data.punishment.Punishment;
-import gg.modl.backend.player.data.punishment.PunishmentDataView;
-import gg.modl.backend.player.data.punishment.PunishmentModification;
-import gg.modl.backend.player.data.punishment.PunishmentModificationType;
-import gg.modl.backend.player.data.punishment.PunishmentStatus;
+import gg.modl.backend.player.data.punishment.*;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.DurationDetail;
 import gg.modl.backend.settings.data.OffenderThresholdSettings;
@@ -14,13 +9,14 @@ import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.OffenderThresholdSettingsService;
 import gg.modl.backend.settings.service.PunishmentTypeIndex;
 import gg.modl.backend.settings.service.PunishmentTypeService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -169,8 +165,8 @@ public class PlayerStatusCalculator {
             } else {
                 String status = data.status();
                 if (status == null
-                    || PunishmentStatus.UNSTARTED.equals(status)
-                    || PunishmentStatus.PARDONED.equals(status)) {
+                        || PunishmentStatus.UNSTARTED.equals(status)
+                        || PunishmentStatus.PARDONED.equals(status)) {
                     offenseLevel = "first";
                 } else {
                     offenseLevel = switch (status.toLowerCase(Locale.ROOT)) {
@@ -216,10 +212,10 @@ public class PlayerStatusCalculator {
     }
 
     public record PlayerStatus(
-        String social,
-        String gameplay,
-        int socialPoints,
-        int gameplayPoints
+            String social,
+            String gameplay,
+            int socialPoints,
+            int gameplayPoints
     ) {
     }
 }

@@ -1,20 +1,17 @@
 package gg.modl.backend.storage.service;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.database.mongo.repository.ServerUsageRepository;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
-import java.util.OptionalLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
+
+import java.util.OptionalLong;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 class StorageUsageAccountantTest {
     private static final String SERVER_ID = "srv-1";
@@ -27,7 +24,7 @@ class StorageUsageAccountantTest {
     void setUp() {
         serverUsageRepository = mock(ServerUsageRepository.class);
         accountant = new StorageUsageAccountant(serverUsageRepository);
-        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+        server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId(SERVER_ID);
     }
 

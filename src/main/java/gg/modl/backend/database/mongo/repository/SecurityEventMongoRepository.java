@@ -5,15 +5,16 @@ import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.AbstractGlobalMongoRepository;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.SecurityEventFields;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.regex.Pattern;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.regex.Pattern;
 
 @Repository
 public class SecurityEventMongoRepository extends AbstractGlobalMongoRepository<SecurityEvent> {
@@ -22,14 +23,14 @@ public class SecurityEventMongoRepository extends AbstractGlobalMongoRepository<
     }
 
     public List<SecurityEvent> findSecurityEvents(
-        String type,
-        String severity,
-        String source,
-        String search,
-        Date startDate,
-        Date endDate,
-        int skip,
-        int limit
+            String type,
+            String severity,
+            String source,
+            String search,
+            Date startDate,
+            Date endDate,
+            int skip,
+            int limit
     ) {
         Query query = buildEventsQuery(type, severity, source, search, startDate, endDate);
         query.with(Sort.by(Sort.Direction.DESC, SecurityEventFields.TIMESTAMP));
@@ -38,12 +39,12 @@ public class SecurityEventMongoRepository extends AbstractGlobalMongoRepository<
     }
 
     private Query buildEventsQuery(
-        String type,
-        String severity,
-        String source,
-        String search,
-        Date startDate,
-        Date endDate
+            String type,
+            String severity,
+            String source,
+            String search,
+            Date startDate,
+            Date endDate
     ) {
         Query query = new Query();
         List<Criteria> criteriaList = new ArrayList<>();
@@ -77,20 +78,20 @@ public class SecurityEventMongoRepository extends AbstractGlobalMongoRepository<
     }
 
     public long countSecurityEvents(
-        String type,
-        String severity,
-        String source,
-        String search,
-        Date startDate,
-        Date endDate
+            String type,
+            String severity,
+            String source,
+            String search,
+            Date startDate,
+            Date endDate
     ) {
         return count(buildEventsQuery(type, severity, source, search, startDate, endDate));
     }
 
     public long countBySeveritySince(String severity, Date startDate) {
         return count(Query.query(new Criteria().andOperator(
-            Criteria.where(SecurityEventFields.SEVERITY).is(severity),
-            Criteria.where(SecurityEventFields.TIMESTAMP).gte(startDate)
+                Criteria.where(SecurityEventFields.SEVERITY).is(severity),
+                Criteria.where(SecurityEventFields.TIMESTAMP).gte(startDate)
         )));
     }
 

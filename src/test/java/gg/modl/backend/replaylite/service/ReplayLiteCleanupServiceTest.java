@@ -1,27 +1,23 @@
 package gg.modl.backend.replaylite.service;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.infrastructure.scheduling.SchedulerLeaseService;
 import gg.modl.backend.replaylite.data.ReplayLiteDocument;
 import gg.modl.backend.replaylite.repository.ReplayLiteMongoRepository;
 import gg.modl.backend.replaylite.storage.ReplayLiteStorageService;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ReplayLiteCleanupServiceTest {
@@ -46,11 +42,11 @@ class ReplayLiteCleanupServiceTest {
     void setUp() {
         when(schedulerLeaseService.tryAcquire(anyString(), any())).thenReturn(true);
         cleanupService = new ReplayLiteCleanupService(
-            repository,
-            storageService,
-            replayLiteService,
-            schedulerLeaseService,
-            Clock.fixed(NOW, ZoneOffset.UTC)
+                repository,
+                storageService,
+                replayLiteService,
+                schedulerLeaseService,
+                Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
 

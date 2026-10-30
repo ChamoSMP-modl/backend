@@ -6,12 +6,6 @@ import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.StorageFileDocumentFields;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.data.StorageFileDocument;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
@@ -19,6 +13,8 @@ import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.*;
 
 @Repository
 public class StorageFileMongoRepository extends AbstractServerMongoRepository<StorageFileDocument> {
@@ -34,8 +30,8 @@ public class StorageFileMongoRepository extends AbstractServerMongoRepository<St
 
     public List<StorageFileDocument> findByKeyPrefix(Server server, String prefix, int limit) {
         Query query = Query.query(Criteria.where(StorageFileDocumentFields.KEY).regex("^" + escapeRegex(prefix)))
-            .with(Sort.by(Sort.Direction.DESC, StorageFileDocumentFields.CREATED_AT))
-            .limit(limit);
+                .with(Sort.by(Sort.Direction.DESC, StorageFileDocumentFields.CREATED_AT))
+                .limit(limit);
         return find(server, query);
     }
 
@@ -74,17 +70,17 @@ public class StorageFileMongoRepository extends AbstractServerMongoRepository<St
         }
 
         Criteria[] prefixCriteria = prefixes.stream()
-            .map(prefix -> Criteria.where(StorageFileDocumentFields.KEY).regex("^" + escapeRegex(prefix)))
-            .toArray(Criteria[]::new);
+                .map(prefix -> Criteria.where(StorageFileDocumentFields.KEY).regex("^" + escapeRegex(prefix)))
+                .toArray(Criteria[]::new);
 
         Criteria match = new Criteria().andOperator(
-            new Criteria().orOperator(prefixCriteria),
-            Criteria.where(StorageFileDocumentFields.CREATED_AT).gte(createdAfter)
+                new Criteria().orOperator(prefixCriteria),
+                Criteria.where(StorageFileDocumentFields.CREATED_AT).gte(createdAfter)
         );
 
         Aggregation aggregation = Aggregation.newAggregation(
-            Aggregation.match(match),
-            Aggregation.group().sum(StorageFileDocumentFields.SIZE).as(ALIAS_TOTAL_SIZE)
+                Aggregation.match(match),
+                Aggregation.group().sum(StorageFileDocumentFields.SIZE).as(ALIAS_TOTAL_SIZE)
         );
 
         Document result = aggregate(server, aggregation, Document.class).getUniqueMappedResult();
@@ -96,7 +92,7 @@ public class StorageFileMongoRepository extends AbstractServerMongoRepository<St
 
     public Map<String, Long> aggregateStorageByCategory(Server server) {
         Aggregation aggregation = Aggregation.newAggregation(
-            Aggregation.group(StorageFileDocumentFields.CATEGORY).sum(StorageFileDocumentFields.SIZE).as(ALIAS_TOTAL_SIZE)
+                Aggregation.group(StorageFileDocumentFields.CATEGORY).sum(StorageFileDocumentFields.SIZE).as(ALIAS_TOTAL_SIZE)
         );
 
         AggregationResults<Document> results = aggregate(server, aggregation, Document.class);
@@ -120,7 +116,7 @@ public class StorageFileMongoRepository extends AbstractServerMongoRepository<St
 
     public long sumTotalSize(Server server) {
         Aggregation aggregation = Aggregation.newAggregation(
-            Aggregation.group().sum(StorageFileDocumentFields.SIZE).as(ALIAS_TOTAL_SIZE)
+                Aggregation.group().sum(StorageFileDocumentFields.SIZE).as(ALIAS_TOTAL_SIZE)
         );
 
         AggregationResults<Document> results = aggregate(server, aggregation, Document.class);

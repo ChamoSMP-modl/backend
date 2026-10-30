@@ -3,10 +3,6 @@ package gg.modl.backend.database.mongo;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import gg.modl.backend.server.data.Server;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BiFunction;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -16,13 +12,18 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.BiFunction;
+
 public abstract class AbstractServerMongoRepository<T> extends AbstractTenantMongoRepository<T> {
     private final TenantMongoAccess tenantMongoAccess;
 
     protected AbstractServerMongoRepository(
-        Class<T> entityType,
-        String collectionName,
-        TenantMongoAccess tenantMongoAccess
+            Class<T> entityType,
+            String collectionName,
+            TenantMongoAccess tenantMongoAccess
     ) {
         super(entityType, collectionName);
         this.tenantMongoAccess = tenantMongoAccess;
@@ -97,10 +98,10 @@ public abstract class AbstractServerMongoRepository<T> extends AbstractTenantMon
     }
 
     protected void bulkUpdateByIds(
-        Server server,
-        List<String> ids,
-        BiFunction<String, Integer, Criteria> criteriaFactory,
-        BiFunction<String, Integer, Update> updateFactory
+            Server server,
+            List<String> ids,
+            BiFunction<String, Integer, Criteria> criteriaFactory,
+            BiFunction<String, Integer, Update> updateFactory
     ) {
         if (ids.isEmpty()) {
             return;

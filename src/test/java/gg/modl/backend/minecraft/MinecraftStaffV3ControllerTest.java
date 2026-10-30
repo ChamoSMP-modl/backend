@@ -1,29 +1,10 @@
 package gg.modl.backend.minecraft;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.same;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.infrastructure.exception.GlobalExceptionHandler;
 import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
-import gg.modl.backend.infrastructure.proto.ProtoBinaryHttpMessageConverter;
-import gg.modl.backend.infrastructure.proto.ProtoJsonHttpMessageConverter;
-import gg.modl.backend.infrastructure.proto.ProtoValidationAdvice;
-import gg.modl.backend.infrastructure.proto.ProtobufErrorResponseWriter;
-import gg.modl.backend.infrastructure.proto.ProtobufMediaTypes;
+import gg.modl.backend.infrastructure.proto.*;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RESTMappingV3;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
@@ -35,20 +16,23 @@ import gg.modl.backend.staff.controller.MinecraftStaffV3Controller;
 import gg.modl.backend.staff.dto.response.MinecraftStaffPermissionsResponse;
 import gg.modl.backend.staff.dto.response.MinecraftStaffSummaryResponse;
 import gg.modl.backend.staff.service.MinecraftStaffService;
-import gg.modl.proto.modl.v1.ApiError;
-import gg.modl.proto.modl.v1.MinecraftStaffOperationResponse;
-import gg.modl.proto.modl.v1.StaffDisconnectRequest;
-import gg.modl.proto.modl.v1.StaffListResponse;
-import gg.modl.proto.modl.v1.StaffPermissionsListResponse;
-import gg.modl.proto.modl.v1.UpdateStaffRoleRequest;
-import java.util.Date;
-import java.util.List;
+import gg.modl.proto.modl.v1.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class MinecraftStaffV3ControllerTest {
     private MinecraftStaffService staffService;
@@ -62,61 +46,61 @@ class MinecraftStaffV3ControllerTest {
         staffService = mock(MinecraftStaffService.class);
         roleAuthorization = mock(RoleAuthorization.class);
         when(roleAuthorization.minecraftPerformer(any(), any()))
-            .thenReturn(RoleAuthorization.PerformerAuthority.unidentified());
-        server = new Server("Demo", "demo", "server_demo", "admin@example.com", true, ServerPlan.FREE);
+                .thenReturn(RoleAuthorization.PerformerAuthority.unidentified());
+        server = new Server("Demo", "demo", "server_demo", "admin@example.com", true, ServerPlan.PREMIUM);
 
         v3MockMvc = MockMvcBuilders.standaloneSetup(new MinecraftStaffV3Controller(staffService, roleAuthorization))
-            .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()), new ProtoValidationAdvice())
-            .setMessageConverters(new ProtoBinaryHttpMessageConverter(), new ProtoJsonHttpMessageConverter())
-            .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
-            .build();
+                .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()), new ProtoValidationAdvice())
+                .setMessageConverters(new ProtoBinaryHttpMessageConverter(), new ProtoJsonHttpMessageConverter())
+                .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
+                .build();
 
         v1MockMvc = MockMvcBuilders.standaloneSetup(new MinecraftStaffController(staffService, roleAuthorization))
-            .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()))
-            .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
-            .build();
+                .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()))
+                .defaultRequest(get("/").requestAttr(RequestAttribute.SERVER, server))
+                .build();
     }
 
     @Test
     void v3StaffListReturnsBinaryResponseMappedFromStaffService() throws Exception {
         when(staffService.getMinecraftStaffSummary(server)).thenReturn(List.of(
-            new MinecraftStaffSummaryResponse(
-                "staff-1",
-                "Moderator",
-                "mod@example.com",
-                "Admin",
-                "11111111-2222-3333-4444-555555555555",
-                "ModMc",
-                List.of("modl.staff.view", "modl.staff.edit"),
-                new Date(1_700_000_000_000L),
-                123_456L,
-                "survival",
-                7,
-                new Date(1_600_000_000_000L),
-                new Date(1_700_100_000_000L)
-            ),
-            new MinecraftStaffSummaryResponse(
-                "staff-2",
-                "Helper",
-                "helper@example.com",
-                "Helper",
-                "22222222-3333-4444-5555-666666666666",
-                "HelperMc",
-                null,
-                null,
-                0L,
-                null,
-                0,
-                null,
-                null
-            )
+                new MinecraftStaffSummaryResponse(
+                        "staff-1",
+                        "Moderator",
+                        "mod@example.com",
+                        "Admin",
+                        "11111111-2222-3333-4444-555555555555",
+                        "ModMc",
+                        List.of("modl.staff.view", "modl.staff.edit"),
+                        new Date(1_700_000_000_000L),
+                        123_456L,
+                        "survival",
+                        7,
+                        new Date(1_600_000_000_000L),
+                        new Date(1_700_100_000_000L)
+                ),
+                new MinecraftStaffSummaryResponse(
+                        "staff-2",
+                        "Helper",
+                        "helper@example.com",
+                        "Helper",
+                        "22222222-3333-4444-5555-666666666666",
+                        "HelperMc",
+                        null,
+                        null,
+                        0L,
+                        null,
+                        0,
+                        null,
+                        null
+                )
         ));
 
         MvcResult result = v3MockMvc.perform(get(RESTMappingV3.PREFIX_MINECRAFT + "/staff")
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         StaffListResponse response = StaffListResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -143,22 +127,22 @@ class MinecraftStaffV3ControllerTest {
     @Test
     void v3StaffPermissionsReturnsBinaryResponseMappedFromStaffService() throws Exception {
         when(staffService.getMinecraftStaffPermissions(server)).thenReturn(List.of(
-            new MinecraftStaffPermissionsResponse(
-                "11111111-2222-3333-4444-555555555555",
-                "ModMc",
-                "Moderator",
-                "staff-1",
-                "Admin",
-                List.of("first", "second"),
-                "mod@example.com"
-            )
+                new MinecraftStaffPermissionsResponse(
+                        "11111111-2222-3333-4444-555555555555",
+                        "ModMc",
+                        "Moderator",
+                        "staff-1",
+                        "Admin",
+                        List.of("first", "second"),
+                        "mod@example.com"
+                )
         ));
 
         MvcResult result = v3MockMvc.perform(get(RESTMappingV3.PREFIX_MINECRAFT + "/staff/permissions")
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         StaffPermissionsListResponse response = StaffPermissionsListResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -177,16 +161,16 @@ class MinecraftStaffV3ControllerTest {
     void v3UpdateStaffRoleCallsServiceAndReturnsBinarySuccess() throws Exception {
         when(staffService.updateMinecraftStaffRole(eq(server), eq("staff-1"), eq("Admin"), any())).thenReturn(true);
         UpdateStaffRoleRequest request = UpdateStaffRoleRequest.newBuilder()
-            .setRole("Admin")
-            .build();
+                .setRole("Admin")
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/staff/staff-1/role")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftStaffOperationResponse response = MinecraftStaffOperationResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -199,16 +183,16 @@ class MinecraftStaffV3ControllerTest {
     void v3UpdateStaffRoleMissingStaffReturnsBinaryNotFound() throws Exception {
         when(staffService.updateMinecraftStaffRole(eq(server), eq("missing-staff"), eq("Admin"), any())).thenReturn(false);
         UpdateStaffRoleRequest request = UpdateStaffRoleRequest.newBuilder()
-            .setRole("Admin")
-            .build();
+                .setRole("Admin")
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/staff/missing-staff/role")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isNotFound())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftStaffOperationResponse response = MinecraftStaffOperationResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(404, response.getStatus());
@@ -220,18 +204,18 @@ class MinecraftStaffV3ControllerTest {
     @Test
     void v3UpdateStaffRoleUnknownRoleReturnsBinaryApiError() throws Exception {
         when(staffService.updateMinecraftStaffRole(eq(server), eq("staff-1"), eq("MissingRole"), any()))
-            .thenThrow(new ResourceNotFoundException("Role not found"));
+                .thenThrow(new ResourceNotFoundException("Role not found"));
         UpdateStaffRoleRequest request = UpdateStaffRoleRequest.newBuilder()
-            .setRole("MissingRole")
-            .build();
+                .setRole("MissingRole")
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/staff/staff-1/role")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isNotFound())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(404, error.getStatusCode());
@@ -243,22 +227,22 @@ class MinecraftStaffV3ControllerTest {
     @Test
     void v3UpdateStaffRoleWhitespaceRoleReturnsBinaryApiError() throws Exception {
         UpdateStaffRoleRequest request = UpdateStaffRoleRequest.newBuilder()
-            .setRole("   ")
-            .build();
+                .setRole("   ")
+                .build();
 
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/staff/staff-1/role")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isBadRequest())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(400, error.getStatusCode());
         assertEquals("INVALID_ARGUMENT", error.getCode());
         assertTrue(error.getFieldViolationsList().stream()
-            .anyMatch(violation -> violation.getField().contains("role")));
+                .anyMatch(violation -> violation.getField().contains("role")));
     }
 
     @Test
@@ -266,17 +250,17 @@ class MinecraftStaffV3ControllerTest {
         when(staffService.markStaffDisconnected(server, "11111111-2222-3333-4444-555555555555")).thenReturn(true);
 
         StaffDisconnectRequest request = StaffDisconnectRequest.newBuilder()
-            .setMinecraftUuid("11111111-2222-3333-4444-555555555555")
-            .setSessionDurationMs(123_456L)
-            .build();
+                .setMinecraftUuid("11111111-2222-3333-4444-555555555555")
+                .setSessionDurationMs(123_456L)
+                .build();
 
         MvcResult result = v3MockMvc.perform(post(RESTMappingV3.PREFIX_MINECRAFT + "/staff/disconnect")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftStaffOperationResponse response = MinecraftStaffOperationResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(200, response.getStatus());
@@ -290,17 +274,17 @@ class MinecraftStaffV3ControllerTest {
         when(staffService.markStaffDisconnected(server, "11111111-2222-3333-4444-555555555555")).thenReturn(false);
 
         StaffDisconnectRequest request = StaffDisconnectRequest.newBuilder()
-            .setMinecraftUuid("11111111-2222-3333-4444-555555555555")
-            .setSessionDurationMs(123_456L)
-            .build();
+                .setMinecraftUuid("11111111-2222-3333-4444-555555555555")
+                .setSessionDurationMs(123_456L)
+                .build();
 
         MvcResult result = v3MockMvc.perform(post(RESTMappingV3.PREFIX_MINECRAFT + "/staff/disconnect")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isNotFound())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         MinecraftStaffOperationResponse response = MinecraftStaffOperationResponse.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(404, response.getStatus());
@@ -311,36 +295,36 @@ class MinecraftStaffV3ControllerTest {
     @Test
     void v3StaffDisconnectValidationRejectsInvalidUuidAndNegativeSessionDuration() throws Exception {
         StaffDisconnectRequest request = StaffDisconnectRequest.newBuilder()
-            .setMinecraftUuid("not-a-uuid")
-            .setSessionDurationMs(-1L)
-            .build();
+                .setMinecraftUuid("not-a-uuid")
+                .setSessionDurationMs(-1L)
+                .build();
 
         MvcResult result = v3MockMvc.perform(post(RESTMappingV3.PREFIX_MINECRAFT + "/staff/disconnect")
-                .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content(request.toByteArray()))
-            .andExpect(status().isBadRequest())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content(request.toByteArray()))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(400, error.getStatusCode());
         assertEquals("INVALID_ARGUMENT", error.getCode());
         assertTrue(error.getFieldViolationsList().stream()
-            .anyMatch(violation -> violation.getField().contains("minecraft_uuid")));
+                .anyMatch(violation -> violation.getField().contains("minecraft_uuid")));
         assertTrue(error.getFieldViolationsList().stream()
-            .anyMatch(violation -> violation.getField().contains("session_duration_ms")));
+                .anyMatch(violation -> violation.getField().contains("session_duration_ms")));
     }
 
     @Test
     void v3UpdateStaffRoleRejectsJsonContentTypeWithBinaryApiError() throws Exception {
         MvcResult result = v3MockMvc.perform(patch(RESTMappingV3.PREFIX_MINECRAFT + "/staff/staff-1/role")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
-                .content("{\"role\":\"Admin\"}"))
-            .andExpect(status().isUnsupportedMediaType())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(ProtobufMediaTypes.APPLICATION_X_PROTOBUF)
+                        .content("{\"role\":\"Admin\"}"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(415, error.getStatusCode());
@@ -350,10 +334,10 @@ class MinecraftStaffV3ControllerTest {
     @Test
     void v3StaffListRejectsJsonAcceptWithBinaryApiError() throws Exception {
         MvcResult result = v3MockMvc.perform(get(RESTMappingV3.PREFIX_MINECRAFT + "/staff")
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isNotAcceptable())
-            .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
-            .andReturn();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(content().contentTypeCompatibleWith(ProtobufMediaTypes.APPLICATION_X_PROTOBUF))
+                .andReturn();
 
         ApiError error = ApiError.parseFrom(result.getResponse().getContentAsByteArray());
         assertEquals(406, error.getStatusCode());
@@ -365,14 +349,14 @@ class MinecraftStaffV3ControllerTest {
         when(staffService.updateMinecraftStaffRole(eq(server), eq("staff-1"), eq("Admin"), any())).thenReturn(true);
 
         MvcResult result = v1MockMvc.perform(patch(RESTMappingV1.MINECRAFT_STAFF + "/staff-1/role")
-                .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("""
-                    {"role":"Admin"}
-                    """))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andReturn();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"role":"Admin"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn();
 
         JsonNode json = new ObjectMapper().readTree(result.getResponse().getContentAsByteArray());
         assertEquals(200, json.get("status").asInt());
@@ -384,28 +368,28 @@ class MinecraftStaffV3ControllerTest {
     @Test
     void v1StaffListStillReturnsJsonEnvelope() throws Exception {
         when(staffService.getMinecraftStaffSummary(server)).thenReturn(List.of(
-            new MinecraftStaffSummaryResponse(
-                "staff-1",
-                "Moderator",
-                "mod@example.com",
-                "Admin",
-                "11111111-2222-3333-4444-555555555555",
-                "ModMc",
-                List.of("modl.staff.view"),
-                new Date(1_700_000_000_000L),
-                123_456L,
-                "survival",
-                7,
-                new Date(1_600_000_000_000L),
-                new Date(1_700_100_000_000L)
-            )
+                new MinecraftStaffSummaryResponse(
+                        "staff-1",
+                        "Moderator",
+                        "mod@example.com",
+                        "Admin",
+                        "11111111-2222-3333-4444-555555555555",
+                        "ModMc",
+                        List.of("modl.staff.view"),
+                        new Date(1_700_000_000_000L),
+                        123_456L,
+                        "survival",
+                        7,
+                        new Date(1_600_000_000_000L),
+                        new Date(1_700_100_000_000L)
+                )
         ));
 
         MvcResult result = v1MockMvc.perform(get(RESTMappingV1.MINECRAFT_STAFF)
-                .accept(MediaType.APPLICATION_JSON))
-            .andExpect(status().isOk())
-            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-            .andReturn();
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andReturn();
 
         JsonNode json = new ObjectMapper().readTree(result.getResponse().getContentAsByteArray());
         assertEquals(200, json.get("status").asInt());

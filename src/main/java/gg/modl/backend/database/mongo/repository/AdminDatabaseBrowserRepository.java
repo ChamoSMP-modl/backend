@@ -2,12 +2,13 @@ package gg.modl.backend.database.mongo.repository;
 
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.server.data.Server;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.bson.Document;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -16,9 +17,9 @@ public class AdminDatabaseBrowserRepository {
 
     public List<Document> readTable(Server server, String collectionName, int limit, int skip) {
         Query query = new Query()
-            .with(Sort.by(Sort.Direction.DESC, "_id"))
-            .skip(skip)
-            .limit(limit);
+                .with(Sort.by(Sort.Direction.DESC, "_id"))
+                .skip(skip)
+                .limit(limit);
         return tenantMongoAccess.forServer(server).find(query, Document.class, collectionName);
     }
 

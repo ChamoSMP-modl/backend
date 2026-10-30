@@ -5,11 +5,6 @@ import gg.modl.backend.database.mongo.fields.StorageFileDocumentFields;
 import gg.modl.backend.database.mongo.repository.StorageFileMongoRepository;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.config.StorageExecutorConfig;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -17,6 +12,12 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -60,12 +61,12 @@ public class StorageSyncService {
 
             Query query = Query.query(Criteria.where(StorageFileDocumentFields.KEY).is(obj.key()));
             Update update = new Update()
-                .setOnInsert(StorageFileDocumentFields.KEY, obj.key())
-                .setOnInsert(StorageFileDocumentFields.FILE_NAME, fileName)
-                .set(StorageFileDocumentFields.SIZE, obj.size())
-                .setOnInsert(StorageFileDocumentFields.CONTENT_TYPE, "application/octet-stream")
-                .setOnInsert(StorageFileDocumentFields.CATEGORY, category)
-                .setOnInsert(StorageFileDocumentFields.CREATED_AT, Date.from(obj.lastModified()));
+                    .setOnInsert(StorageFileDocumentFields.KEY, obj.key())
+                    .setOnInsert(StorageFileDocumentFields.FILE_NAME, fileName)
+                    .set(StorageFileDocumentFields.SIZE, obj.size())
+                    .setOnInsert(StorageFileDocumentFields.CONTENT_TYPE, "application/octet-stream")
+                    .setOnInsert(StorageFileDocumentFields.CATEGORY, category)
+                    .setOnInsert(StorageFileDocumentFields.CREATED_AT, Date.from(obj.lastModified()));
 
             UpdateResult result = storageFileRepository.upsert(server, query, update);
             if (result.getUpsertedId() != null) {

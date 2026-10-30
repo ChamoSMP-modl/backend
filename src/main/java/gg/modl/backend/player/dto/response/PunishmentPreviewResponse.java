@@ -32,10 +32,10 @@ public class PunishmentPreviewResponse implements PunishmentPreviewView {
 
     public static PunishmentPreviewResponse error(String message) {
         return PunishmentPreviewResponse.builder()
-            .status(400)
-            .success(false)
-            .message(message)
-            .build();
+                .status(400)
+                .success(false)
+                .message(message)
+                .build();
     }
 
     @Data

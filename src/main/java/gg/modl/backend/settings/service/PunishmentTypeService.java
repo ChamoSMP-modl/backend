@@ -10,27 +10,27 @@ import gg.modl.backend.settings.data.DefaultPunishmentTypes;
 import gg.modl.backend.settings.data.PunishmentCategory;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.data.Settings;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class PunishmentTypeService {
+    private static final String SETTINGS_TYPE_PUNISHMENT_TYPES = "punishmentTypes";
     private final SettingsRepositoryAccess settingsRepositoryAccess;
     private final ObjectMapper objectMapper;
     private final ServerTimestampService serverTimestampService;
-    private static final String SETTINGS_TYPE_PUNISHMENT_TYPES = "punishmentTypes";
-
     private final Cache<String, List<PunishmentType>> typesCache = Caffeine.newBuilder()
-        .expireAfterWrite(Duration.ofSeconds(45))
-        .maximumSize(500)
-        .build();
+            .expireAfterWrite(Duration.ofSeconds(45))
+            .maximumSize(500)
+            .build();
 
     public List<PunishmentType> getPunishmentTypes(@NotNull Server server) {
         return typesCache.get(server.getId(), id -> loadOrInitializeTypes(server));
@@ -44,9 +44,10 @@ public class PunishmentTypeService {
 
     private SettingsCodec<List<PunishmentType>> codec(@NotNull Server server) {
         return SettingsCodec.of(
-            objectMapper,
-            new TypeReference<List<PunishmentType>>() {},
-            () -> persistPunishmentTypes(server, DefaultPunishmentTypes.getAll())
+                objectMapper,
+                new TypeReference<List<PunishmentType>>() {
+                },
+                () -> persistPunishmentTypes(server, DefaultPunishmentTypes.getAll())
         );
     }
 
@@ -88,20 +89,20 @@ public class PunishmentTypeService {
                     types.set(i, updatedType);
                 } else {
                     PunishmentType merged = existing.toBuilder()
-                        .staffDescription(updatedType.getStaffDescription())
-                        .playerDescription(updatedType.getPlayerDescription())
-                        .appealable(updatedType.getAppealable())
-                        .appealForm(updatedType.getAppealForm())
-                        .durations(updatedType.getDurations())
-                        .points(updatedType.getPoints())
-                        .singleSeverityPunishment(updatedType.getSingleSeverityPunishment())
-                        .singleSeverityDurations(updatedType.getSingleSeverityDurations())
-                        .singleSeverityPoints(updatedType.getSingleSeverityPoints())
-                        .canBeAltBlocking(updatedType.getCanBeAltBlocking())
-                        .canBeStatWiping(updatedType.getCanBeStatWiping())
-                        .permanentUntilSkinChange(updatedType.getPermanentUntilSkinChange())
-                        .permanentUntilUsernameChange(updatedType.getPermanentUntilUsernameChange())
-                        .build();
+                            .staffDescription(updatedType.getStaffDescription())
+                            .playerDescription(updatedType.getPlayerDescription())
+                            .appealable(updatedType.getAppealable())
+                            .appealForm(updatedType.getAppealForm())
+                            .durations(updatedType.getDurations())
+                            .points(updatedType.getPoints())
+                            .singleSeverityPunishment(updatedType.getSingleSeverityPunishment())
+                            .singleSeverityDurations(updatedType.getSingleSeverityDurations())
+                            .singleSeverityPoints(updatedType.getSingleSeverityPoints())
+                            .canBeAltBlocking(updatedType.getCanBeAltBlocking())
+                            .canBeStatWiping(updatedType.getCanBeStatWiping())
+                            .permanentUntilSkinChange(updatedType.getPermanentUntilSkinChange())
+                            .permanentUntilUsernameChange(updatedType.getPermanentUntilUsernameChange())
+                            .build();
                     types.set(i, merged);
                     updatedType = merged;
                 }
@@ -120,8 +121,8 @@ public class PunishmentTypeService {
 
         List<PunishmentType> types = getPunishmentTypes(server);
         List<PunishmentType> filtered = types.stream()
-            .filter(pt -> !Objects.equals(pt.getOrdinal(), ordinal))
-            .toList();
+                .filter(pt -> !Objects.equals(pt.getOrdinal(), ordinal))
+                .toList();
 
         if (filtered.size() == types.size()) {
             return false;
@@ -135,18 +136,18 @@ public class PunishmentTypeService {
         List<PunishmentType> types = new ArrayList<>(getPunishmentTypes(server));
 
         int maxOrdinal = types.stream()
-            .map(PunishmentType::getOrdinal)
-            .filter(o -> o != null)
-            .mapToInt(Integer::intValue)
-            .max()
-            .orElse(5);
+                .map(PunishmentType::getOrdinal)
+                .filter(o -> o != null)
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(5);
 
         int maxId = types.stream()
-            .map(PunishmentType::getId)
-            .filter(Objects::nonNull)
-            .mapToInt(Integer::intValue)
-            .max()
-            .orElse(5);
+                .map(PunishmentType::getId)
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .max()
+                .orElse(5);
 
         newType.setOrdinal(maxOrdinal + 1);
         newType.setId(maxId + 1);
@@ -159,17 +160,17 @@ public class PunishmentTypeService {
     }
 
     public long calculateDurationMillis(
-        @NotNull Server server,
-        int ordinal,
-        String severity,
-        String offenseLevel
+            @NotNull Server server,
+            int ordinal,
+            String severity,
+            String offenseLevel
     ) {
         return getPunishmentTypeByOrdinal(server, ordinal)
-            .map(type -> type.getDurationMillis(
-                severity != null ? severity : "regular",
-                offenseLevel != null ? offenseLevel : "first"
-            ))
-            .orElse(0L);
+                .map(type -> type.getDurationMillis(
+                        severity != null ? severity : "regular",
+                        offenseLevel != null ? offenseLevel : "first"
+                ))
+                .orElse(0L);
     }
 
     public Optional<PunishmentType> getPunishmentTypeByOrdinal(@NotNull Server server, int ordinal) {
@@ -178,19 +179,19 @@ public class PunishmentTypeService {
 
     public String getPunishmentTypeName(@NotNull Server server, int ordinal) {
         return getPunishmentTypeByOrdinal(server, ordinal)
-            .map(PunishmentType::getName)
-            .orElse("Unknown");
+                .map(PunishmentType::getName)
+                .orElse("Unknown");
     }
 
     public boolean isAppealable(@NotNull Server server, int ordinal) {
         return getPunishmentTypeByOrdinal(server, ordinal)
-            .map(PunishmentType::isAppealable)
-            .orElse(false);
+                .map(PunishmentType::isAppealable)
+                .orElse(false);
     }
 
     public int getPointsForPunishment(@NotNull Server server, int ordinal, String severity) {
         return getPunishmentTypeByOrdinal(server, ordinal)
-            .map(type -> type.getPointsForSeverity(severity != null ? severity : "regular"))
-            .orElse(0);
+                .map(type -> type.getPointsForSeverity(severity != null ? severity : "regular"))
+                .orElse(0);
     }
 }

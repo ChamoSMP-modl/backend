@@ -3,12 +3,9 @@ package gg.modl.backend.audit.service;
 import gg.modl.backend.audit.dto.response.ActivePunishmentResponse;
 import gg.modl.backend.player.data.punishment.Punishment;
 import gg.modl.backend.player.data.punishment.PunishmentModification;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import org.bson.Document;
+
+import java.util.*;
 
 final class PunishmentDocumentMapper {
     private PunishmentDocumentMapper() {
@@ -23,11 +20,11 @@ final class PunishmentDocumentMapper {
         punishment.setId(reconstructedId);
         punishment.setTypeOrdinal(doc.getInteger(AuditProjectionKeys.TYPE_ORDINAL, 0));
         punishment.setIssuerName(
-            doc.getString(AuditProjectionKeys.ISSUER_NAME) != null
-                ? doc.getString(AuditProjectionKeys.ISSUER_NAME) : "Unknown");
+                doc.getString(AuditProjectionKeys.ISSUER_NAME) != null
+                        ? doc.getString(AuditProjectionKeys.ISSUER_NAME) : "Unknown");
         punishment.setIssuerId(doc.getString(AuditProjectionKeys.ISSUER_ID));
         punishment.setIssued(
-            doc.getDate("issued") != null ? doc.getDate("issued") : new Date());
+                doc.getDate("issued") != null ? doc.getDate("issued") : new Date());
         punishment.setStarted(doc.getDate("started"));
 
         Document data = doc.get(AuditProjectionKeys.DATA, Document.class);
@@ -57,15 +54,15 @@ final class PunishmentDocumentMapper {
                 effectiveDuration = num.longValue();
             }
             mods.add(new PunishmentModification(
-                modDoc.getString("id"),
-                modDoc.getString("type"),
-                modDoc.getDate("date"),
-                modDoc.getString(AuditProjectionKeys.ISSUER_NAME),
-                modDoc.getString(AuditProjectionKeys.ISSUER_ID),
-                modDoc.getString(AuditProjectionKeys.REASON),
-                effectiveDuration,
-                modDoc.getString("appealTicketId"),
-                null
+                    modDoc.getString("id"),
+                    modDoc.getString("type"),
+                    modDoc.getDate("date"),
+                    modDoc.getString(AuditProjectionKeys.ISSUER_NAME),
+                    modDoc.getString(AuditProjectionKeys.ISSUER_ID),
+                    modDoc.getString(AuditProjectionKeys.REASON),
+                    effectiveDuration,
+                    modDoc.getString("appealTicketId"),
+                    null
             ));
         }
         return mods;
@@ -80,10 +77,10 @@ final class PunishmentDocumentMapper {
         List<ActivePunishmentResponse.EvidenceItem> items = new ArrayList<>();
         for (Document evidenceDoc : evidenceDocs) {
             items.add(new ActivePunishmentResponse.EvidenceItem(
-                evidenceDoc.getString("text"),
-                evidenceDoc.getString("url"),
-                evidenceDoc.getString("type"),
-                evidenceDoc.getString("fileName")
+                    evidenceDoc.getString("text"),
+                    evidenceDoc.getString("url"),
+                    evidenceDoc.getString("type"),
+                    evidenceDoc.getString("fileName")
             ));
         }
         return items;

@@ -2,7 +2,6 @@ package gg.modl.backend.auth;
 
 import gg.modl.backend.auth.session.AuthSessionData;
 import gg.modl.backend.auth.session.SessionService;
-import gg.modl.backend.billing.service.BillingService;
 import gg.modl.backend.email.EmailAddressUtil;
 import gg.modl.backend.email.EmailHTMLTemplate;
 import gg.modl.backend.email.EmailService;
@@ -14,10 +13,11 @@ import gg.modl.backend.server.ServerService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.service.StaffProfileService;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +28,6 @@ public class EmailChangeService {
     private final StaffProfileService staffProfileService;
     private final ServerService serverService;
     private final WebAuthnService webAuthnService;
-    private final BillingService billingService;
     private final SessionService sessionService;
     private final EmailService emailService;
 
@@ -58,9 +57,6 @@ public class EmailChangeService {
         }
 
         revokeStalePasskeys(server, currentEmail);
-        if (isSuperAdmin) {
-            billingService.syncCustomerEmail(server, normalizedNewEmail);
-        }
 
         sessionService.invalidateAllSessionsForEmail(server, currentEmail);
         AuthSessionData newSession = sessionService.createSession(server, normalizedNewEmail, clientIp, userAgent);
@@ -78,10 +74,10 @@ public class EmailChangeService {
             throw new ValidationException("New email must be different from your current email.");
         }
         boolean collidesWithServerAdmin = server.getAdminEmail() != null
-            && normalizedNewEmail.equalsIgnoreCase(server.getAdminEmail());
+                && normalizedNewEmail.equalsIgnoreCase(server.getAdminEmail());
         if (collidesWithServerAdmin
-            || staffProfileService.isStaffEmailInUse(server, normalizedNewEmail, currentEmail)
-            || (isSuperAdmin && serverService.isAdminEmailInUse(normalizedNewEmail, server.getId()))) {
+                || staffProfileService.isStaffEmailInUse(server, normalizedNewEmail, currentEmail)
+                || (isSuperAdmin && serverService.isAdminEmailInUse(normalizedNewEmail, server.getId()))) {
             throw new ConflictException("Email address already in use");
         }
         return normalizedNewEmail;
@@ -98,7 +94,7 @@ public class EmailChangeService {
     private void notifyPreviousAddress(Server server, String previousEmail, String newEmail) {
         try {
             emailService.send(previousEmail,
-                EmailHTMLTemplate.EMAIL_CHANGED_NOTICE.build(server.getServerName(), EmailAddressUtil.mask(newEmail)));
+                    EmailHTMLTemplate.EMAIL_CHANGED_NOTICE.build(server.getServerName(), EmailAddressUtil.mask(newEmail)));
         } catch (Exception e) {
             log.warn("Failed to send email-change notice to the previous address on server {}", server.getId(), e);
         }

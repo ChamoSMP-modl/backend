@@ -5,39 +5,39 @@ import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
 import gg.modl.backend.infrastructure.rest.RequestHeader;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
+import gg.modl.backend.infrastructure.util.HostExtractionUtil;
 import gg.modl.backend.server.ServerService;
 import gg.modl.backend.server.data.Server;
-import gg.modl.backend.infrastructure.util.HostExtractionUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+import java.util.Set;
+
 public class ServerHeaderFilter extends OncePerRequestFilter {
+    private static final Set<String> EXCLUDED_PATHS = Set.of(
+            RESTMappingV1.PUBLIC_REGISTRATION,
+            RESTMappingV1.PUBLIC_EVIDENCE_UPLOAD
+    );
     private final ServerService serverService;
     private final boolean developmentMode;
     private final String devServerDomain;
     private final OriginPolicy originPolicy;
-
-    private static final Set<String> EXCLUDED_PATHS = Set.of(
-        RESTMappingV1.PUBLIC_REGISTRATION,
-        RESTMappingV1.PUBLIC_EVIDENCE_UPLOAD
-    );
 
     public ServerHeaderFilter(ServerService serverService) {
         this(serverService, false, null, new OriginPolicy(Set.of(), Set.of(), false));
     }
 
     public ServerHeaderFilter(
-        ServerService serverService,
-        boolean developmentMode,
-        @Nullable String devServerDomain,
-        OriginPolicy originPolicy
+            ServerService serverService,
+            boolean developmentMode,
+            @Nullable String devServerDomain,
+            OriginPolicy originPolicy
     ) {
         this.serverService = serverService;
         this.developmentMode = developmentMode;
@@ -56,7 +56,7 @@ public class ServerHeaderFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain chain)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         String requestHost = resolveRequestHost(request);
         String legacyServerDomainHeader = HostExtractionUtil.normalizeServerDomain(request.getHeader(RequestHeader.SERVER_DOMAIN));
 
@@ -82,8 +82,8 @@ public class ServerHeaderFilter extends OncePerRequestFilter {
         }
 
         if (!devHostOverrideApplied
-            && requestHost != null && legacyServerDomainHeader != null
-            && !requestHost.equalsIgnoreCase(legacyServerDomainHeader)) {
+                && requestHost != null && legacyServerDomainHeader != null
+                && !requestHost.equalsIgnoreCase(legacyServerDomainHeader)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mismatched server domain headers");
             return;
         }
@@ -129,8 +129,8 @@ public class ServerHeaderFilter extends OncePerRequestFilter {
 
         int separatorIndex = forwardedHostHeader.indexOf(',');
         String firstForwardedHost = separatorIndex >= 0
-                                    ? forwardedHostHeader.substring(0, separatorIndex).trim()
-                                    : forwardedHostHeader.trim();
+                ? forwardedHostHeader.substring(0, separatorIndex).trim()
+                : forwardedHostHeader.trim();
         return HostExtractionUtil.normalizeServerDomain(firstForwardedHost);
     }
 

@@ -4,11 +4,12 @@ import gg.modl.backend.infrastructure.config.ModlCorsProperties;
 import gg.modl.backend.infrastructure.config.ModlProperties;
 import gg.modl.backend.infrastructure.util.HostExtractionUtil;
 import jakarta.annotation.PostConstruct;
-import java.util.HashSet;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Component;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor

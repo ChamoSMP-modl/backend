@@ -1,11 +1,12 @@
 package gg.modl.backend.infrastructure.util;
 
+import lombok.experimental.UtilityClass;
+import org.jetbrains.annotations.Nullable;
+
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.experimental.UtilityClass;
-import org.jetbrains.annotations.Nullable;
 
 @UtilityClass
 public class HostExtractionUtil {
@@ -37,8 +38,8 @@ public class HostExtractionUtil {
         }
 
         return Arrays.stream(values.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isBlank())
-            .collect(Collectors.toUnmodifiableSet());
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toUnmodifiableSet());
     }
 }

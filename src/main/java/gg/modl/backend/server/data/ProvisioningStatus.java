@@ -11,10 +11,9 @@ public enum ProvisioningStatus {
 
     private final String value;
 
-    ProvisioningStatus(String value) { this.value = value; }
-
-    @JsonValue
-    public String getValue() { return value; }
+    ProvisioningStatus(String value) {
+        this.value = value;
+    }
 
     @JsonCreator
     public static ProvisioningStatus fromValue(String value) {
@@ -22,5 +21,10 @@ public enum ProvisioningStatus {
             if (v.value.equalsIgnoreCase(value)) return v;
         }
         throw new IllegalArgumentException("Unknown ProvisioningStatus: " + value);
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }

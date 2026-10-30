@@ -7,12 +7,13 @@ import gg.modl.backend.admin.dto.response.AdminSecuritySummary;
 import gg.modl.backend.database.mongo.repository.SecurityEventMongoRepository;
 import gg.modl.backend.infrastructure.util.DateRangeUtil;
 import gg.modl.backend.infrastructure.util.PaginationHelper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -20,14 +21,14 @@ public class AdminSecurityService {
     private final SecurityEventMongoRepository securityEventRepository;
 
     public AdminSecurityEvents getSecurityEvents(
-        int page,
-        int limit,
-        String type,
-        String severity,
-        String source,
-        String search,
-        String startDate,
-        String endDate
+            int page,
+            int limit,
+            String type,
+            String severity,
+            String source,
+            String search,
+            String startDate,
+            String endDate
     ) {
         int pageNum = PaginationHelper.normalizePage(page);
         int limitNum = PaginationHelper.normalizeLimit(limit, 100);
@@ -39,8 +40,8 @@ public class AdminSecurityService {
         long total = securityEventRepository.countSecurityEvents(type, severity, source, search, start, end);
 
         return new AdminSecurityEvents(
-            events,
-            new AdminPagination(pageNum, limitNum, total, PaginationHelper.calculateTotalPages(total, limitNum)));
+                events,
+                new AdminPagination(pageNum, limitNum, total, PaginationHelper.calculateTotalPages(total, limitNum)));
     }
 
     public AdminSecuritySummary getSecuritySummary() {
@@ -53,8 +54,8 @@ public class AdminSecurityService {
         long totalEvents7d = securityEventRepository.countSince(last7d);
 
         return new AdminSecuritySummary(
-            new AdminSecuritySummary.Last24Hours(criticalEvents24h, highEvents24h, mediumEvents24h),
-            totalEvents7d,
-            new Date());
+                new AdminSecuritySummary.Last24Hours(criticalEvents24h, highEvents24h, mediumEvents24h),
+                totalEvents7d,
+                new Date());
     }
 }

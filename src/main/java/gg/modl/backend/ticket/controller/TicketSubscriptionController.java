@@ -1,36 +1,26 @@
 package gg.modl.backend.ticket.controller;
 
-import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
 import gg.modl.backend.infrastructure.authorization.RequiresPanelPermission;
+import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
 import gg.modl.backend.infrastructure.exception.UnauthorizedException;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
+import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
 import gg.modl.backend.realtime.publish.RealtimeEventPublisher;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.ticket.dto.response.SubscriptionUpdateResponse;
 import gg.modl.backend.ticket.dto.response.TicketSubscriptionResponse;
 import gg.modl.backend.ticket.service.TicketSubscriptionService;
-import gg.modl.backend.infrastructure.validation.RequestValidationLimits;
-import gg.modl.proto.modl.v1.DeleteTicketSubscriptionResponse;
-import gg.modl.proto.modl.v1.MarkSubscriptionUpdateReadResponse;
-import gg.modl.proto.modl.v1.MarkTicketSubscriptionReadResponse;
-import gg.modl.proto.modl.v1.PanelResource;
-import gg.modl.proto.modl.v1.SubscriptionUpdatesResponse;
-import gg.modl.proto.modl.v1.TicketSubscriptionsResponse;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(RESTMappingV1.PANEL_TICKET_SUBSCRIPTIONS)
@@ -55,8 +45,8 @@ public class TicketSubscriptionController {
 
     @DeleteMapping("/{ticketId}")
     public ResponseEntity<DeleteTicketSubscriptionResponse> unsubscribe(
-        @PathVariable String ticketId,
-        HttpServletRequest request
+            @PathVariable String ticketId,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         String staffEmail = sessionEmail(request);
@@ -73,8 +63,8 @@ public class TicketSubscriptionController {
 
     @GetMapping("/updates")
     public ResponseEntity<SubscriptionUpdatesResponse> getUpdates(
-        @RequestParam(defaultValue = "10") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
-        HttpServletRequest request
+            @RequestParam(defaultValue = "10") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         String staffEmail = sessionEmail(request);
@@ -88,8 +78,8 @@ public class TicketSubscriptionController {
 
     @PostMapping("/updates/{updateId}/read")
     public ResponseEntity<MarkSubscriptionUpdateReadResponse> markAsRead(
-        @PathVariable String updateId,
-        HttpServletRequest request
+            @PathVariable String updateId,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         String staffEmail = sessionEmail(request);
@@ -104,8 +94,8 @@ public class TicketSubscriptionController {
 
     @PostMapping("/tickets/{ticketId}/read")
     public ResponseEntity<MarkTicketSubscriptionReadResponse> markTicketAsRead(
-        @PathVariable String ticketId,
-        HttpServletRequest request
+            @PathVariable String ticketId,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         String staffEmail = sessionEmail(request);
@@ -120,8 +110,8 @@ public class TicketSubscriptionController {
 
     @GetMapping("/assigned-updates")
     public ResponseEntity<SubscriptionUpdatesResponse> getAssignedUpdates(
-        @RequestParam(defaultValue = "10") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
-        HttpServletRequest request
+            @RequestParam(defaultValue = "10") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         String staffEmail = sessionEmail(request);

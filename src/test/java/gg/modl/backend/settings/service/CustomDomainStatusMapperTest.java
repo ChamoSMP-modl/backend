@@ -1,13 +1,10 @@
 package gg.modl.backend.settings.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.cloudflare.external.CloudflareClient;
 import gg.modl.backend.server.data.CustomDomainStatus;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class CustomDomainStatusMapperTest {
     private final CustomDomainStatusMapper mapper = new CustomDomainStatusMapper();
@@ -25,7 +22,7 @@ class CustomDomainStatusMapperTest {
     @Test
     void resolveActiveHostnameMarksCnameConfigured() {
         CloudflareClient.CustomHostnameResult result = hostname("active",
-            new CloudflareClient.CustomHostnameResult.SslStatus("active", "http", "dv"));
+                new CloudflareClient.CustomHostnameResult.SslStatus("active", "http", "dv"));
 
         CustomDomainStatusMapper.Resolution resolution = mapper.resolve(result);
 
@@ -38,7 +35,7 @@ class CustomDomainStatusMapperTest {
     @Test
     void resolvePendingValidationMapsToPending() {
         CloudflareClient.CustomHostnameResult result = hostname("pending_validation",
-            new CloudflareClient.CustomHostnameResult.SslStatus("pending_validation", "http", "dv"));
+                new CloudflareClient.CustomHostnameResult.SslStatus("pending_validation", "http", "dv"));
 
         CustomDomainStatusMapper.Resolution resolution = mapper.resolve(result);
 

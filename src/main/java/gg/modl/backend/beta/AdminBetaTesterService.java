@@ -17,13 +17,14 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.server.data.SubscriptionStatus;
 import gg.modl.backend.server.service.ServerProvisioningService;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -59,8 +60,8 @@ public class AdminBetaTesterService {
 
     public BetaTesterDetails get(String id) {
         Server server = serverBetaTesterRepository.findById(id)
-            .filter(candidate -> candidate.getBetaTesterCreatedAt() != null)
-            .orElseThrow(() -> new BetaRequestException("Beta tester not found.", HttpStatus.NOT_FOUND));
+                .filter(candidate -> candidate.getBetaTesterCreatedAt() != null)
+                .orElseThrow(() -> new BetaRequestException("Beta tester not found.", HttpStatus.NOT_FOUND));
         return details(server);
     }
 
@@ -77,9 +78,9 @@ public class AdminBetaTesterService {
 
         String subdomain = subdomainValidator.normalize(creation.customDomain());
         registrationService.validateIdentity(normalizedEmail, trimmedName, subdomain)
-            .ifPresent(rejection -> {
-                throw new BetaRequestException(rejection.message(), rejection.status());
-            });
+                .ifPresent(rejection -> {
+                    throw new BetaRequestException(rejection.message(), rejection.status());
+                });
 
         Server saved = persistBetaServer(trimmedName, subdomain, normalizedEmail, actingAdminEmail);
         boolean tenantDatabaseExisted = provisioningService.tenantDatabaseExists(saved);
@@ -100,7 +101,7 @@ public class AdminBetaTesterService {
 
         Server reloaded = serverBetaTesterRepository.findById(saved.getId()).orElse(saved);
         betaAuditService.record(BetaAuditAction.CREATE, reloaded.getId(), actingAdminEmail,
-            "Created beta tester panel " + subdomain);
+                "Created beta tester panel " + subdomain);
         sendBetaReadyEmail(reloaded);
         return details(reloaded);
     }
@@ -109,7 +110,7 @@ public class AdminBetaTesterService {
         try {
             String panelLink = registrationService.buildPanelUrl(server);
             emailService.send(server.getAdminEmail(),
-                EmailHTMLTemplate.BETA_PANEL_READY.build(server.getServerName(), panelLink));
+                    EmailHTMLTemplate.BETA_PANEL_READY.build(server.getServerName(), panelLink));
         } catch (Exception e) {
             log.error("Failed to send beta ready email for {}", server.getCustomDomain(), e);
         }
@@ -118,7 +119,7 @@ public class AdminBetaTesterService {
     private Server persistBetaServer(String serverName, String subdomain, String adminEmail, String actingAdminEmail) {
         Date now = new Date();
         Server server = new Server(serverName, subdomain, serverService.generateDatabaseName(subdomain),
-            adminEmail, true, ServerPlan.PREMIUM);
+                adminEmail, true, ServerPlan.PREMIUM);
         server.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
         server.setProvisioningStatus(ProvisioningStatus.IN_PROGRESS);
         server.setBetaTester(true);
@@ -134,8 +135,8 @@ public class AdminBetaTesterService {
     public BetaTesterDetails revoke(String id, String actingAdminEmail) {
         requireActiveBetaTester(id);
 
-        Server updated = serverBetaTesterRepository.updateBetaState(id, ServerPlan.FREE, SubscriptionStatus.INACTIVE, false)
-            .orElseThrow(() -> new BetaRequestException("Failed to revoke beta tester.", HttpStatus.INTERNAL_SERVER_ERROR));
+        Server updated = serverBetaTesterRepository.updateBetaState(id, ServerPlan.PREMIUM, SubscriptionStatus.ACTIVE, false)
+                .orElseThrow(() -> new BetaRequestException("Failed to revoke beta tester.", HttpStatus.INTERNAL_SERVER_ERROR));
         authSessionRepository.deleteAllForServer(updated);
         serverService.evictAllServerCaches();
 
@@ -147,7 +148,7 @@ public class AdminBetaTesterService {
         Server server = requireActiveBetaTester(id);
         List<String> clearedCollections = betaResetService.reset(server);
         betaAuditService.record(BetaAuditAction.RESET, server.getId(), actingAdminEmail,
-            "Reset cleared " + clearedCollections.size() + " collections");
+                "Reset cleared " + clearedCollections.size() + " collections");
         return new BetaResetResponse(server.getId(), clearedCollections);
     }
 
@@ -155,7 +156,7 @@ public class AdminBetaTesterService {
         return betaResetService.resetAll().thenApply(results -> {
             for (ResetResult result : results) {
                 betaAuditService.record(BetaAuditAction.RESET_ALL, result.serverId(), actingAdminEmail,
-                    result.success() ? "Reset all succeeded" : "Reset all failed: " + result.message());
+                        result.success() ? "Reset all succeeded" : "Reset all failed: " + result.message());
             }
             return results;
         });
@@ -167,7 +168,7 @@ public class AdminBetaTesterService {
 
     private Server requireActiveBetaTester(String id) {
         Server server = serverBetaTesterRepository.findById(id)
-            .orElseThrow(() -> new BetaRequestException("Beta tester not found.", HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new BetaRequestException("Beta tester not found.", HttpStatus.NOT_FOUND));
         if (!Boolean.TRUE.equals(server.getBetaTester())) {
             throw new BetaRequestException("Beta tester not found.", HttpStatus.NOT_FOUND);
         }

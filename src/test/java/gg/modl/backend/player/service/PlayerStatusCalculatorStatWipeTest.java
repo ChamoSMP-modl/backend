@@ -1,22 +1,19 @@
 package gg.modl.backend.player.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-
 import gg.modl.backend.player.data.punishment.Punishment;
 import gg.modl.backend.player.data.punishment.PunishmentModification;
 import gg.modl.backend.settings.service.OffenderThresholdSettingsService;
 import gg.modl.backend.settings.service.PunishmentTypeService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 class PlayerStatusCalculatorStatWipeTest {
 
@@ -26,8 +23,8 @@ class PlayerStatusCalculatorStatWipeTest {
     void setUp() {
         // isPunishmentNaturallyExpired doesn't use these services
         calculator = new PlayerStatusCalculator(
-            mock(PunishmentTypeService.class),
-            mock(OffenderThresholdSettingsService.class)
+                mock(PunishmentTypeService.class),
+                mock(OffenderThresholdSettingsService.class)
         );
     }
 
@@ -43,9 +40,9 @@ class PlayerStatusCalculatorStatWipeTest {
         Map<String, Object> data = new HashMap<>();
         data.put("duration", durationMs);
         return new Punishment(
-            "test-id", typeOrdinal, "TestIssuer", null,
-            new Date(), started, modifications,
-            List.of(), List.of(), List.of(), data
+                "test-id", typeOrdinal, "TestIssuer", null,
+                new Date(), started, modifications,
+                List.of(), List.of(), List.of(), data
         );
     }
 
@@ -91,7 +88,7 @@ class PlayerStatusCalculatorStatWipeTest {
     void pardonedPunishmentReturnsFalse() {
         Date started = new Date(System.currentTimeMillis() - 7200_000L);
         PunishmentModification pardon = new PunishmentModification(
-            "mod-1", "MANUAL_PARDON", new Date(), "Staff", null, "", null, null, null
+                "mod-1", "MANUAL_PARDON", new Date(), "Staff", null, "", null, null, null
         );
         Punishment p = createPunishment(2, started, 3600_000L, List.of(pardon));
         assertFalse(calculator.isPunishmentNaturallyExpired(p));
@@ -101,7 +98,7 @@ class PlayerStatusCalculatorStatWipeTest {
     void appealAcceptedReturnsFalse() {
         Date started = new Date(System.currentTimeMillis() - 7200_000L);
         PunishmentModification appealAccept = new PunishmentModification(
-            "mod-1", "APPEAL_ACCEPT", new Date(), "Staff", null, "", null, null, null
+                "mod-1", "APPEAL_ACCEPT", new Date(), "Staff", null, "", null, null, null
         );
         Punishment p = createPunishment(2, started, 3600_000L, List.of(appealAccept));
         assertFalse(calculator.isPunishmentNaturallyExpired(p));
@@ -111,7 +108,7 @@ class PlayerStatusCalculatorStatWipeTest {
     void systemPardonedReturnsFalse() {
         Date started = new Date(System.currentTimeMillis() - 7200_000L);
         PunishmentModification systemPardon = new PunishmentModification(
-            "mod-1", "SYSTEM_PARDON", new Date(), "System", null, "", null, null, null
+                "mod-1", "SYSTEM_PARDON", new Date(), "System", null, "", null, null, null
         );
         Punishment p = createPunishment(2, started, 3600_000L, List.of(systemPardon));
         assertFalse(calculator.isPunishmentNaturallyExpired(p));
@@ -123,9 +120,9 @@ class PlayerStatusCalculatorStatWipeTest {
         Date started = new Date(System.currentTimeMillis() - 7200_000L);
         Date modDate = new Date(System.currentTimeMillis() - 3600_000L);
         PunishmentModification durationChange = new PunishmentModification(
-            "mod-1", "MANUAL_DURATION_CHANGE", modDate, "Staff", null, "Extended",
-            10800_000L, // 3 hours from modification date -> expires 2 hours from now
-            null, null
+                "mod-1", "MANUAL_DURATION_CHANGE", modDate, "Staff", null, "Extended",
+                10800_000L, // 3 hours from modification date -> expires 2 hours from now
+                null, null
         );
         Punishment p = createPunishment(2, started, 3600_000L, List.of(durationChange));
         // Effective expiry = modDate + 3 hours = 2 hours from now -> still active
@@ -138,9 +135,9 @@ class PlayerStatusCalculatorStatWipeTest {
         Date started = new Date(System.currentTimeMillis() - 7200_000L);
         Date modDate = new Date(System.currentTimeMillis() - 3600_000L);
         PunishmentModification durationChange = new PunishmentModification(
-            "mod-1", "MANUAL_DURATION_CHANGE", modDate, "Staff", null, "Shortened",
-            1800_000L, // 30 min from modification date -> expired 30 min ago
-            null, null
+                "mod-1", "MANUAL_DURATION_CHANGE", modDate, "Staff", null, "Shortened",
+                1800_000L, // 30 min from modification date -> expired 30 min ago
+                null, null
         );
         Punishment p = createPunishment(2, started, 86400_000L, List.of(durationChange));
         assertTrue(calculator.isPunishmentNaturallyExpired(p));
@@ -176,12 +173,12 @@ class PlayerStatusCalculatorStatWipeTest {
         Date mod1Date = new Date(System.currentTimeMillis() - 5L * 86400_000L);
         Date mod2Date = new Date(System.currentTimeMillis() - 3600_000L);
         PunishmentModification finiteChange = new PunishmentModification(
-            "mod-1", "MANUAL_DURATION_CHANGE", mod1Date, "Staff", null, "Shortened",
-            86400_000L, null, null
+                "mod-1", "MANUAL_DURATION_CHANGE", mod1Date, "Staff", null, "Shortened",
+                86400_000L, null, null
         );
         PunishmentModification makePermanent = new PunishmentModification(
-            "mod-2", "MANUAL_DURATION_CHANGE", mod2Date, "Staff", null, "Made permanent",
-            null, null, null
+                "mod-2", "MANUAL_DURATION_CHANGE", mod2Date, "Staff", null, "Made permanent",
+                null, null, null
         );
         Punishment p = createPunishment(2, started, 86400_000L, List.of(finiteChange, makePermanent));
         assertNull(calculator.getEffectiveExpiry(p));
@@ -192,8 +189,8 @@ class PlayerStatusCalculatorStatWipeTest {
     void appealDurationChangeRecognizedAsPermanent() {
         Date started = new Date(System.currentTimeMillis() - 7200_000L);
         PunishmentModification appealChange = new PunishmentModification(
-            "mod-1", "APPEAL_DURATION_CHANGE", new Date(), "Staff", null, "Appeal made permanent",
-            null, null, null
+                "mod-1", "APPEAL_DURATION_CHANGE", new Date(), "Staff", null, "Appeal made permanent",
+                null, null, null
         );
         Punishment p = createPunishment(2, started, 86400_000L, List.of(appealChange));
         assertNull(calculator.getEffectiveExpiry(p));
@@ -205,12 +202,12 @@ class PlayerStatusCalculatorStatWipeTest {
         Date mod1Date = new Date(System.currentTimeMillis() - 5L * 86400_000L);
         Date mod2Date = new Date(System.currentTimeMillis() - 3600_000L);
         PunishmentModification finiteChange = new PunishmentModification(
-            "mod-1", "MANUAL_DURATION_CHANGE", mod1Date, "Staff", null, "Shortened",
-            86400_000L, null, null
+                "mod-1", "MANUAL_DURATION_CHANGE", mod1Date, "Staff", null, "Shortened",
+                86400_000L, null, null
         );
         PunishmentModification makePermanent = new PunishmentModification(
-            "mod-2", "MANUAL_DURATION_CHANGE", mod2Date, "Staff", null, "Made permanent",
-            -1L, null, null
+                "mod-2", "MANUAL_DURATION_CHANGE", mod2Date, "Staff", null, "Made permanent",
+                -1L, null, null
         );
         Punishment p = createPunishment(2, started, 86400_000L, List.of(finiteChange, makePermanent));
         assertNull(calculator.getEffectiveExpiry(p));
@@ -220,7 +217,7 @@ class PlayerStatusCalculatorStatWipeTest {
     void nonDurationModWithEffectiveDurationIgnored() {
         Date started = new Date(System.currentTimeMillis() - 1800_000L);
         PunishmentModification noteMod = new PunishmentModification(
-            "mod-1", "NOTE", new Date(), "Staff", null, "", 1L, null, null
+                "mod-1", "NOTE", new Date(), "Staff", null, "", 1L, null, null
         );
         Punishment p = createPunishment(2, started, 3600_000L, List.of(noteMod));
         Date expiry = calculator.getEffectiveExpiry(p);
@@ -232,10 +229,10 @@ class PlayerStatusCalculatorStatWipeTest {
     void nullDataReturnsFalse() {
         // Punishment with null data -> getEffectiveExpiry returns null -> permanent -> false
         Punishment p = new Punishment(
-            "test-id", 2, "TestIssuer", null,
-            new Date(), new Date(System.currentTimeMillis() - 7200_000L),
-            List.of(), List.of(), List.of(), List.of(),
-            null
+                "test-id", 2, "TestIssuer", null,
+                new Date(), new Date(System.currentTimeMillis() - 7200_000L),
+                List.of(), List.of(), List.of(), List.of(),
+                null
         );
         assertFalse(calculator.isPunishmentNaturallyExpired(p));
     }

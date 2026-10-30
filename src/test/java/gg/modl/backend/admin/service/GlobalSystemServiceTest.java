@@ -1,24 +1,23 @@
 package gg.modl.backend.admin.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.admin.data.SystemConfig;
 import gg.modl.backend.admin.dto.request.UpdateSystemConfigRequest;
 import gg.modl.backend.admin.dto.request.UpdateSystemConfigRequest.GeneralConfigRequest;
 import gg.modl.backend.admin.dto.request.UpdateSystemConfigRequest.SecurityConfigRequest;
 import gg.modl.backend.database.mongo.repository.SystemConfigMongoRepository;
 import gg.modl.backend.database.mongo.repository.SystemPromptMongoRepository;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class GlobalSystemServiceTest {
@@ -34,8 +33,8 @@ class GlobalSystemServiceTest {
     @BeforeEach
     void setUp() {
         globalSystemService = new GlobalSystemService(
-            systemConfigRepository,
-            systemPromptRepository
+                systemConfigRepository,
+                systemPromptRepository
         );
     }
 
@@ -72,8 +71,8 @@ class GlobalSystemServiceTest {
         when(systemConfigRepository.saveEntity(any())).thenAnswer(inv -> inv.getArgument(0));
 
         UpdateSystemConfigRequest request = new UpdateSystemConfigRequest(
-            new GeneralConfigRequest("New Name", null, null, null, null, null),
-            null, null, null, null, null
+                new GeneralConfigRequest("New Name", null, null, null, null, null),
+                null, null, null, null, null
         );
 
         SystemConfig saved = globalSystemService.updateConfig(request);
@@ -93,10 +92,10 @@ class GlobalSystemServiceTest {
         when(systemConfigRepository.saveEntity(any())).thenAnswer(inv -> inv.getArgument(0));
 
         UpdateSystemConfigRequest request = new UpdateSystemConfigRequest(
-            null,
-            null,
-            new SecurityConfigRequest(null, null, null, true, null, null, null, null),
-            null, null, null
+                null,
+                null,
+                new SecurityConfigRequest(null, null, null, true, null, null, null, null),
+                null, null, null
         );
 
         SystemConfig saved = globalSystemService.updateConfig(request);
@@ -116,8 +115,8 @@ class GlobalSystemServiceTest {
         when(systemConfigRepository.saveEntity(any())).thenAnswer(inv -> inv.getArgument(0));
 
         UpdateSystemConfigRequest request = new UpdateSystemConfigRequest(
-            new GeneralConfigRequest("Only General", null, null, null, null, null),
-            null, null, null, null, null
+                new GeneralConfigRequest("Only General", null, null, null, null, null),
+                null, null, null, null, null
         );
 
         SystemConfig saved = globalSystemService.updateConfig(request);

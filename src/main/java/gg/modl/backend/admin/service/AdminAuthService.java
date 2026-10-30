@@ -7,16 +7,13 @@ import gg.modl.backend.database.mongo.repository.AdminUserMongoRepository;
 import gg.modl.backend.infrastructure.rest.RESTSecurityRole;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +49,7 @@ public class AdminAuthService {
         }
 
         return findByEmail(session.getEmail())
-            .map(admin -> new AdminSession(admin.getId(), session.getEmail(), session.getCreatedAt()));
+                .map(admin -> new AdminSession(admin.getId(), session.getEmail(), session.getCreatedAt()));
     }
 
     public String extractSessionId(HttpServletRequest request) {
@@ -75,15 +72,16 @@ public class AdminAuthService {
         }
 
         return Arrays.stream(cookies)
-            .filter(cookie -> RESTSecurityRole.ADMIN_SESSION_COOKIE.equals(cookie.getName()))
-            .map(Cookie::getValue)
-            .filter(value -> value != null && !value.isBlank())
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+                .filter(cookie -> RESTSecurityRole.ADMIN_SESSION_COOKIE.equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .filter(value -> value != null && !value.isBlank())
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     public boolean isAdminSessionExpired(AuthSessionData session) {
         return session.getCreatedAt().toInstant().plusSeconds(ADMIN_SESSION_MAX_AGE_SECONDS).isBefore(Instant.now());
     }
 
-    public record AdminSession(String adminId, String email, Date createdAt) {}
+    public record AdminSession(String adminId, String email, Date createdAt) {
+    }
 }

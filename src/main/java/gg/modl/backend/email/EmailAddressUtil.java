@@ -1,6 +1,7 @@
 package gg.modl.backend.email;
 
 import jakarta.mail.internet.InternetAddress;
+
 import java.util.Locale;
 
 public final class EmailAddressUtil {

@@ -6,14 +6,15 @@ import gg.modl.backend.realtime.state.RealtimeConnectionState;
 import gg.modl.backend.realtime.transport.RealtimeCodec;
 import gg.modl.backend.realtime.transport.RealtimeSessionOperations;
 import jakarta.annotation.PreDestroy;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Emits unsolicited heartbeats to authenticated connections so idle sessions keep seeing inbound
@@ -47,21 +48,21 @@ public class RealtimeServerHeartbeatEmitter {
     // Spring falls back to a (non-existent) no-arg constructor unless one is annotated.
     @Autowired
     public RealtimeServerHeartbeatEmitter(
-        RealtimeProperties properties,
-        RealtimeConnectionRegistry connectionRegistry,
-        RealtimeCodec codec,
-        RealtimeSessionOperations sessionOperations
+            RealtimeProperties properties,
+            RealtimeConnectionRegistry connectionRegistry,
+            RealtimeCodec codec,
+            RealtimeSessionOperations sessionOperations
     ) {
         this(properties, connectionRegistry, codec, sessionOperations,
-            Executors.newVirtualThreadPerTaskExecutor());
+                Executors.newVirtualThreadPerTaskExecutor());
     }
 
     RealtimeServerHeartbeatEmitter(
-        RealtimeProperties properties,
-        RealtimeConnectionRegistry connectionRegistry,
-        RealtimeCodec codec,
-        RealtimeSessionOperations sessionOperations,
-        Executor deliveryExecutor
+            RealtimeProperties properties,
+            RealtimeConnectionRegistry connectionRegistry,
+            RealtimeCodec codec,
+            RealtimeSessionOperations sessionOperations,
+            Executor deliveryExecutor
     ) {
         this.properties = properties;
         this.connectionRegistry = connectionRegistry;
@@ -95,7 +96,7 @@ public class RealtimeServerHeartbeatEmitter {
             // Best effort: a failed keepalive is not itself grounds for tearing down the connection.
             // A genuinely dead peer stops sending client heartbeats and the sweeper closes it.
             sessionOperations.trySend(
-                snapshot.session(), state, codec.heartbeat(state.nextOutboundHeartbeatSequence()));
+                    snapshot.session(), state, codec.heartbeat(state.nextOutboundHeartbeatSequence()));
         } catch (RuntimeException exception) {
             log.warn("Failed to send realtime heartbeat connection={}", state.getConnectionId(), exception);
         }
@@ -107,9 +108,9 @@ public class RealtimeServerHeartbeatEmitter {
         // Unauthenticated sessions are the handshake sweeper's business; sending to a closing or
         // terminal session would only race its close frame.
         return state.isAuthenticated()
-            && !state.isClosing()
-            && state.getTerminalSince() == null
-            && session.isOpen();
+                && !state.isClosing()
+                && state.getTerminalSince() == null
+                && session.isOpen();
     }
 
     @PreDestroy

@@ -1,15 +1,5 @@
 package gg.modl.backend.realtime.lifecycle;
 
-import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.realtime.metrics.RealtimeMetrics;
 import gg.modl.backend.realtime.rate.RealtimeMessageRateLimiter;
@@ -21,11 +11,19 @@ import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import gg.modl.proto.modl.v1.ReconnectAction;
 import gg.modl.proto.modl.v1.ReconnectReason;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.concurrent.ConcurrentHashMap;
+
+import static gg.modl.backend.realtime.support.RealtimeEventCounters.realtimeEventCount;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.*;
 
 class RealtimeDeployDrainManagerTest {
 
@@ -40,11 +38,11 @@ class RealtimeDeployDrainManagerTest {
         RealtimeMetrics metrics = new RealtimeMetrics(meterRegistry);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeDeployDrainManager manager = new RealtimeDeployDrainManager(
-            properties,
-            registry,
-            cleanup,
-            new RealtimeCodec(properties),
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                new RealtimeCodec(properties),
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("deploy-drain", true);
         when(session.isOpen()).thenReturn(true, true, true, false);
@@ -57,9 +55,9 @@ class RealtimeDeployDrainManagerTest {
             try {
                 RealtimeEnvelope envelope = RealtimeEnvelope.parseFrom(((BinaryMessage) message).getPayload());
                 return envelope.hasReconnectAdvice()
-                    && envelope.getReconnectAdvice().getReason() == ReconnectReason.RECONNECT_REASON_DEPLOYMENT
-                    && envelope.getReconnectAdvice().getAction() == ReconnectAction.RECONNECT_ACTION_RECONNECT
-                    && envelope.getReconnectAdvice().getRetryAfterMs() == 7000;
+                        && envelope.getReconnectAdvice().getReason() == ReconnectReason.RECONNECT_REASON_DEPLOYMENT
+                        && envelope.getReconnectAdvice().getAction() == ReconnectAction.RECONNECT_ACTION_RECONNECT
+                        && envelope.getReconnectAdvice().getRetryAfterMs() == 7000;
             } catch (Exception exception) {
                 return false;
             }
@@ -78,11 +76,11 @@ class RealtimeDeployDrainManagerTest {
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeDeployDrainManager manager = new RealtimeDeployDrainManager(
-            properties,
-            registry,
-            cleanup,
-            new RealtimeCodec(properties),
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                new RealtimeCodec(properties),
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("deploy-drain-close-throws", true);
         when(session.isOpen()).thenReturn(true, true, true, false);
@@ -106,11 +104,11 @@ class RealtimeDeployDrainManagerTest {
         RealtimeMetrics metrics = new RealtimeMetrics(meterRegistry);
         RealtimeConnectionCleanup cleanup = new RealtimeConnectionCleanup(registry, rateLimiter, metrics);
         RealtimeDeployDrainManager manager = new RealtimeDeployDrainManager(
-            properties,
-            registry,
-            cleanup,
-            new RealtimeCodec(properties),
-            new RealtimeSessionOperations(registry, cleanup, metrics)
+                properties,
+                registry,
+                cleanup,
+                new RealtimeCodec(properties),
+                new RealtimeSessionOperations(registry, cleanup, metrics)
         );
         WebSocketSession session = session("closed", false);
         RealtimeConnectionState state = registry.register(session);

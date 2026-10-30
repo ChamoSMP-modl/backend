@@ -1,15 +1,12 @@
 package gg.modl.backend.player.service;
 
-import gg.modl.backend.database.mongo.repository.MigrationMongoRepository;
-import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
-import gg.modl.backend.database.mongo.repository.ServerInstanceSnapshotMongoRepository;
-import gg.modl.backend.database.mongo.repository.ServerActivityRepository;
-import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
+import gg.modl.backend.database.mongo.repository.*;
+import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.migration.data.MigrationStatus;
 import gg.modl.backend.player.data.Player;
+import gg.modl.backend.player.data.punishment.EnforcementCategory;
 import gg.modl.backend.player.data.punishment.Punishment;
 import gg.modl.backend.player.data.punishment.PunishmentModificationType;
-import gg.modl.backend.player.data.punishment.EnforcementCategory;
 import gg.modl.backend.player.dto.response.SimplePunishmentView;
 import gg.modl.backend.player.dto.response.SyncDataView;
 import gg.modl.backend.player.dto.response.SyncPunishmentEntry;
@@ -17,23 +14,15 @@ import gg.modl.backend.player.dto.response.SyncResult;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.PunishmentTypeService;
-import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.staff.data.Staff;
-import java.net.URI;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.net.URI;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -53,14 +42,14 @@ public class MinecraftSyncService {
     private final SyncActiveStaffService syncActiveStaffService;
 
     public SyncResult sync(
-        Server server,
-        String lastSyncTimestamp,
-        List<OnlinePlayerInput> onlinePlayers,
-        String serverName,
-        List<ChatLogInput> chatLogs,
-        List<CommandLogInput> commandLogs,
-        ServerStatusInput serverStatus,
-        String clientIp
+            Server server,
+            String lastSyncTimestamp,
+            List<OnlinePlayerInput> onlinePlayers,
+            String serverName,
+            List<ChatLogInput> chatLogs,
+            List<CommandLogInput> commandLogs,
+            ServerStatusInput serverStatus,
+            String clientIp
     ) {
         Instant now = Instant.now();
 
@@ -111,40 +100,40 @@ public class MinecraftSyncService {
         submitLogs(server, chatLogs, commandLogs);
 
         Long staffPermissionsUpdatedAt = server.getStaffPermissionsUpdatedAt() != null
-            ? server.getStaffPermissionsUpdatedAt().getTime()
-            : null;
+                ? server.getStaffPermissionsUpdatedAt().getTime()
+                : null;
         Long punishmentTypesUpdatedAt = server.getPunishmentTypesUpdatedAt() != null
-            ? server.getPunishmentTypesUpdatedAt().getTime()
-            : null;
+                ? server.getPunishmentTypesUpdatedAt().getTime()
+                : null;
         List<Map<String, Object>> staff2faVerifications = collectStaff2faVerifications(server);
         Map<String, Object> migrationTask = collectMigrationTask(server);
 
         applyServerStatus(server, serverStatus, serverName, clientIp, now);
 
         SyncDataView data = new SyncDataView(
-            pendingPunishments,
-            List.of(),
-            recentlyModifiedPunishments,
-            playerNotifications,
-            staffNotifications,
-            activeStaffMembers,
-            List.of(),
-            staffPermissionsUpdatedAt,
-            punishmentTypesUpdatedAt,
-            staff2faVerifications,
-            migrationTask
+                pendingPunishments,
+                List.of(),
+                recentlyModifiedPunishments,
+                playerNotifications,
+                staffNotifications,
+                activeStaffMembers,
+                List.of(),
+                staffPermissionsUpdatedAt,
+                punishmentTypesUpdatedAt,
+                staff2faVerifications,
+                migrationTask
         );
 
         return new SyncResult(now.toString(), data);
     }
 
     private void collectPlayerPunishments(
-        Player player,
-        List<PunishmentType> types,
-        Instant lastSync,
-        Map<String, String> resolvedIssuers,
-        List<SyncPunishmentEntry> pendingPunishments,
-        List<SyncPunishmentEntry> recentlyModifiedPunishments
+            Player player,
+            List<PunishmentType> types,
+            Instant lastSync,
+            Map<String, String> resolvedIssuers,
+            List<SyncPunishmentEntry> pendingPunishments,
+            List<SyncPunishmentEntry> recentlyModifiedPunishments
     ) {
         String uuid = player.getMinecraftUuid().toString();
         String username = PlayerDataUtils.extractLatestUsername(player.getUsernames());
@@ -158,27 +147,27 @@ public class MinecraftSyncService {
             String category = statusCalculator.getEffectiveCategory(punishment, types);
 
             boolean recentlyModified = punishment.getModifications()
-                .stream()
-                .anyMatch(mod -> mod.date() != null && mod.date().toInstant().isAfter(lastSync));
+                    .stream()
+                    .anyMatch(mod -> mod.date() != null && mod.date().toInstant().isAfter(lastSync));
             if (recentlyModified) {
                 recentlyModifiedPunishments.add(new SyncPunishmentEntry(
-                    uuid, username,
-                    PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
+                        uuid, username,
+                        PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
             }
 
             boolean recentlyPardoned = punishment.getModifications()
-                .stream()
-                .anyMatch(mod -> mod.date() != null
-                                 && mod.date().toInstant().isAfter(lastSync)
-                                 && PunishmentModificationType.isPardon(mod.type()));
+                    .stream()
+                    .anyMatch(mod -> mod.date() != null
+                            && mod.date().toInstant().isAfter(lastSync)
+                            && PunishmentModificationType.isPardon(mod.type()));
             if (recentlyPardoned && category != null) {
                 pardonedCategories.add(category);
             }
 
             if (punishment.getTypeOrdinal() == 0 && punishment.getStarted() == null) {
                 pendingPunishments.add(new SyncPunishmentEntry(
-                    uuid, username,
-                    PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
+                        uuid, username,
+                        PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
                 continue;
             }
 
@@ -187,12 +176,12 @@ public class MinecraftSyncService {
             }
 
             if (punishment.getStarted() != null
-                && punishment.getIssued() != null
-                && punishment.getIssued().toInstant().isAfter(lastSync)
-                && category != null) {
+                    && punishment.getIssued() != null
+                    && punishment.getIssued().toInstant().isAfter(lastSync)
+                    && category != null) {
                 pendingPunishments.add(new SyncPunishmentEntry(
-                    uuid, username,
-                    PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
+                        uuid, username,
+                        PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
             }
 
             if (category != null && punishment.getStarted() != null) {
@@ -200,9 +189,9 @@ public class MinecraftSyncService {
             } else if (category != null && punishment.getStarted() == null) {
                 Punishment existing = oldestUnstartedPerCategory.get(category);
                 if (existing == null
-                    || (punishment.getIssued() != null
+                        || (punishment.getIssued() != null
                         && (existing.getIssued() == null
-                            || punishment.getIssued().before(existing.getIssued())))) {
+                        || punishment.getIssued().before(existing.getIssued())))) {
                     oldestUnstartedPerCategory.put(category, punishment);
                 }
             }
@@ -211,8 +200,8 @@ public class MinecraftSyncService {
         for (Map.Entry<String, Punishment> entry : oldestUnstartedPerCategory.entrySet()) {
             if (!categoriesWithActiveStarted.contains(entry.getKey())) {
                 pendingPunishments.add(new SyncPunishmentEntry(
-                    uuid, username,
-                    PunishmentMapper.toSimplePunishment(entry.getValue(), types, statusCalculator, resolvedIssuers)));
+                        uuid, username,
+                        PunishmentMapper.toSimplePunishment(entry.getValue(), types, statusCalculator, resolvedIssuers)));
             }
         }
 
@@ -225,8 +214,8 @@ public class MinecraftSyncService {
                 String category = statusCalculator.getEffectiveCategory(punishment, types);
                 if (category != null && pardonedCategories.contains(category)) {
                     pendingPunishments.add(new SyncPunishmentEntry(
-                        uuid, username,
-                        PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
+                            uuid, username,
+                            PunishmentMapper.toSimplePunishment(punishment, types, statusCalculator, resolvedIssuers)));
                     pardonedCategories.remove(category);
                 }
             }
@@ -247,8 +236,8 @@ public class MinecraftSyncService {
             List<Staff> pendingStaff = staffRepository.findWithPendingTwoFactorDelivery(server);
             if (!pendingStaff.isEmpty()) {
                 List<Map<String, Object>> verifications = pendingStaff.stream()
-                    .map(staff -> Map.<String, Object>of("minecraftUuid", staff.getAssignedMinecraftUuid()))
-                    .toList();
+                        .map(staff -> Map.<String, Object>of("minecraftUuid", staff.getAssignedMinecraftUuid()))
+                        .toList();
                 staffRepository.clearPendingTwoFactorDelivery(server);
                 return verifications;
             }
@@ -264,8 +253,8 @@ public class MinecraftSyncService {
             if (activeMigration.isPresent()) {
                 MigrationStatus migration = activeMigration.get();
                 return Map.of(
-                    "taskId", migration.getTaskId(),
-                    "type", migration.getType()
+                        "taskId", migration.getTaskId(),
+                        "type", migration.getType()
                 );
             }
         } catch (Exception e) {
@@ -276,7 +265,7 @@ public class MinecraftSyncService {
 
     public void applyPresence(Server server, List<OnlinePlayerInput> onlinePlayers, String serverName, Instant now) {
         serverActivityRepository.updateActivityAndPlayerCount(server, Date.from(now),
-            onlinePlayers != null ? (long) onlinePlayers.size() : 0L);
+                onlinePlayers != null ? (long) onlinePlayers.size() : 0L);
 
         playerRepository.markStalePlayersOffline(server, collectOnlineUuids(onlinePlayers), serverName, Date.from(now));
     }
@@ -284,25 +273,25 @@ public class MinecraftSyncService {
     public void submitLogs(Server server, List<ChatLogInput> chatLogs, List<CommandLogInput> commandLogs) {
         if (chatLogs != null && !chatLogs.isEmpty()) {
             minecraftChatLogService.submitChatLogs(server, chatLogs.stream()
-                .map(entry -> new MinecraftChatLogService.ChatLogCommand(
-                    entry.uuid(),
-                    entry.username(),
-                    entry.message(),
-                    entry.timestamp(),
-                    entry.server()
-                ))
-                .toList());
+                    .map(entry -> new MinecraftChatLogService.ChatLogCommand(
+                            entry.uuid(),
+                            entry.username(),
+                            entry.message(),
+                            entry.timestamp(),
+                            entry.server()
+                    ))
+                    .toList());
         }
         if (commandLogs != null && !commandLogs.isEmpty()) {
             minecraftChatLogService.submitCommandLogs(server, commandLogs.stream()
-                .map(entry -> new MinecraftChatLogService.CommandLogCommand(
-                    entry.uuid(),
-                    entry.username(),
-                    entry.command(),
-                    entry.timestamp(),
-                    entry.server()
-                ))
-                .toList());
+                    .map(entry -> new MinecraftChatLogService.CommandLogCommand(
+                            entry.uuid(),
+                            entry.username(),
+                            entry.command(),
+                            entry.timestamp(),
+                            entry.server()
+                    ))
+                    .toList());
         }
     }
 
@@ -314,15 +303,15 @@ public class MinecraftSyncService {
             long epochSeconds = now.getEpochSecond();
             Date fiveMinBoundary = Date.from(Instant.ofEpochSecond((epochSeconds / 300) * 300));
             serverInstanceSnapshotRepository.upsertServerEntry(
-                fiveMinBoundary,
-                server.getId(),
-                serverName,
-                serverStatus.onlinePlayerCount(),
-                serverStatus.platformType(),
-                serverStatus.serverVersion(),
-                clientIp,
-                serverStatus.pluginVersion(),
-                Date.from(now)
+                    fiveMinBoundary,
+                    server.getId(),
+                    serverName,
+                    serverStatus.onlinePlayerCount(),
+                    serverStatus.platformType(),
+                    serverStatus.serverVersion(),
+                    clientIp,
+                    serverStatus.pluginVersion(),
+                    Date.from(now)
             );
         } catch (Exception e) {
             log.warn("Failed to upsert server instance snapshot during sync", e);
@@ -378,23 +367,23 @@ public class MinecraftSyncService {
     }
 
     public SyncResult syncV2(
-        Server server,
-        String lastSyncTimestamp,
-        List<OnlinePlayerInput> onlinePlayers,
-        String serverName,
-        List<ChatLogInput> chatLogs,
-        List<CommandLogInput> commandLogs,
-        String clientIp
+            Server server,
+            String lastSyncTimestamp,
+            List<OnlinePlayerInput> onlinePlayers,
+            String serverName,
+            List<ChatLogInput> chatLogs,
+            List<CommandLogInput> commandLogs,
+            String clientIp
     ) {
         SyncResult result = sync(
-            server,
-            lastSyncTimestamp,
-            onlinePlayers,
-            serverName,
-            chatLogs,
-            commandLogs,
-            null,
-            clientIp
+                server,
+                lastSyncTimestamp,
+                onlinePlayers,
+                serverName,
+                chatLogs,
+                commandLogs,
+                null,
+                clientIp
         );
 
         convertTicketUrlsInNotifications(result.data().staffNotifications());
@@ -431,7 +420,8 @@ public class MinecraftSyncService {
         }
     }
 
-    public record ServerStatusInput(int onlinePlayerCount, int maxPlayers, String serverVersion, String platformType, String pluginVersion) {
+    public record ServerStatusInput(int onlinePlayerCount, int maxPlayers, String serverVersion, String platformType,
+                                    String pluginVersion) {
     }
 
     public record OnlinePlayerInput(String uuid, String username, String ipAddress) {

@@ -1,8 +1,9 @@
 package gg.modl.backend.infrastructure.util;
 
 import gg.modl.backend.infrastructure.exception.ValidationException;
-import java.util.Date;
 import lombok.experimental.UtilityClass;
+
+import java.util.Date;
 
 @UtilityClass
 public class DateRangeUtil {

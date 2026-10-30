@@ -21,8 +21,8 @@ public class MinecraftDashboardV3Controller {
     private final DashboardService dashboardService;
 
     @GetMapping(
-        value = "/stats",
-        produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
+            value = "/stats",
+            produces = ProtobufMediaTypes.APPLICATION_X_PROTOBUF_VALUE
     )
     public ResponseEntity<MinecraftDashboardResponse> getDashboardStats(HttpServletRequest httpRequest) {
         Server server = RequestUtil.getRequestServer(httpRequest);

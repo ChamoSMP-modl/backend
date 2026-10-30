@@ -1,17 +1,18 @@
 package gg.modl.backend.database.mongo.repository;
 
-import static gg.modl.backend.database.mongo.MongoAggregationResults.extractLong;
-
 import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.server.data.Server;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+import static gg.modl.backend.database.mongo.MongoAggregationResults.extractLong;
 
 @Repository
 @RequiredArgsConstructor
@@ -95,20 +96,16 @@ public class ServerDatabaseMongoRepository {
 
     private boolean isServerDatabaseName(String databaseName) {
         return databaseName.startsWith(SERVER_DATABASE_PREFIX)
-            && databaseName.length() > SERVER_DATABASE_PREFIX.length();
+                && databaseName.length() > SERVER_DATABASE_PREFIX.length();
     }
 
-    public record UsageCounts(long players, long tickets) {}
+    public record UsageCounts(long players, long tickets) {
+    }
 
-    public record ServerDatabaseStats(long players, long tickets, long logs, long storageSize) {}
+    public record ServerDatabaseStats(long players, long tickets, long logs, long storageSize) {
+    }
 
     public record PlayerCollectionInspection(Status status, long players, String reason) {
-        public enum Status {
-            SAFE_EMPTY,
-            BLOCKED_NON_EMPTY,
-            UNKNOWN_ERROR
-        }
-
         public static PlayerCollectionInspection safeMissing() {
             return new PlayerCollectionInspection(Status.SAFE_EMPTY, 0L, "missing_collection");
         }
@@ -123,6 +120,12 @@ public class ServerDatabaseMongoRepository {
 
         public static PlayerCollectionInspection unknown(String reason) {
             return new PlayerCollectionInspection(Status.UNKNOWN_ERROR, 0L, reason);
+        }
+
+        public enum Status {
+            SAFE_EMPTY,
+            BLOCKED_NON_EMPTY,
+            UNKNOWN_ERROR
         }
     }
 }

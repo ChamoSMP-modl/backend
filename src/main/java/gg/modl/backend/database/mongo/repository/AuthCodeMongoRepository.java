@@ -7,8 +7,6 @@ import gg.modl.backend.database.mongo.fields.AuthCodeFields;
 import gg.modl.backend.infrastructure.onetimecode.OneTimeCodeFieldNames;
 import gg.modl.backend.infrastructure.onetimecode.OneTimeCodeQueries;
 import gg.modl.backend.server.data.Server;
-import java.util.Date;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -17,12 +15,19 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class AuthCodeMongoRepository {
     private static final OneTimeCodeFieldNames FIELDS =
-        new OneTimeCodeFieldNames(AuthCodeFields.CODE_HASH, AuthCodeFields.EXPIRES_AT, AuthCodeFields.FAILED_ATTEMPTS);
+            new OneTimeCodeFieldNames(AuthCodeFields.CODE_HASH, AuthCodeFields.EXPIRES_AT, AuthCodeFields.FAILED_ATTEMPTS);
     private final TenantMongoAccess tenantMongoAccess;
+
+    private static Criteria emailCriteria(String normalizedEmail) {
+        return Criteria.where(AuthCodeFields.EMAIL).is(normalizedEmail);
+    }
 
     public void replaceForServer(Server server, String normalizedEmail, String codeHash, Date expiresAt) {
         replace(tenantMongoAccess.forServer(server), normalizedEmail, codeHash, expiresAt);
@@ -31,15 +36,11 @@ public class AuthCodeMongoRepository {
     private void replace(MongoTemplate template, String normalizedEmail, String codeHash, Date expiresAt) {
         Query query = Query.query(emailCriteria(normalizedEmail));
         Update update = new Update()
-            .set(AuthCodeFields.CODE_HASH, codeHash)
-            .set(AuthCodeFields.EXPIRES_AT, expiresAt)
-            .set(AuthCodeFields.FAILED_ATTEMPTS, 0)
-            .setOnInsert(AuthCodeFields.EMAIL, normalizedEmail);
+                .set(AuthCodeFields.CODE_HASH, codeHash)
+                .set(AuthCodeFields.EXPIRES_AT, expiresAt)
+                .set(AuthCodeFields.FAILED_ATTEMPTS, 0)
+                .setOnInsert(AuthCodeFields.EMAIL, normalizedEmail);
         template.upsert(query, update, AuthCode.class, CollectionName.AUTH_CODES);
-    }
-
-    private static Criteria emailCriteria(String normalizedEmail) {
-        return Criteria.where(AuthCodeFields.EMAIL).is(normalizedEmail);
     }
 
     public void replaceForGlobal(String normalizedEmail, String codeHash, Date expiresAt) {

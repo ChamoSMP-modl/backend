@@ -1,20 +1,21 @@
 package gg.modl.backend.support;
 
-import static com.mongodb.client.model.Filters.eq;
-
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import java.util.List;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 
+import java.util.List;
+
+import static com.mongodb.client.model.Filters.eq;
+
 public final class TestDatabase {
 
+    private static volatile TestDatabase instance;
     private final MongoClient client;
     private final MongoDatabase serverDb;
-    private static volatile TestDatabase instance;
 
     private TestDatabase(String uri, String domain) {
         this.client = MongoClients.create(uri);
@@ -72,7 +73,9 @@ public final class TestDatabase {
         return players().find(eq("minecraftUuid", uuid)).first();
     }
 
-    public MongoCollection<Document> players() {return serverDb.getCollection("players");}
+    public MongoCollection<Document> players() {
+        return serverDb.getCollection("players");
+    }
 
     public Document findTicketById(String ticketId) {
         // Try string _id first, then ObjectId
@@ -86,13 +89,17 @@ public final class TestDatabase {
         return doc;
     }
 
-    public MongoCollection<Document> tickets() {return serverDb.getCollection("tickets");}
+    public MongoCollection<Document> tickets() {
+        return serverDb.getCollection("tickets");
+    }
 
     public Document findStaffByUsername(String username) {
         return staff().find(eq("username", username)).first();
     }
 
-    public MongoCollection<Document> staff() {return serverDb.getCollection("staffs");}
+    public MongoCollection<Document> staff() {
+        return serverDb.getCollection("staffs");
+    }
 
     public Document findRoleById(String roleId) {
         Document doc = roles().find(eq("_id", roleId)).first();
@@ -110,13 +117,17 @@ public final class TestDatabase {
 
     // ── Query helpers ──
 
-    public MongoCollection<Document> roles() {return serverDb.getCollection("staffroles");}
+    public MongoCollection<Document> roles() {
+        return serverDb.getCollection("staffroles");
+    }
 
     public Document findSettingsByType(String type) {
         return settings().find(eq("type", type)).first();
     }
 
-    public MongoCollection<Document> settings() {return serverDb.getCollection("settings");}
+    public MongoCollection<Document> settings() {
+        return serverDb.getCollection("settings");
+    }
 
     public Document findHomepageCardById(String cardId) {
         Document doc = homepageCards().find(eq("_id", cardId)).first();
@@ -129,7 +140,9 @@ public final class TestDatabase {
         return doc;
     }
 
-    public MongoCollection<Document> homepageCards() {return serverDb.getCollection("homepagecards");}
+    public MongoCollection<Document> homepageCards() {
+        return serverDb.getCollection("homepagecards");
+    }
 
     public Document findKbCategoryById(String categoryId) {
         Document doc = kbCategories().find(eq("_id", categoryId)).first();
@@ -142,7 +155,9 @@ public final class TestDatabase {
         return doc;
     }
 
-    public MongoCollection<Document> kbCategories() {return serverDb.getCollection("knowledgebasecategories");}
+    public MongoCollection<Document> kbCategories() {
+        return serverDb.getCollection("knowledgebasecategories");
+    }
 
     public Document findKbArticleById(String articleId) {
         Document doc = kbArticles().find(eq("_id", articleId)).first();
@@ -155,7 +170,9 @@ public final class TestDatabase {
         return doc;
     }
 
-    public MongoCollection<Document> kbArticles() {return serverDb.getCollection("knowledgebasearticles");}
+    public MongoCollection<Document> kbArticles() {
+        return serverDb.getCollection("knowledgebasearticles");
+    }
 
     public void close() {
         client.close();

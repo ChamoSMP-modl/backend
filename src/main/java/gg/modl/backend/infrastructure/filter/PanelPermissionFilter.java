@@ -5,8 +5,8 @@ import gg.modl.backend.infrastructure.authorization.PanelAccessPolicyResolver;
 import gg.modl.backend.infrastructure.authorization.PanelAccessRequest;
 import gg.modl.backend.infrastructure.authorization.PanelPrincipalPermissions;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
-import gg.modl.backend.infrastructure.rest.RouteGroups;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
+import gg.modl.backend.infrastructure.rest.RouteGroups;
 import gg.modl.backend.role.service.PermissionService;
 import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
@@ -14,12 +14,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -39,9 +40,9 @@ public class PanelPermissionFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-        HttpServletRequest request,
-        @NotNull HttpServletResponse response,
-        @NotNull FilterChain filterChain
+            HttpServletRequest request,
+            @NotNull HttpServletResponse response,
+            @NotNull FilterChain filterChain
     ) throws ServletException, IOException {
         Server server = (Server) request.getAttribute(RequestAttribute.SERVER);
         String email = RequestUtil.getSessionEmail(request);

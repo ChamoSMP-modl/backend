@@ -1,8 +1,9 @@
 package gg.modl.backend.player.data.punishment;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Locale;
 import java.util.function.BiConsumer;
-import org.jetbrains.annotations.Nullable;
 
 public enum PunishmentToggleOption {
     ALT_BLOCKING(PunishmentData.ALT_BLOCKING, "alt-blocking", PunishmentDataView::setAltBlocking),
@@ -18,18 +19,6 @@ public enum PunishmentToggleOption {
         this.mutator = mutator;
     }
 
-    public String dataKey() {
-        return dataKey;
-    }
-
-    public String displayName() {
-        return displayName;
-    }
-
-    public void apply(PunishmentDataView data, boolean enabled) {
-        mutator.accept(data, enabled);
-    }
-
     @Nullable
     public static PunishmentToggleOption from(String option) {
         if (option == null || option.isBlank()) {
@@ -40,5 +29,17 @@ public enum PunishmentToggleOption {
         } catch (IllegalArgumentException exception) {
             return null;
         }
+    }
+
+    public String dataKey() {
+        return dataKey;
+    }
+
+    public String displayName() {
+        return displayName;
+    }
+
+    public void apply(PunishmentDataView data, boolean enabled) {
+        mutator.accept(data, enabled);
     }
 }

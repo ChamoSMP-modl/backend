@@ -6,12 +6,13 @@ import gg.modl.backend.realtime.metrics.RealtimeMetrics;
 import gg.modl.backend.realtime.state.RealtimeConnectionRegistry;
 import gg.modl.backend.realtime.state.RealtimeConnectionState;
 import gg.modl.backend.realtime.transport.RealtimeSessionOperations;
-import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.time.Instant;
 
 @Component
 @RequiredArgsConstructor
@@ -41,7 +42,7 @@ public class RealtimeHeartbeatSweeper {
             WebSocketSession session = snapshot.session();
             Instant terminalSince = state.getTerminalSince();
             if (terminalSince != null
-                && terminalSince.isBefore(now.minusMillis(properties.getTerminalGraceMs()))) {
+                    && terminalSince.isBefore(now.minusMillis(properties.getTerminalGraceMs()))) {
                 metrics.recordReject(state, "terminal_force_evict");
                 connectionCleanup.unregister(session, CloseStatus.NO_CLOSE_FRAME);
                 continue;

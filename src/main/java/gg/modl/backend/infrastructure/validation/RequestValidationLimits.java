@@ -179,5 +179,6 @@ public final class RequestValidationLimits {
     public static final int PAGINATION_LIMIT_MIN = 1;
     public static final int PAGINATION_LIMIT_MAX = 100;
 
-    private RequestValidationLimits() {}
+    private RequestValidationLimits() {
+    }
 }

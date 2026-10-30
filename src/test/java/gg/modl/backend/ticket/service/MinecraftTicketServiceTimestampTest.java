@@ -1,10 +1,11 @@
 package gg.modl.backend.ticket.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.Date;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MinecraftTicketServiceTimestampTest {
 

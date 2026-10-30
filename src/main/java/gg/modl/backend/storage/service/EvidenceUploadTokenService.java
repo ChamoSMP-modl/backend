@@ -4,12 +4,13 @@ import gg.modl.backend.infrastructure.util.DigestUtils;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.data.EvidenceUploadTokenDocument;
 import gg.modl.backend.storage.repository.EvidenceUploadTokenMongoRepository;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -24,13 +25,13 @@ public class EvidenceUploadTokenService {
         String token = UUID.randomUUID().toString();
         Instant now = Instant.now();
         tokenRepository.saveEntity(new EvidenceUploadTokenDocument(
-            DigestUtils.sha256Hex(token),
-            server.getDatabaseName(),
-            punishmentId,
-            playerUuid,
-            issuerName,
-            now,
-            now.plus(TOKEN_TTL)
+                DigestUtils.sha256Hex(token),
+                server.getDatabaseName(),
+                punishmentId,
+                playerUuid,
+                issuerName,
+                now,
+                now.plus(TOKEN_TTL)
         ));
         return token;
     }
@@ -46,12 +47,12 @@ public class EvidenceUploadTokenService {
             return null;
         }
         return new UploadToken(
-            token,
-            doc.getServerDatabaseName(),
-            doc.getPunishmentId(),
-            doc.getPlayerUuid(),
-            doc.getIssuerName(),
-            doc.getCreatedAt()
+                token,
+                doc.getServerDatabaseName(),
+                doc.getPunishmentId(),
+                doc.getPlayerUuid(),
+                doc.getIssuerName(),
+                doc.getCreatedAt()
         );
     }
 
@@ -61,12 +62,12 @@ public class EvidenceUploadTokenService {
 
 
     public record UploadToken(
-        String token,
-        String serverDatabaseName,
-        String punishmentId,
-        String playerUuid,
-        String issuerName,
-        Instant createdAt
+            String token,
+            String serverDatabaseName,
+            String punishmentId,
+            String playerUuid,
+            String issuerName,
+            Instant createdAt
     ) {
     }
 }

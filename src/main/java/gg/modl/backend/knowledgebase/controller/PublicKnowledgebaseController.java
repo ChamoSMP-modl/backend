@@ -11,14 +11,11 @@ import gg.modl.proto.modl.v1.KnowledgebaseArticlesResponse;
 import gg.modl.proto.modl.v1.KnowledgebaseSearchResponse;
 import gg.modl.proto.modl.v1.PublicKnowledgebaseCategoriesResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping(RESTMappingV1.PUBLIC_KNOWLEDGEBASE)
@@ -33,24 +30,24 @@ public class PublicKnowledgebaseController {
         Server server = RequestUtil.getRequestServer(request);
         var categories = categoryService.getVisibleCategories(server);
         return ResponseEntity.ok(mapper.toPublicCategoriesResponse(
-            categories,
-            category -> articleService.getVisibleArticlesByCategory(server, category.getId())));
+                categories,
+                category -> articleService.getVisibleArticlesByCategory(server, category.getId())));
     }
 
     @GetMapping("/categories/{categoryId}/articles")
     public ResponseEntity<KnowledgebaseArticlesResponse> getArticles(
-        @PathVariable String categoryId,
-        HttpServletRequest request
+            @PathVariable String categoryId,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         return ResponseEntity.ok(mapper.toArticlesResponse(
-            articleService.getVisibleArticlesByCategory(server, categoryId)));
+                articleService.getVisibleArticlesByCategory(server, categoryId)));
     }
 
     @GetMapping("/articles/{idOrSlug}")
     public ResponseEntity<KnowledgebaseArticleResponse> getArticle(
-        @PathVariable String idOrSlug,
-        HttpServletRequest request
+            @PathVariable String idOrSlug,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
 
@@ -60,15 +57,15 @@ public class PublicKnowledgebaseController {
         }
 
         return article
-            .filter(KnowledgebaseArticle::isVisible)
-            .map(found -> ResponseEntity.ok(mapper.toArticleResponse(found)))
-            .orElseGet(() -> ResponseEntity.notFound().build());
+                .filter(KnowledgebaseArticle::isVisible)
+                .map(found -> ResponseEntity.ok(mapper.toArticleResponse(found)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/search")
     public ResponseEntity<KnowledgebaseSearchResponse> searchArticles(
-        @RequestParam String q,
-        HttpServletRequest request
+            @RequestParam String q,
+            HttpServletRequest request
     ) {
         Server server = RequestUtil.getRequestServer(request);
         return ResponseEntity.ok(mapper.toSearchResponse(articleService.searchArticles(server, q)));

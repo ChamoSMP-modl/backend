@@ -7,16 +7,17 @@ import gg.modl.backend.database.mongo.fields.ReplayDocumentFields;
 import gg.modl.backend.replay.data.ReplayDocument;
 import gg.modl.backend.replay.data.ReplayLabel;
 import gg.modl.backend.server.data.Server;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class ReplayMongoRepository extends AbstractServerMongoRepository<ReplayDocument> {
@@ -60,36 +61,36 @@ public class ReplayMongoRepository extends AbstractServerMongoRepository<ReplayD
 
     private Criteria expiredWithStorageKey(Date cutoff) {
         return new Criteria().andOperator(
-            expiredCompletedOrFailed(cutoff),
-            Criteria.where(ReplayDocumentFields.STORAGE_KEY).exists(true).nin(null, "")
+                expiredCompletedOrFailed(cutoff),
+                Criteria.where(ReplayDocumentFields.STORAGE_KEY).exists(true).nin(null, "")
         );
     }
 
     private Criteria expiredWithMissingStorageKey(Date cutoff) {
         return new Criteria().andOperator(
-            expiredCompletedOrFailed(cutoff),
-            new Criteria().orOperator(
-                Criteria.where(ReplayDocumentFields.STORAGE_KEY).exists(false),
-                Criteria.where(ReplayDocumentFields.STORAGE_KEY).is(null),
-                Criteria.where(ReplayDocumentFields.STORAGE_KEY).is("")
-            )
+                expiredCompletedOrFailed(cutoff),
+                new Criteria().orOperator(
+                        Criteria.where(ReplayDocumentFields.STORAGE_KEY).exists(false),
+                        Criteria.where(ReplayDocumentFields.STORAGE_KEY).is(null),
+                        Criteria.where(ReplayDocumentFields.STORAGE_KEY).is("")
+                )
         );
     }
 
     private Criteria expiredCompletedOrFailed(Date cutoff) {
         return new Criteria().andOperator(
-            Criteria.where(ReplayDocumentFields.STATUS).in(ReplayDocument.STATUS_COMPLETE, ReplayDocument.STATUS_FAILED),
-            Criteria.where(ReplayDocumentFields.CREATED_AT).lt(cutoff)
+                Criteria.where(ReplayDocumentFields.STATUS).in(ReplayDocument.STATUS_COMPLETE, ReplayDocument.STATUS_FAILED),
+                Criteria.where(ReplayDocumentFields.CREATED_AT).lt(cutoff)
         );
     }
 
     private Criteria keysetAfter(ReplayCursor after) {
         return new Criteria().orOperator(
-            Criteria.where(ReplayDocumentFields.CREATED_AT).gt(after.createdAt()),
-            new Criteria().andOperator(
-                Criteria.where(ReplayDocumentFields.CREATED_AT).is(after.createdAt()),
-                Criteria.where(ReplayDocumentFields.ID).gt(after.id())
-            )
+                Criteria.where(ReplayDocumentFields.CREATED_AT).gt(after.createdAt()),
+                new Criteria().andOperator(
+                        Criteria.where(ReplayDocumentFields.CREATED_AT).is(after.createdAt()),
+                        Criteria.where(ReplayDocumentFields.ID).gt(after.id())
+                )
         );
     }
 

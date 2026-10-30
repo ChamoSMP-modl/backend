@@ -17,20 +17,13 @@ import gg.modl.backend.settings.service.PunishmentTypeService;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.dto.response.StaffResponse;
 import gg.modl.backend.staff.service.StaffService;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -44,19 +37,35 @@ public class StaffPerformanceService {
     private final StaffService staffService;
     private final PermissionService permissionService;
 
+    private static int averageResponseTimeMinutes(List<StaffDetailsResponse.TicketDetail> tickets) {
+        return averageOf(tickets.stream()
+                .map(StaffDetailsResponse.TicketDetail::responseTime)
+                .toList());
+    }
+
+    private static int averageOf(List<Integer> responseTimes) {
+        if (responseTimes.isEmpty()) {
+            return 0;
+        }
+        return (int) responseTimes.stream()
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
+    }
+
     public List<StaffPerformanceResponse> getStaffPerformance(Server server, String period) {
         Date startDate = DateRangeUtil.getStartDate(period);
 
         List<Staff> allStaff = staffMongoRepository.findAllStaff(server);
         Map<String, String> roleNamesById = permissionService.resolveRoleNames(server,
-            allStaff.stream().map(Staff::getRoleId).toList());
+                allStaff.stream().map(Staff::getRoleId).toList());
         Map<String, StaffActivityResult> activityByUsername = indexStaffActivity(
-            staffActivityAnalyticsRepository.aggregateLogActivityBySource(server, startDate));
+                staffActivityAnalyticsRepository.aggregateLogActivityBySource(server, startDate));
         Map<String, Integer> ticketResponsesByStaff = indexIdCounts(
-            staffActivityAnalyticsRepository.aggregateTicketResponseCounts(server, startDate));
+                staffActivityAnalyticsRepository.aggregateTicketResponseCounts(server, startDate));
         Map<String, Integer> punishmentsByStaff = countPunishmentsByStaff(server, startDate);
         Map<String, List<StaffTicketResponseTime>> ticketResponseTimesByStaff = indexTicketResponseTimes(
-            staffActivityAnalyticsRepository.aggregateTicketResponseTimesByStaff(server, startDate));
+                staffActivityAnalyticsRepository.aggregateTicketResponseTimesByStaff(server, startDate));
 
         List<StaffPerformanceResponse> performanceList = new ArrayList<>();
         for (Staff staff : allStaff) {
@@ -73,42 +82,42 @@ public class StaffPerformanceService {
             int moderationActions = punishmentsByStaff.getOrDefault(lowerUsername, 0);
             String minecraftUsername = staff.getAssignedMinecraftUsername();
             if (minecraftUsername != null && !minecraftUsername.isEmpty()
-                && !minecraftUsername.equalsIgnoreCase(username)) {
+                    && !minecraftUsername.equalsIgnoreCase(username)) {
                 moderationActions +=
-                    punishmentsByStaff.getOrDefault(minecraftUsername.toLowerCase(), 0);
+                        punishmentsByStaff.getOrDefault(minecraftUsername.toLowerCase(), 0);
             }
             if (staff.getId() != null) {
                 moderationActions +=
-                    punishmentsByStaff.getOrDefault(staff.getId().toLowerCase(), 0);
+                        punishmentsByStaff.getOrDefault(staff.getId().toLowerCase(), 0);
             }
 
             Date lastActive = activity != null
-                              ? activity.lastActive() : staff.getUpdatedAt();
+                    ? activity.lastActive() : staff.getUpdatedAt();
             if (ticketActions > 0 || moderationActions > 0) {
                 totalActions = Math.max(totalActions, ticketActions + moderationActions);
             }
 
             String roleName = staff.getRoleId() != null && !staff.getRoleId().isBlank()
-                              ? roleNamesById.getOrDefault(staff.getRoleId(), staff.getRoleId())
-                              : "User";
+                    ? roleNamesById.getOrDefault(staff.getRoleId(), staff.getRoleId())
+                    : "User";
             int avgResponseTime = averageOf(
-                ticketResponseTimesByStaff.getOrDefault(lowerUsername, List.of()).stream()
-                    .map(source -> calculateResponseTimeMinutes(source.ticketCreated(), source.firstReply()))
-                    .toList());
+                    ticketResponseTimesByStaff.getOrDefault(lowerUsername, List.of()).stream()
+                            .map(source -> calculateResponseTimeMinutes(source.ticketCreated(), source.firstReply()))
+                            .toList());
             performanceList.add(new StaffPerformanceResponse(
-                staff.getId(),
-                username,
-                roleName,
-                totalActions,
-                ticketActions,
-                moderationActions,
-                avgResponseTime,
-                lastActive != null ? lastActive : new Date()
+                    staff.getId(),
+                    username,
+                    roleName,
+                    totalActions,
+                    ticketActions,
+                    moderationActions,
+                    avgResponseTime,
+                    lastActive != null ? lastActive : new Date()
             ));
         }
 
         performanceList.sort(
-            (left, right) -> Integer.compare(right.totalActions(), left.totalActions()));
+                (left, right) -> Integer.compare(right.totalActions(), left.totalActions()));
         return performanceList;
     }
 
@@ -123,7 +132,7 @@ public class StaffPerformanceService {
     }
 
     private Map<String, List<StaffTicketResponseTime>> indexTicketResponseTimes(
-        List<StaffTicketResponseTime> results) {
+            List<StaffTicketResponseTime> results) {
         Map<String, List<StaffTicketResponseTime>> map = new HashMap<>();
         for (StaffTicketResponseTime result : results) {
             if (result.staff() != null) {
@@ -146,7 +155,7 @@ public class StaffPerformanceService {
     private Map<String, Integer> countPunishmentsByStaff(Server server, Date startDate) {
         Map<String, Integer> counts = new HashMap<>();
         List<IdCountResult> results =
-            staffActivityAnalyticsRepository.aggregatePunishmentCountsByIssuer(server, startDate);
+                staffActivityAnalyticsRepository.aggregatePunishmentCountsByIssuer(server, startDate);
 
         Set<String> issuerIdsToResolve = new HashSet<>();
         for (IdCountResult result : results) {
@@ -155,7 +164,7 @@ public class StaffPerformanceService {
             }
         }
         Map<String, String> resolvedIds =
-            staffMongoRepository.findUsernamesByIds(server, issuerIdsToResolve);
+                staffMongoRepository.findUsernamesByIds(server, issuerIdsToResolve);
 
         for (IdCountResult result : results) {
             if (result.id() == null) {
@@ -179,48 +188,48 @@ public class StaffPerformanceService {
             StaffResponse staff = staffOpt.get();
             staffId = staff.id();
             if (staff.assignedMinecraftUsername() != null
-                && !staff.assignedMinecraftUsername().isEmpty()
-                && !staff.assignedMinecraftUsername().equalsIgnoreCase(username)) {
+                    && !staff.assignedMinecraftUsername().isEmpty()
+                    && !staff.assignedMinecraftUsername().equalsIgnoreCase(username)) {
                 usernamesToSearch.add(staff.assignedMinecraftUsername());
             }
         }
 
         List<StaffDetailsResponse.PunishmentDetail> punishments =
-            getPunishmentDetails(server, usernamesToSearch, staffId, startDate);
+                getPunishmentDetails(server, usernamesToSearch, staffId, startDate);
         List<StaffDetailsResponse.TicketDetail> tickets =
-            getTicketDetails(server, username, startDate);
+                getTicketDetails(server, username, startDate);
         List<StaffDetailsResponse.DailyActivity> dailyActivity =
-            getDailyActivity(server, usernamesToSearch, staffId, startDate);
+                getDailyActivity(server, usernamesToSearch, staffId, startDate);
         List<StaffDetailsResponse.PunishmentTypeBreakdown> typeBreakdown =
-            getPunishmentTypeBreakdown(server, usernamesToSearch, staffId, startDate);
+                getPunishmentTypeBreakdown(server, usernamesToSearch, staffId, startDate);
 
         long evidenceUploads = auditLogRepository.countEvidenceUploads(server, username, startDate);
         int avgResponseTime = averageResponseTimeMinutes(tickets);
 
         StaffDetailsResponse.Summary summary = new StaffDetailsResponse.Summary(
-            punishments.size(),
-            tickets.size(),
-            avgResponseTime,
-            (int) evidenceUploads
+                punishments.size(),
+                tickets.size(),
+                avgResponseTime,
+                (int) evidenceUploads
         );
 
         return new StaffDetailsResponse(
-            username,
-            period,
-            punishments,
-            tickets,
-            dailyActivity,
-            typeBreakdown,
-            (int) evidenceUploads,
-            summary
+                username,
+                period,
+                punishments,
+                tickets,
+                dailyActivity,
+                typeBreakdown,
+                (int) evidenceUploads,
+                summary
         );
     }
 
     private List<StaffDetailsResponse.PunishmentDetail> getPunishmentDetails(
-        Server server, List<String> usernames, String staffId, Date startDate) {
+            Server server, List<String> usernames, String staffId, Date startDate) {
         List<StaffDetailsResponse.PunishmentDetail> details = new ArrayList<>();
         List<Document> results =
-            staffActivityAnalyticsRepository.aggregatePunishmentDetails(server, usernames, staffId, startDate);
+                staffActivityAnalyticsRepository.aggregatePunishmentDetails(server, usernames, staffId, startDate);
 
         for (Document doc : results) {
             int typeOrdinal = doc.getInteger(AuditProjectionKeys.TYPE_ORDINAL, 0);
@@ -228,60 +237,44 @@ public class StaffPerformanceService {
             Object durationObj = doc.get(AuditProjectionKeys.DURATION);
 
             details.add(new StaffDetailsResponse.PunishmentDetail(
-                doc.getString(AuditProjectionKeys.PUNISHMENT_ID),
-                doc.getString(AuditProjectionKeys.PLAYER_ID),
-                AuditDocumentUtil.extractPlayerNameFromDoc(doc),
-                punishmentTypeService.getPunishmentTypeName(server, typeOrdinal),
-                reason != null ? reason : "No reason provided",
-                durationObj != null ? durationObj.toString() : null,
-                doc.getDate("issued"),
-                !AuditDocumentUtil.hasModificationType(doc, PunishmentModificationType.REMOVE.name(), PunishmentModificationType.REVOKE.name()),
-                AuditDocumentUtil.hasModificationType(doc, PunishmentModificationType.ROLLBACK.name())
+                    doc.getString(AuditProjectionKeys.PUNISHMENT_ID),
+                    doc.getString(AuditProjectionKeys.PLAYER_ID),
+                    AuditDocumentUtil.extractPlayerNameFromDoc(doc),
+                    punishmentTypeService.getPunishmentTypeName(server, typeOrdinal),
+                    reason != null ? reason : "No reason provided",
+                    durationObj != null ? durationObj.toString() : null,
+                    doc.getDate("issued"),
+                    !AuditDocumentUtil.hasModificationType(doc, PunishmentModificationType.REMOVE.name(), PunishmentModificationType.REVOKE.name()),
+                    AuditDocumentUtil.hasModificationType(doc, PunishmentModificationType.ROLLBACK.name())
             ));
         }
         return details;
     }
 
     private List<StaffDetailsResponse.TicketDetail> getTicketDetails(
-        Server server, String username, Date startDate) {
+            Server server, String username, Date startDate) {
         List<StaffDetailsResponse.TicketDetail> details = new ArrayList<>();
         List<Document> results =
-            staffActivityAnalyticsRepository.aggregateTicketDetails(server, username, startDate);
+                staffActivityAnalyticsRepository.aggregateTicketDetails(server, username, startDate);
 
         for (Document doc : results) {
             int responseTime = calculateResponseTimeMinutes(
-                doc.getDate("ticketCreated"), doc.getDate("firstReply"));
+                    doc.getDate("ticketCreated"), doc.getDate("firstReply"));
 
             String subject = doc.getString("subject");
             String category = doc.getString("category");
             String status = doc.getString("status");
 
             details.add(new StaffDetailsResponse.TicketDetail(
-                doc.getString("_id"),
-                subject != null ? subject : "No Subject",
-                category != null ? category : "General",
-                status != null ? status : "Unknown",
-                doc.getDate("lastActivity"),
-                responseTime
+                    doc.getString("_id"),
+                    subject != null ? subject : "No Subject",
+                    category != null ? category : "General",
+                    status != null ? status : "Unknown",
+                    doc.getDate("lastActivity"),
+                    responseTime
             ));
         }
         return details;
-    }
-
-    private static int averageResponseTimeMinutes(List<StaffDetailsResponse.TicketDetail> tickets) {
-        return averageOf(tickets.stream()
-            .map(StaffDetailsResponse.TicketDetail::responseTime)
-            .toList());
-    }
-
-    private static int averageOf(List<Integer> responseTimes) {
-        if (responseTimes.isEmpty()) {
-            return 0;
-        }
-        return (int) responseTimes.stream()
-            .mapToInt(Integer::intValue)
-            .average()
-            .orElse(0);
     }
 
     private int calculateResponseTimeMinutes(Date ticketCreated, Date firstReply) {
@@ -293,47 +286,47 @@ public class StaffPerformanceService {
     }
 
     private List<StaffDetailsResponse.DailyActivity> getDailyActivity(
-        Server server, List<String> usernames, String staffId, Date startDate) {
+            Server server, List<String> usernames, String staffId, Date startDate) {
         Map<String, StaffDetailsResponse.DailyActivity> activityByDate = new HashMap<>();
 
         List<IdCountResult> punishmentResults =
-            staffActivityAnalyticsRepository.aggregateDailyPunishmentCounts(
-                server, usernames, staffId, startDate);
+                staffActivityAnalyticsRepository.aggregateDailyPunishmentCounts(
+                        server, usernames, staffId, startDate);
         for (IdCountResult result : punishmentResults) {
             activityByDate.put(result.id(),
-                new StaffDetailsResponse.DailyActivity(result.id(), result.count(), 0, 0));
+                    new StaffDetailsResponse.DailyActivity(result.id(), result.count(), 0, 0));
         }
 
         List<IdCountResult> ticketResults =
-            staffActivityAnalyticsRepository.aggregateDailyTicketResponseCounts(
-                server, usernames.get(0), startDate);
+                staffActivityAnalyticsRepository.aggregateDailyTicketResponseCounts(
+                        server, usernames.get(0), startDate);
         for (IdCountResult result : ticketResults) {
             StaffDetailsResponse.DailyActivity existing = activityByDate.get(result.id());
             if (existing != null) {
                 activityByDate.put(result.id(), new StaffDetailsResponse.DailyActivity(
-                    result.id(), existing.punishments(), result.count(), existing.evidence()));
+                        result.id(), existing.punishments(), result.count(), existing.evidence()));
             } else {
                 activityByDate.put(result.id(),
-                    new StaffDetailsResponse.DailyActivity(result.id(), 0, result.count(), 0));
+                        new StaffDetailsResponse.DailyActivity(result.id(), 0, result.count(), 0));
             }
         }
 
         return activityByDate.values()
-            .stream()
-            .sorted(Comparator.comparing(StaffDetailsResponse.DailyActivity::date))
-            .toList();
+                .stream()
+                .sorted(Comparator.comparing(StaffDetailsResponse.DailyActivity::date))
+                .toList();
     }
 
     private List<StaffDetailsResponse.PunishmentTypeBreakdown> getPunishmentTypeBreakdown(
-        Server server, List<String> usernames, String staffId, Date startDate) {
+            Server server, List<String> usernames, String staffId, Date startDate) {
         List<StaffDetailsResponse.PunishmentTypeBreakdown> breakdown = new ArrayList<>();
         List<OrdinalCountResult> results =
-            staffActivityAnalyticsRepository.aggregatePunishmentTypeBreakdown(
-                server, usernames, staffId, startDate);
+                staffActivityAnalyticsRepository.aggregatePunishmentTypeBreakdown(
+                        server, usernames, staffId, startDate);
 
         for (OrdinalCountResult result : results) {
             String typeName = punishmentTypeService.getPunishmentTypeName(
-                server, result.id() != null ? result.id() : 0);
+                    server, result.id() != null ? result.id() : 0);
             breakdown.add(new StaffDetailsResponse.PunishmentTypeBreakdown(typeName, result.count()));
         }
         return breakdown;

@@ -3,20 +3,14 @@ package gg.modl.backend.realtime.transport;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Timestamp;
 import gg.modl.backend.realtime.config.RealtimeProperties;
-import gg.modl.proto.modl.v1.ErrorCode;
-import gg.modl.proto.modl.v1.Heartbeat;
-import gg.modl.proto.modl.v1.RealtimeEnvelope;
-import gg.modl.proto.modl.v1.ReconnectAction;
-import gg.modl.proto.modl.v1.ReconnectAdvice;
-import gg.modl.proto.modl.v1.ReconnectReason;
-import gg.modl.proto.modl.v1.ServerHello;
-import gg.modl.proto.modl.v1.Topic;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.UUID;
+import gg.modl.proto.modl.v1.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
+
+import java.time.Instant;
+import java.util.Collection;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -36,11 +30,11 @@ public class RealtimeCodec {
 
     public BinaryMessage serverHello(String connectionId, Collection<Topic> acceptedTopics) {
         ServerHello hello = ServerHello.newBuilder()
-            .setProtocolVersion(properties.getProtocolVersion())
-            .setConnectionId(connectionId)
-            .addAllAcceptedTopics(acceptedTopics)
-            .setServerTime(Instant.now().toString())
-            .build();
+                .setProtocolVersion(properties.getProtocolVersion())
+                .setConnectionId(connectionId)
+                .addAllAcceptedTopics(acceptedTopics)
+                .setServerTime(Instant.now().toString())
+                .build();
 
         return toMessage(baseEnvelope().setServerHello(hello).build());
     }
@@ -56,30 +50,30 @@ public class RealtimeCodec {
     public BinaryMessage heartbeat(long sequence) {
         Instant now = Instant.now();
         return toMessage(RealtimeEnvelope.newBuilder()
-            .setProtocolVersion(properties.getProtocolVersion())
-            .setTimestamp(Timestamp.newBuilder()
-                .setSeconds(now.getEpochSecond())
-                .setNanos(now.getNano())
-                .build())
-            .setHeartbeat(Heartbeat.newBuilder().setSequence(sequence))
-            .build());
+                .setProtocolVersion(properties.getProtocolVersion())
+                .setTimestamp(Timestamp.newBuilder()
+                        .setSeconds(now.getEpochSecond())
+                        .setNanos(now.getNano())
+                        .build())
+                .setHeartbeat(Heartbeat.newBuilder().setSequence(sequence))
+                .build());
     }
 
     public BinaryMessage error(ErrorCode code, String message) {
         gg.modl.proto.modl.v1.Error error = gg.modl.proto.modl.v1.Error.newBuilder()
-            .setCode(code)
-            .setMessage(message)
-            .build();
+                .setCode(code)
+                .setMessage(message)
+                .build();
         return toMessage(baseEnvelope().setError(error).build());
     }
 
     public BinaryMessage deployDrainAdvice() {
         ReconnectAdvice advice = ReconnectAdvice.newBuilder()
-            .setReason(ReconnectReason.RECONNECT_REASON_DEPLOYMENT)
-            .setAction(ReconnectAction.RECONNECT_ACTION_RECONNECT)
-            .setRetryAfterMs(properties.getDeployDrainRetryAfterMs())
-            .setMessage("Realtime backend is draining for deployment; reconnect after the retry delay")
-            .build();
+                .setReason(ReconnectReason.RECONNECT_REASON_DEPLOYMENT)
+                .setAction(ReconnectAction.RECONNECT_ACTION_RECONNECT)
+                .setRetryAfterMs(properties.getDeployDrainRetryAfterMs())
+                .setMessage("Realtime backend is draining for deployment; reconnect after the retry delay")
+                .build();
         return toMessage(baseEnvelope().setReconnectAdvice(advice).build());
     }
 
@@ -94,9 +88,9 @@ public class RealtimeCodec {
         if (!builder.hasTimestamp()) {
             Instant now = Instant.now();
             builder.setTimestamp(Timestamp.newBuilder()
-                .setSeconds(now.getEpochSecond())
-                .setNanos(now.getNano())
-                .build());
+                    .setSeconds(now.getEpochSecond())
+                    .setNanos(now.getNano())
+                    .build());
         }
         return builder.build();
     }
@@ -113,12 +107,12 @@ public class RealtimeCodec {
     private RealtimeEnvelope.Builder baseEnvelope() {
         Instant now = Instant.now();
         return RealtimeEnvelope.newBuilder()
-            .setEventId(UUID.randomUUID().toString())
-            .setProtocolVersion(properties.getProtocolVersion())
-            .setTimestamp(Timestamp.newBuilder()
-                .setSeconds(now.getEpochSecond())
-                .setNanos(now.getNano())
-                .build());
+                .setEventId(UUID.randomUUID().toString())
+                .setProtocolVersion(properties.getProtocolVersion())
+                .setTimestamp(Timestamp.newBuilder()
+                        .setSeconds(now.getEpochSecond())
+                        .setNanos(now.getNano())
+                        .build());
     }
 
     private BinaryMessage toMessage(RealtimeEnvelope envelope) {

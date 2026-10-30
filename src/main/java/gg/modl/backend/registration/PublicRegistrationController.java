@@ -5,31 +5,19 @@ import gg.modl.backend.auth.session.SessionService;
 import gg.modl.backend.beta.SubdomainValidator;
 import gg.modl.backend.infrastructure.rest.RESTMappingV1;
 import gg.modl.backend.infrastructure.rest.RequestUtil;
+import gg.modl.backend.infrastructure.util.CookieUtil;
 import gg.modl.backend.server.ServerService;
 import gg.modl.backend.server.data.ProvisioningStatus;
 import gg.modl.backend.server.data.Server;
-import gg.modl.backend.infrastructure.util.CookieUtil;
-import gg.modl.proto.modl.v1.AutoLoginRequest;
-import gg.modl.proto.modl.v1.CliRegistrationRequest;
-import gg.modl.proto.modl.v1.CliSetupStatusRequest;
-import gg.modl.proto.modl.v1.EmailVerificationTokenRequest;
-import gg.modl.proto.modl.v1.ProvisioningTokenRequest;
-import gg.modl.proto.modl.v1.PublicRegistrationRequest;
-import gg.modl.proto.modl.v1.ServerAvailabilityRequest;
-import gg.modl.proto.modl.v1.ServerAvailabilityResponse;
-import gg.modl.proto.modl.v1.SetupStatusRequest;
+import gg.modl.proto.modl.v1.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Date;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @RestController
 @RequestMapping(RESTMappingV1.PUBLIC_REGISTRATION)
@@ -45,12 +33,12 @@ public class PublicRegistrationController {
     private final SubdomainValidator subdomainValidator;
 
     public PublicRegistrationController(
-        @Value("${modl.registration.cli-turnstile-required:false}") boolean cliTurnstileRequired,
-        ServerService serverService,
-        SessionService sessionService,
-        RegistrationService registrationService,
-        CookieUtil cookieUtil,
-        SubdomainValidator subdomainValidator
+            @Value("${modl.registration.cli-turnstile-required:false}") boolean cliTurnstileRequired,
+            ServerService serverService,
+            SessionService sessionService,
+            RegistrationService registrationService,
+            CookieUtil cookieUtil,
+            SubdomainValidator subdomainValidator
     ) {
         this.cliTurnstileRequired = cliTurnstileRequired;
         this.serverService = serverService;
@@ -62,27 +50,27 @@ public class PublicRegistrationController {
 
     @PostMapping
     public ResponseEntity<?> register(
-        HttpServletRequest request,
-        @RequestBody PublicRegistrationRequest requestData) {
+            HttpServletRequest request,
+            @RequestBody PublicRegistrationRequest requestData) {
 
         RegistrationService.RegistrationCommand command = new RegistrationService.RegistrationCommand(
-            RegistrationService.RegistrationChannel.WEB,
-            true,
-            requestData.getTurnstileToken(),
-            RequestUtil.getClientIp(request),
-            requestData.getEmail(),
-            requestData.getServerName(),
-            requestData.getCustomDomain()
+                RegistrationService.RegistrationChannel.WEB,
+                true,
+                requestData.getTurnstileToken(),
+                RequestUtil.getClientIp(request),
+                requestData.getEmail(),
+                requestData.getServerName(),
+                requestData.getCustomDomain()
         );
 
         return switch (registrationService.performRegistration(command)) {
             case RegistrationService.RegistrationOutcome.Rejected rejected -> toRejectionResponse(rejected);
             case RegistrationService.RegistrationOutcome.Created created -> ResponseEntity.status(201).body(
-                RegistrationProtoMapper.toRegistrationResponse(
-                    true,
-                    "Registration successful. Please check your email to verify your account.",
-                    created.server()
-                ));
+                    RegistrationProtoMapper.toRegistrationResponse(
+                            true,
+                            "Registration successful. Please check your email to verify your account.",
+                            created.server()
+                    ));
         };
     }
 
@@ -99,13 +87,13 @@ public class PublicRegistrationController {
     private ResponseEntity<?> verifyEmailInternal(String token) {
         if (token == null || token.isBlank()) {
             return ResponseEntity.badRequest().body(RegistrationProtoMapper.toEmailVerificationResponse(
-                false, "Verification token is required.", null, null));
+                    false, "Verification token is required.", null, null));
         }
 
         Server server = serverService.verifyEmailToken(token);
         if (server == null) {
             return ResponseEntity.badRequest().body(RegistrationProtoMapper.toEmailVerificationResponse(
-                false, "Invalid or expired verification token.", null, null));
+                    false, "Invalid or expired verification token.", null, null));
         }
 
         String autoLoginToken = registrationService.generateToken();
@@ -113,10 +101,10 @@ public class PublicRegistrationController {
         serverService.setAutoLoginToken(server, autoLoginToken, tokenExpiry);
 
         return ResponseEntity.ok(RegistrationProtoMapper.toEmailVerificationResponse(
-            true,
-            "Email verified successfully.",
-            server.getCustomDomain(),
-            autoLoginToken
+                true,
+                "Email verified successfully.",
+                server.getCustomDomain(),
+                autoLoginToken
         ));
     }
 
@@ -133,38 +121,38 @@ public class PublicRegistrationController {
     private ResponseEntity<?> getSetupStatusInternal(String token) {
         if (token == null || token.isBlank()) {
             return ResponseEntity.badRequest().body(RegistrationProtoMapper.toSetupStatusResponse(
-                null, null, false, null, "Token is required."
+                    null, null, false, null, "Token is required."
             ));
         }
 
         Server server = serverService.getServerByAutoLoginToken(token);
         if (server == null) {
             return ResponseEntity.badRequest().body(RegistrationProtoMapper.toSetupStatusResponse(
-                null, null, false, null, "Invalid or expired setup token."
+                    null, null, false, null, "Invalid or expired setup token."
             ));
         }
 
         if (registrationService.isTokenExpired(server)) {
             return ResponseEntity.badRequest().body(RegistrationProtoMapper.toSetupStatusResponse(
-                server.getCustomDomain(), server.getServerName(),
-                server.getEmailVerified(), null, "Setup token has expired. Please request a new verification email."
+                    server.getCustomDomain(), server.getServerName(),
+                    server.getEmailVerified(), null, "Setup token has expired. Please request a new verification email."
             ));
         }
 
         return ResponseEntity.ok(RegistrationProtoMapper.toSetupStatusResponse(
-            server.getCustomDomain(),
-            server.getServerName(),
-            server.getEmailVerified(),
-            server.getProvisioningStatus() != null ? server.getProvisioningStatus() : ProvisioningStatus.PENDING,
-            registrationService.getProvisioningMessage(server.getProvisioningStatus())
+                server.getCustomDomain(),
+                server.getServerName(),
+                server.getEmailVerified(),
+                server.getProvisioningStatus() != null ? server.getProvisioningStatus() : ProvisioningStatus.PENDING,
+                registrationService.getProvisioningMessage(server.getProvisioningStatus())
         ));
     }
 
     @PostMapping("/auto-login")
     public ResponseEntity<?> autoLogin(
-        @RequestBody AutoLoginRequest request,
-        HttpServletRequest httpRequest,
-        HttpServletResponse response) {
+            @RequestBody AutoLoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse response) {
 
         Server server = serverService.getServerByAutoLoginToken(request.getToken());
         if (server == null) {
@@ -173,7 +161,7 @@ public class PublicRegistrationController {
 
         if (registrationService.isTokenExpired(server)) {
             return ResponseEntity.badRequest().body(RegistrationProtoMapper.toAutoLoginResponse(
-                false, "Setup token has expired. Please sign in manually.", null
+                    false, "Setup token has expired. Please sign in manually.", null
             ));
         }
 
@@ -193,7 +181,7 @@ public class PublicRegistrationController {
         }
 
         AuthSessionData session = sessionService.createSession(server, server.getAdminEmail(), RequestUtil.getClientIp(httpRequest),
-            httpRequest.getHeader("User-Agent"));
+                httpRequest.getHeader("User-Agent"));
 
         response.addCookie(cookieUtil.createSessionCookie(session.getId()));
 
@@ -202,17 +190,17 @@ public class PublicRegistrationController {
 
     @PostMapping("/cli")
     public ResponseEntity<?> registerCli(
-        HttpServletRequest request,
-        @RequestBody CliRegistrationRequest requestData) {
+            HttpServletRequest request,
+            @RequestBody CliRegistrationRequest requestData) {
 
         RegistrationService.RegistrationCommand command = new RegistrationService.RegistrationCommand(
-            RegistrationService.RegistrationChannel.CLI,
-            cliTurnstileRequired,
-            request.getHeader(CLI_TURNSTILE_TOKEN_HEADER),
-            RequestUtil.getClientIp(request),
-            requestData.getEmail(),
-            requestData.getServerName(),
-            requestData.getCustomDomain()
+                RegistrationService.RegistrationChannel.CLI,
+                cliTurnstileRequired,
+                request.getHeader(CLI_TURNSTILE_TOKEN_HEADER),
+                RequestUtil.getClientIp(request),
+                requestData.getEmail(),
+                requestData.getServerName(),
+                requestData.getCustomDomain()
         );
 
         return switch (registrationService.performRegistration(command)) {
@@ -222,10 +210,10 @@ public class PublicRegistrationController {
                 String cliSetupToken = registrationService.generateToken();
                 serverService.setCliSetupToken(server, cliSetupToken);
                 yield ResponseEntity.status(201).body(RegistrationProtoMapper.toCliRegistrationResponse(
-                    true,
-                    "Registration successful. Please check your email to verify your account.",
-                    server,
-                    cliSetupToken
+                        true,
+                        "Registration successful. Please check your email to verify your account.",
+                        server,
+                        cliSetupToken
                 ));
             }
         };
@@ -236,13 +224,13 @@ public class PublicRegistrationController {
         Server server = serverService.getServerByCliSetupToken(request.getToken());
         if (server == null) {
             return ResponseEntity.badRequest().body(RegistrationProtoMapper.toCliSetupStatusResponse(
-                false, null, null, null, "Invalid or expired setup token."
+                    false, null, null, null, "Invalid or expired setup token."
             ));
         }
 
         boolean emailVerified = Boolean.TRUE.equals(server.getEmailVerified());
         ProvisioningStatus status = server.getProvisioningStatus() != null
-            ? server.getProvisioningStatus() : ProvisioningStatus.PENDING;
+                ? server.getProvisioningStatus() : ProvisioningStatus.PENDING;
         boolean complete = emailVerified && server.getProvisioningStatus() == ProvisioningStatus.COMPLETED;
 
         String apiKey = null;
@@ -254,8 +242,8 @@ public class PublicRegistrationController {
         }
 
         return ResponseEntity.ok(RegistrationProtoMapper.toCliSetupStatusResponse(
-            true, emailVerified, status, complete ? apiKey : null,
-            complete ? panelUrl : registrationService.getProvisioningMessage(server.getProvisioningStatus())
+                true, emailVerified, status, complete ? apiKey : null,
+                complete ? panelUrl : registrationService.getProvisioningMessage(server.getProvisioningStatus())
         ));
     }
 
@@ -291,7 +279,7 @@ public class PublicRegistrationController {
     private ResponseEntity<?> toRejectionResponse(RegistrationService.RegistrationOutcome.Rejected rejected) {
         RegistrationService.RegistrationRejection rejection = rejected.rejection();
         return ResponseEntity.status(rejection.status())
-            .body(RegistrationProtoMapper.toRegistrationResponse(false, rejection.message(), null));
+                .body(RegistrationProtoMapper.toRegistrationResponse(false, rejection.message(), null));
     }
 
     @PostMapping("/check-availability")
@@ -308,9 +296,9 @@ public class PublicRegistrationController {
 
         if (namePresent || domainPresent) {
             ServerService.ServerExistResult existResult = serverService.doesServerExist(
-                "",
-                namePresent ? serverName : "",
-                normalizedDomain
+                    "",
+                    namePresent ? serverName : "",
+                    normalizedDomain
             );
             if (namePresent) {
                 nameAvailable = !existResult.nameMatch();
@@ -326,9 +314,9 @@ public class PublicRegistrationController {
         }
 
         ServerAvailabilityResponse.Builder builder = ServerAvailabilityResponse.newBuilder()
-            .setEmailAvailable(true)
-            .setNameAvailable(nameAvailable)
-            .setSubdomainAvailable(subdomainAvailable);
+                .setEmailAvailable(true)
+                .setNameAvailable(nameAvailable)
+                .setSubdomainAvailable(subdomainAvailable);
         if (reserved) {
             builder.setMessage("This subdomain is reserved.");
         }

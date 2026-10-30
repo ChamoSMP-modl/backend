@@ -4,10 +4,10 @@ import gg.modl.backend.server.data.Server;
 import org.jetbrains.annotations.Nullable;
 
 public record RealtimePrincipal(
-    RealtimeClientKind clientKind,
-    Server server,
-    @Nullable String email,
-    @Nullable String serverInstanceId
+        RealtimeClientKind clientKind,
+        Server server,
+        @Nullable String email,
+        @Nullable String serverInstanceId
 ) {
     public static RealtimePrincipal panel(Server server, String email) {
         return new RealtimePrincipal(RealtimeClientKind.PANEL, server, email, null);

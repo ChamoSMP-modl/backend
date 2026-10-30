@@ -1,22 +1,18 @@
 package gg.modl.backend.admin.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.admin.dto.response.AdminAnalyticsUsage;
-import gg.modl.backend.database.mongo.repository.GlobalMongoAdminRepository;
-import gg.modl.backend.database.mongo.repository.MetricSnapshotMongoRepository;
-import gg.modl.backend.database.mongo.repository.ServerInstanceSnapshotMongoRepository;
-import gg.modl.backend.database.mongo.repository.ServerMetricsRepository;
-import gg.modl.backend.database.mongo.repository.ServerUsageRepository;
+import gg.modl.backend.database.mongo.repository.*;
 import gg.modl.backend.infrastructure.exception.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AdminAnalyticsServiceTest {
@@ -44,12 +40,12 @@ class AdminAnalyticsServiceTest {
     @BeforeEach
     void setUp() {
         adminAnalyticsService = new AdminAnalyticsService(
-            serverMetricsRepository,
-            serverUsageRepository,
-            metricSnapshotRepository,
-            serverInstanceSnapshotRepository,
-            globalMongoAdminRepository,
-            adminServerService
+                serverMetricsRepository,
+                serverUsageRepository,
+                metricSnapshotRepository,
+                serverInstanceSnapshotRepository,
+                globalMongoAdminRepository,
+                adminServerService
         );
     }
 

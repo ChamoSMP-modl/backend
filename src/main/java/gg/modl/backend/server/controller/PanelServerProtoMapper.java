@@ -13,12 +13,12 @@ final class PanelServerProtoMapper {
 
     static ProvisioningStatusResponse toProvisioningStatusResponse(Server server) {
         ProvisioningStatus status = server.getProvisioningStatus() != null
-            ? server.getProvisioningStatus() : ProvisioningStatus.PENDING;
+                ? server.getProvisioningStatus() : ProvisioningStatus.PENDING;
         return ProvisioningStatusResponse.newBuilder()
-            .setStatus(toProtoStatus(status))
-            .setServerName(stringValue(server.getServerName()))
-            .setEmailVerified(server.getEmailVerified() != null && server.getEmailVerified())
-            .build();
+                .setStatus(toProtoStatus(status))
+                .setServerName(stringValue(server.getServerName()))
+                .setEmailVerified(server.getEmailVerified() != null && server.getEmailVerified())
+                .build();
     }
 
     private static gg.modl.proto.modl.v1.ProvisioningStatus toProtoStatus(ProvisioningStatus status) {

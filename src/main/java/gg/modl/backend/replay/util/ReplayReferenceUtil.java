@@ -1,6 +1,7 @@
 package gg.modl.backend.replay.util;
 
 import gg.modl.backend.infrastructure.exception.ValidationException;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -63,8 +64,8 @@ public final class ReplayReferenceUtil {
 
     private static boolean isRawReplayId(String replayReference) {
         return !replayReference.contains("://")
-               && !replayReference.contains("/")
-               && !replayReference.contains("?")
-               && !replayReference.contains("#");
+                && !replayReference.contains("/")
+                && !replayReference.contains("?")
+                && !replayReference.contains("#");
     }
 }

@@ -4,12 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.TicketFormSettings;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 public class TicketFormSettingsService {
@@ -21,13 +18,13 @@ public class TicketFormSettingsService {
     public TicketFormSettingsService(SettingsDocumentService settingsDocumentService, ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.support = VersionedSettingsSupport.of(
-            settingsDocumentService, SETTINGS_TYPE_TICKET_FORMS, this::mapToTicketFormSettings);
+                settingsDocumentService, SETTINGS_TYPE_TICKET_FORMS, this::mapToTicketFormSettings);
     }
 
     public VersionedSettings<TicketFormSettings> patchTicketFormSettings(
-        Server server,
-        long expectedVersion,
-        TicketFormSettings newSettings
+            Server server,
+            long expectedVersion,
+            TicketFormSettings newSettings
     ) {
         TicketFormSettings merged = newSettings != null ? newSettings : getDefaultTicketFormSettings();
         ensureFormDefaults(merged);
@@ -85,8 +82,8 @@ public class TicketFormSettingsService {
         }
 
         for (TicketFormSettings.TicketForm form : List.of(
-            settings.getBug(), settings.getSupport(), settings.getApplication(),
-            settings.getPlayer(), settings.getChat()
+                settings.getBug(), settings.getSupport(), settings.getApplication(),
+                settings.getPlayer(), settings.getChat()
         )) {
             sanitizeForm(form);
         }
@@ -106,20 +103,20 @@ public class TicketFormSettingsService {
 
     private TicketFormSettings getDefaultTicketFormSettings() {
         return TicketFormSettings.builder()
-            .bug(emptyForm())
-            .support(emptyForm())
-            .application(emptyForm())
-            .player(emptyForm())
-            .chat(emptyForm())
-            .build();
+                .bug(emptyForm())
+                .support(emptyForm())
+                .application(emptyForm())
+                .player(emptyForm())
+                .chat(emptyForm())
+                .build();
     }
 
     private TicketFormSettings.TicketForm emptyForm() {
         return TicketFormSettings.TicketForm.builder()
-            .allowEmailNotifications(true)
-            .fields(new ArrayList<>())
-            .sections(new ArrayList<>())
-            .build();
+                .allowEmailNotifications(true)
+                .fields(new ArrayList<>())
+                .sections(new ArrayList<>())
+                .build();
     }
 
     public Map<String, Object> buildTicketFormsResponse(TicketFormSettings ticketForms) {
@@ -134,7 +131,8 @@ public class TicketFormSettingsService {
 
     private void putFormIfNotNull(Map<String, Object> forms, String key, TicketFormSettings.TicketForm form) {
         if (form != null) {
-            forms.put(key, objectMapper.convertValue(form, new TypeReference<Map<String, Object>>() {}));
+            forms.put(key, objectMapper.convertValue(form, new TypeReference<Map<String, Object>>() {
+            }));
         }
     }
 }

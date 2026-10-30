@@ -1,20 +1,15 @@
 package gg.modl.backend.storage.service;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.billing.service.UsageTrackingService;
 import gg.modl.backend.database.mongo.repository.ServerUsageRepository;
 import gg.modl.backend.limits.DefaultServerLimitPolicy;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class StorageQuotaServiceTest {
 
@@ -24,11 +19,11 @@ class StorageQuotaServiceTest {
         UsageTrackingService usageTrackingService = mock(UsageTrackingService.class);
         StorageSyncService storageSyncService = mock(StorageSyncService.class);
         StorageQuotaService service = new StorageQuotaService(
-            metadataService,
-            usageTrackingService,
-            new StorageUsageAccountant(mock(ServerUsageRepository.class)),
-            storageSyncService,
-            new DefaultServerLimitPolicy()
+                metadataService,
+                usageTrackingService,
+                new StorageUsageAccountant(mock(ServerUsageRepository.class)),
+                storageSyncService,
+                new DefaultServerLimitPolicy()
         );
         Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setMaxStorageLimitBytes(10_000L);
@@ -42,11 +37,11 @@ class StorageQuotaServiceTest {
     @Test
     void canUploadFallsBackToDefaultPremiumLimit() {
         StorageQuotaService service = new StorageQuotaService(
-            mock(StorageMetadataService.class),
-            mock(UsageTrackingService.class),
-            new StorageUsageAccountant(mock(ServerUsageRepository.class)),
-            mock(StorageSyncService.class),
-            new DefaultServerLimitPolicy()
+                mock(StorageMetadataService.class),
+                mock(UsageTrackingService.class),
+                new StorageUsageAccountant(mock(ServerUsageRepository.class)),
+                mock(StorageSyncService.class),
+                new DefaultServerLimitPolicy()
         );
         Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setStorageUsedBytes(0L);
@@ -58,11 +53,11 @@ class StorageQuotaServiceTest {
     void canUploadTreatsMissingCounterAsZeroAndTriggersSync() {
         StorageSyncService storageSyncService = mock(StorageSyncService.class);
         StorageQuotaService service = new StorageQuotaService(
-            mock(StorageMetadataService.class),
-            mock(UsageTrackingService.class),
-            new StorageUsageAccountant(mock(ServerUsageRepository.class)),
-            storageSyncService,
-            new DefaultServerLimitPolicy()
+                mock(StorageMetadataService.class),
+                mock(UsageTrackingService.class),
+                new StorageUsageAccountant(mock(ServerUsageRepository.class)),
+                storageSyncService,
+                new DefaultServerLimitPolicy()
         );
         Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
 
@@ -76,11 +71,11 @@ class StorageQuotaServiceTest {
         UsageTrackingService usageTrackingService = mock(UsageTrackingService.class);
         ServerUsageRepository serverRepository = mock(ServerUsageRepository.class);
         StorageQuotaService service = new StorageQuotaService(
-            metadataService,
-            usageTrackingService,
-            new StorageUsageAccountant(serverRepository),
-            mock(StorageSyncService.class),
-            new DefaultServerLimitPolicy()
+                metadataService,
+                usageTrackingService,
+                new StorageUsageAccountant(serverRepository),
+                mock(StorageSyncService.class),
+                new DefaultServerLimitPolicy()
         );
         Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
@@ -88,10 +83,10 @@ class StorageQuotaServiceTest {
         server.setStorageUsedBytes(9_000L);
         when(serverRepository.tryIncrementStorageUsedWithinLimit("server-id", 1_000L, 10_000L)).thenReturn(true);
         when(metadataService.recordReservedFile(server, "db/evidence/file.png", 1_000L, "image/png"))
-            .thenReturn(StorageMetadataService.RecordFileResult.INSERTED);
+                .thenReturn(StorageMetadataService.RecordFileResult.INSERTED);
 
         assertEquals(StorageQuotaService.ConfirmResult.SUCCESS,
-            service.confirmAndRecordFile(server, "db/evidence/file.png", 1_000L, "image/png"));
+                service.confirmAndRecordFile(server, "db/evidence/file.png", 1_000L, "image/png"));
         verify(metadataService).recordReservedFile(server, "db/evidence/file.png", 1_000L, "image/png");
     }
 
@@ -101,11 +96,11 @@ class StorageQuotaServiceTest {
         UsageTrackingService usageTrackingService = mock(UsageTrackingService.class);
         ServerUsageRepository serverRepository = mock(ServerUsageRepository.class);
         StorageQuotaService service = new StorageQuotaService(
-            metadataService,
-            usageTrackingService,
-            new StorageUsageAccountant(serverRepository),
-            mock(StorageSyncService.class),
-            new DefaultServerLimitPolicy()
+                metadataService,
+                usageTrackingService,
+                new StorageUsageAccountant(serverRepository),
+                mock(StorageSyncService.class),
+                new DefaultServerLimitPolicy()
         );
         Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
@@ -114,7 +109,7 @@ class StorageQuotaServiceTest {
         when(serverRepository.tryIncrementStorageUsedWithinLimit("server-id", 1_000L, 10_000L)).thenReturn(false);
 
         assertEquals(StorageQuotaService.ConfirmResult.QUOTA_EXCEEDED,
-            service.confirmAndRecordFile(server, "db/evidence/file.png", 1_000L, "image/png"));
+                service.confirmAndRecordFile(server, "db/evidence/file.png", 1_000L, "image/png"));
     }
 
     @Test
@@ -123,11 +118,11 @@ class StorageQuotaServiceTest {
         UsageTrackingService usageTrackingService = mock(UsageTrackingService.class);
         ServerUsageRepository serverRepository = mock(ServerUsageRepository.class);
         StorageQuotaService service = new StorageQuotaService(
-            metadataService,
-            usageTrackingService,
-            new StorageUsageAccountant(serverRepository),
-            mock(StorageSyncService.class),
-            new DefaultServerLimitPolicy()
+                metadataService,
+                usageTrackingService,
+                new StorageUsageAccountant(serverRepository),
+                mock(StorageSyncService.class),
+                new DefaultServerLimitPolicy()
         );
         Server server = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
@@ -135,10 +130,10 @@ class StorageQuotaServiceTest {
         server.setStorageUsedBytes(9_000L);
         when(serverRepository.tryIncrementStorageUsedWithinLimit("server-id", 1_000L, 10_000L)).thenReturn(true);
         when(metadataService.recordReservedFile(server, "db/evidence/file.png", 1_000L, "image/png"))
-            .thenReturn(StorageMetadataService.RecordFileResult.ALREADY_EXISTS);
+                .thenReturn(StorageMetadataService.RecordFileResult.ALREADY_EXISTS);
 
         assertEquals(StorageQuotaService.ConfirmResult.SUCCESS,
-            service.confirmAndRecordFile(server, "db/evidence/file.png", 1_000L, "image/png"));
+                service.confirmAndRecordFile(server, "db/evidence/file.png", 1_000L, "image/png"));
         verify(serverRepository).decrementStorageUsed("server-id", 1_000L);
     }
 }

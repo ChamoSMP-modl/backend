@@ -9,14 +9,14 @@ final class StaffResponseFactory {
 
     static StaffResponse of(Staff staff, String status, String roleName) {
         return new StaffResponse(
-            staff.getId(),
-            staff.getEmail(),
-            staff.getUsername(),
-            roleName,
-            status,
-            staff.getAssignedMinecraftUuid(),
-            staff.getAssignedMinecraftUsername(),
-            staff.getCreatedAt()
+                staff.getId(),
+                staff.getEmail(),
+                staff.getUsername(),
+                roleName,
+                status,
+                staff.getAssignedMinecraftUuid(),
+                staff.getAssignedMinecraftUsername(),
+                staff.getCreatedAt()
         );
     }
 }

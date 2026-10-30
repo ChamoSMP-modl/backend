@@ -1,44 +1,27 @@
 package gg.modl.backend.ticket.service;
 
-import gg.modl.backend.infrastructure.exception.ConflictException;
-import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
 import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
 import gg.modl.backend.email.EmailAddressUtil;
+import gg.modl.backend.infrastructure.exception.ConflictException;
+import gg.modl.backend.infrastructure.exception.ResourceNotFoundException;
+import gg.modl.backend.infrastructure.util.MongoKeyUtils;
+import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.QuickResponseSettings;
 import gg.modl.backend.settings.data.TicketFormSettings;
 import gg.modl.backend.settings.service.QuickResponseSettingsService;
 import gg.modl.backend.settings.service.TicketFormSettingsService;
 import gg.modl.backend.settings.service.WebhookSettingsService;
-import gg.modl.backend.ticket.data.AppealWorkflowStatus;
-import gg.modl.backend.ticket.data.Ticket;
-import gg.modl.backend.ticket.data.TicketCategory;
-import gg.modl.backend.ticket.data.TicketNote;
-import gg.modl.backend.ticket.data.TicketPriority;
-import gg.modl.backend.ticket.data.TicketReply;
-import gg.modl.backend.ticket.data.TicketStatus;
-import gg.modl.backend.ticket.dto.request.BulkTicketUpdateRequest;
-import gg.modl.backend.ticket.dto.request.CreateTicketRequest;
-import gg.modl.backend.ticket.dto.request.QuickResponseRequest;
-import gg.modl.backend.ticket.dto.request.SubmitTicketFormRequest;
-import gg.modl.backend.ticket.dto.request.UpdateTicketRequest;
+import gg.modl.backend.ticket.data.*;
+import gg.modl.backend.ticket.dto.request.*;
 import gg.modl.backend.ticket.dto.response.QuickResponseResult;
 import gg.modl.backend.ticket.dto.response.TicketResponse;
 import gg.modl.backend.ticket.util.TicketAssigneeUtil;
-import gg.modl.backend.infrastructure.util.MongoKeyUtils;
-import gg.modl.backend.infrastructure.util.UuidUtils;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,9 +35,23 @@ public class TicketService {
     private final TicketContentService contentService;
     private final WebhookSettingsService webhookSettingsService;
 
+    private static Object resolveEffectiveCreatorEmail(Object existingCreatorEmail, String requestCreatorEmail, boolean emailVerified) {
+        if (requestCreatorEmail != null && (existingCreatorEmail == null || emailVerified)) {
+            return requestCreatorEmail;
+        }
+        return existingCreatorEmail;
+    }
+
+    private static void applyLockedState(Ticket ticket, boolean locked) {
+        TicketStatus nextStatus = locked
+                ? TicketStatus.CLOSED
+                : (ticket.getStatus() == TicketStatus.UNFINISHED ? TicketStatus.UNFINISHED : TicketStatus.OPEN);
+        ticket.applyLifecycleStatus(nextStatus);
+    }
+
     public TicketResponse getTicketById(Server server, String ticketId) {
         Ticket ticket = ticketRepository.findById(server, ticketId)
-            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
         return ticketResponseAssembler.toTicketResponse(server, ticket);
     }
 
@@ -78,13 +75,13 @@ public class TicketService {
         TicketCategory ticketCategory = TicketCategory.fromCanonicalId(request.type());
 
         boolean shouldOpenImmediately = ticketCategory.isReport()
-                                        || (request.subject() != null && !request.subject().isBlank());
+                || (request.subject() != null && !request.subject().isBlank());
         TicketStatus ticketStatus = forceUnfinished
-                                    ? TicketStatus.UNFINISHED
-                                    : (shouldOpenImmediately ? TicketStatus.OPEN : TicketStatus.UNFINISHED);
+                ? TicketStatus.UNFINISHED
+                : (shouldOpenImmediately ? TicketStatus.OPEN : TicketStatus.UNFINISHED);
         String subject = (request.subject() != null && !request.subject().isBlank())
-                         ? request.subject()
-                         : ticketCategory.getDisplayName();
+                ? request.subject()
+                : ticketCategory.getDisplayName();
 
         List<String> tags = request.tags() != null ? new ArrayList<>(request.tags()) : new ArrayList<>();
 
@@ -99,23 +96,23 @@ public class TicketService {
 
         TicketContentService.FormDataProcessingResult createFormDataProcessing = contentService.processFormDataForContent(request.formData());
         List<Object> initialAttachments = contentService.mergeAttachments(
-            contentService.normalizeAttachments(request.attachments()),
-            createFormDataProcessing.attachments()
+                contentService.normalizeAttachments(request.attachments()),
+                createFormDataProcessing.attachments()
         );
 
         List<TicketReply> replies = new ArrayList<>();
         String content = contentService.buildTicketContent(request, createFormDataProcessing.formData());
         if (!content.isBlank() || !initialAttachments.isEmpty()) {
             TicketReply initialReply = TicketReply.builder()
-                .id(UUID.randomUUID().toString())
-                .name(request.creatorName() != null ? request.creatorName() : "API User")
-                .content(content)
-                .type("user")
-                .created(new Date())
-                .staff(false)
-                .attachments(initialAttachments)
-                .creatorIdentifier(request.creatorIdentifier())
-                .build();
+                    .id(UUID.randomUUID().toString())
+                    .name(request.creatorName() != null ? request.creatorName() : "API User")
+                    .content(content)
+                    .type("user")
+                    .created(new Date())
+                    .staff(false)
+                    .attachments(initialAttachments)
+                    .creatorIdentifier(request.creatorIdentifier())
+                    .build();
             replies.add(initialReply);
         }
 
@@ -124,37 +121,37 @@ public class TicketService {
         boolean emailAuth = resolveEmailAuth(server, ticketCategory, request);
 
         Ticket ticket = Ticket.builder()
-            .type(ticketCategory)
-            .subject(subject)
-            .status(ticketStatus)
-            .appealWorkflowStatus(ticketCategory.isAppeal() ? AppealWorkflowStatus.OPEN : null)
-            .creatorName(creatorDisplayName)
-            .creatorUuid(UuidUtils.normalize(request.creatorUuid()))
-            .reportedPlayer(request.reportedPlayerName())
-            .reportedPlayerUuid(UuidUtils.normalize(request.reportedPlayerUuid()))
-            .tags(tags)
-            .replies(replies)
-            .notes(new ArrayList<>())
-            .chatMessages(request.chatMessages() == null || request.chatMessages().isEmpty() ? null : contentService.sanitizeChatMessages(request.chatMessages()))
-            .formData(MongoKeyUtils.sanitizeKeys(request.formData()))
-            .data(data)
-            .locked(ticketStatus.isTerminal())
-            .priority(TicketPriority.resolveOrDefault(request.priority()))
-            .emailAuthEnabled(emailAuth)
-            .created(new Date())
-            .updatedAt(new Date())
-            .build();
+                .type(ticketCategory)
+                .subject(subject)
+                .status(ticketStatus)
+                .appealWorkflowStatus(ticketCategory.isAppeal() ? AppealWorkflowStatus.OPEN : null)
+                .creatorName(creatorDisplayName)
+                .creatorUuid(UuidUtils.normalize(request.creatorUuid()))
+                .reportedPlayer(request.reportedPlayerName())
+                .reportedPlayerUuid(UuidUtils.normalize(request.reportedPlayerUuid()))
+                .tags(tags)
+                .replies(replies)
+                .notes(new ArrayList<>())
+                .chatMessages(request.chatMessages() == null || request.chatMessages().isEmpty() ? null : contentService.sanitizeChatMessages(request.chatMessages()))
+                .formData(MongoKeyUtils.sanitizeKeys(request.formData()))
+                .data(data)
+                .locked(ticketStatus.isTerminal())
+                .priority(TicketPriority.resolveOrDefault(request.priority()))
+                .emailAuthEnabled(emailAuth)
+                .created(new Date())
+                .updatedAt(new Date())
+                .build();
 
         Ticket saved = ticketIdGenerator.insertWithUniqueId(server, ticketCategory.getTicketPrefix(), ticket);
 
         if (!forceUnfinished) {
             webhookSettingsService.sendTicketCreatedWebhook(server, Map.of(
-                "id", saved.getId(),
-                "type", ticketCategory.getDisplayName(),
-                "title", subject,
-                "priority", saved.getPriority() != null ? saved.getPriority().name() : "Normal",
-                "category", ticketCategory.getDisplayName(),
-                "submittedBy", creatorDisplayName
+                    "id", saved.getId(),
+                    "type", ticketCategory.getDisplayName(),
+                    "title", subject,
+                    "priority", saved.getPriority() != null ? saved.getPriority().name() : "Normal",
+                    "category", ticketCategory.getDisplayName(),
+                    "submittedBy", creatorDisplayName
             ));
         }
 
@@ -163,7 +160,7 @@ public class TicketService {
 
     public TicketResponse updateTicket(Server server, String ticketId, UpdateTicketRequest request, String staffEmail) {
         Ticket ticket = ticketRepository.findById(server, ticketId)
-            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
         boolean wasClosed = ticket.getStatus() != null && ticket.getStatus().isTerminal();
         ticket.setUpdatedAt(new Date());
 
@@ -196,28 +193,28 @@ public class TicketService {
         TicketReply newReply = null;
         if (request.newReply() != null) {
             newReply = TicketReply.builder()
-                .id(UUID.randomUUID().toString())
-                .name(request.newReply().name())
-                .avatar(request.newReply().avatar())
-                .content(request.newReply().content())
-                .type(request.newReply().type() != null ? request.newReply().type() : "public")
-                .created(new Date())
-                .staff(request.newReply().staff())
-                .action(request.newReply().action())
-                .attachments(request.newReply().attachments() != null ? request.newReply().attachments() : new ArrayList<>())
-                .creatorIdentifier(request.newReply().creatorIdentifier())
-                .build();
+                    .id(UUID.randomUUID().toString())
+                    .name(request.newReply().name())
+                    .avatar(request.newReply().avatar())
+                    .content(request.newReply().content())
+                    .type(request.newReply().type() != null ? request.newReply().type() : "public")
+                    .created(new Date())
+                    .staff(request.newReply().staff())
+                    .action(request.newReply().action())
+                    .attachments(request.newReply().attachments() != null ? request.newReply().attachments() : new ArrayList<>())
+                    .creatorIdentifier(request.newReply().creatorIdentifier())
+                    .build();
 
             ticket.ensureReplies().add(newReply);
         }
 
         if (request.newNote() != null) {
             TicketNote newNote = TicketNote.builder()
-                .text(request.newNote().text())
-                .issuerName(request.newNote().issuerName())
-                .issuerAvatar(request.newNote().issuerAvatar())
-                .date(new Date())
-                .build();
+                    .text(request.newNote().text())
+                    .issuerName(request.newNote().issuerName())
+                    .issuerAvatar(request.newNote().issuerAvatar())
+                    .date(new Date())
+                    .build();
 
             ticket.ensureNotes().add(newNote);
         }
@@ -275,8 +272,8 @@ public class TicketService {
 
             if (request.assignTo() != null) {
                 List<String> assignees = "none".equalsIgnoreCase(request.assignTo())
-                                         ? List.of()
-                                         : TicketAssigneeUtil.normalizeCsv(request.assignTo());
+                        ? List.of()
+                        : TicketAssigneeUtil.normalizeCsv(request.assignTo());
                 ticket.setAssignedTo(assignees);
                 hasChanges = true;
             }
@@ -311,13 +308,13 @@ public class TicketService {
         }
 
         TicketReply responseReply = TicketReply.builder()
-            .id(UUID.randomUUID().toString())
-            .name(staffUsername != null ? staffUsername : "System")
-            .content(action.getMessage())
-            .type("public")
-            .created(new Date())
-            .staff(true)
-            .build();
+                .id(UUID.randomUUID().toString())
+                .name(staffUsername != null ? staffUsername : "System")
+                .content(action.getMessage())
+                .type("public")
+                .created(new Date())
+                .staff(true)
+                .build();
         ticket.ensureReplies().add(responseReply);
         ticket.setUpdatedAt(new Date());
         boolean ticketClosed = false;
@@ -335,19 +332,19 @@ public class TicketService {
         }
 
         return new QuickResponseResult(
-            true,
-            "Quick response applied successfully",
-            ticketId,
-            action.getName(),
-            ticketClosed,
-            false,
-            action.getAppealAction()
+                true,
+                "Quick response applied successfully",
+                ticketId,
+                action.getName(),
+                ticketClosed,
+                false,
+                action.getAppealAction()
         );
     }
 
     public TicketResponse submitTicketForm(Server server, String ticketId, SubmitTicketFormRequest request, boolean emailVerified) {
         Ticket ticket = ticketRepository.findById(server, ticketId)
-            .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Ticket not found"));
         if (ticket.isLocked() || (ticket.getStatus() != null && ticket.getStatus().isTerminal())) {
             throw new ConflictException("Ticket is locked and cannot be resubmitted");
         }
@@ -360,8 +357,8 @@ public class TicketService {
         Map<String, Object> requestFormData = request.formData() != null ? request.formData() : Collections.emptyMap();
         TicketContentService.FormDataProcessingResult formDataProcessing = contentService.processFormDataForContent(requestFormData);
         List<Object> initialAttachments = contentService.mergeAttachments(
-            contentService.normalizeAttachments(request.attachments()),
-            formDataProcessing.attachments()
+                contentService.normalizeAttachments(request.attachments()),
+                formDataProcessing.attachments()
         );
 
         if (request.subject() != null) {
@@ -377,7 +374,7 @@ public class TicketService {
         }
 
         Object effectiveCreatorEmail = resolveEffectiveCreatorEmail(
-            existingCreatorEmail, contentService.resolveCreatorEmail(request), emailVerified);
+                existingCreatorEmail, contentService.resolveCreatorEmail(request), emailVerified);
         if (effectiveCreatorEmail != null) {
             existingData.put("creatorEmail", effectiveCreatorEmail);
             hasDataUpdates = true;
@@ -401,15 +398,15 @@ public class TicketService {
             String content = contentService.buildFormDataContent(formDataProcessing.formData(), request.fieldLabels());
             if (!content.isBlank() || !initialAttachments.isEmpty()) {
                 TicketReply initialReply = TicketReply.builder()
-                    .id(UUID.randomUUID().toString())
-                    .name(ticket.getCreatorName() != null ? ticket.getCreatorName() : "Player")
-                    .content(content)
-                    .type("user")
-                    .created(new Date())
-                    .staff(false)
-                    .attachments(initialAttachments)
-                    .creatorIdentifier(request.creatorIdentifier())
-                    .build();
+                        .id(UUID.randomUUID().toString())
+                        .name(ticket.getCreatorName() != null ? ticket.getCreatorName() : "Player")
+                        .content(content)
+                        .type("user")
+                        .created(new Date())
+                        .staff(false)
+                        .attachments(initialAttachments)
+                        .creatorIdentifier(request.creatorIdentifier())
+                        .build();
                 ticket.ensureReplies().add(initialReply);
             }
         }
@@ -426,15 +423,15 @@ public class TicketService {
         }
 
         TicketReply systemReply = TicketReply.builder()
-            .id(UUID.randomUUID().toString())
-            .name(issuerName)
-            .content("Report accepted - punishment has been issued.")
-            .type("public")
-            .created(new Date())
-            .staff(true)
-            .action("report_accepted")
-            .attachments(new ArrayList<>())
-            .build();
+                .id(UUID.randomUUID().toString())
+                .name(issuerName)
+                .content("Report accepted - punishment has been issued.")
+                .type("public")
+                .created(new Date())
+                .staff(true)
+                .action("report_accepted")
+                .attachments(new ArrayList<>())
+                .build();
 
         ticket.ensureReplies().add(systemReply);
         ticket.applyLifecycleStatus(TicketStatus.CLOSED);
@@ -462,9 +459,9 @@ public class TicketService {
             return Set.of();
         }
         return form.getFields().stream()
-            .map(TicketFormSettings.FormField::getId)
-            .filter(id -> id != null && !id.isBlank())
-            .collect(Collectors.toSet());
+                .map(TicketFormSettings.FormField::getId)
+                .filter(id -> id != null && !id.isBlank())
+                .collect(Collectors.toSet());
     }
 
     private boolean resolveEmailAuth(Server server, TicketCategory ticketCategory, CreateTicketRequest request) {
@@ -498,23 +495,9 @@ public class TicketService {
         }
 
         Map<String, Object> mergedFormData = ticket.getFormData() != null
-                                             ? new HashMap<>(ticket.getFormData())
-                                             : new HashMap<>();
+                ? new HashMap<>(ticket.getFormData())
+                : new HashMap<>();
         mergedFormData.putAll(sanitizedFormData);
         ticket.setFormData(mergedFormData);
-    }
-
-    private static Object resolveEffectiveCreatorEmail(Object existingCreatorEmail, String requestCreatorEmail, boolean emailVerified) {
-        if (requestCreatorEmail != null && (existingCreatorEmail == null || emailVerified)) {
-            return requestCreatorEmail;
-        }
-        return existingCreatorEmail;
-    }
-
-    private static void applyLockedState(Ticket ticket, boolean locked) {
-        TicketStatus nextStatus = locked
-                                  ? TicketStatus.CLOSED
-                                  : (ticket.getStatus() == TicketStatus.UNFINISHED ? TicketStatus.UNFINISHED : TicketStatus.OPEN);
-        ticket.applyLifecycleStatus(nextStatus);
     }
 }

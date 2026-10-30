@@ -1,12 +1,5 @@
 package gg.modl.backend.auth.filter;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.auth.AuthConfiguration;
 import gg.modl.backend.auth.session.AuthSessionData;
 import gg.modl.backend.auth.session.SessionService;
@@ -16,14 +9,18 @@ import gg.modl.backend.infrastructure.util.CookieUtil;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import jakarta.servlet.http.Cookie;
-import java.util.Date;
-import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.util.Date;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 class SessionAuthenticationFilterTest {
 
@@ -44,7 +41,7 @@ class SessionAuthenticationFilterTest {
         CookieUtil cookieUtil = new CookieUtil(authConfiguration);
         SessionAuthenticationFilter filter = new SessionAuthenticationFilter(sessionService, authConfiguration, cookieUtil);
 
-        Server server = new Server("Alpha", "alpha", "server_alpha", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Alpha", "alpha", "server_alpha", "admin@example.com", true, ServerPlan.PREMIUM);
         AuthSessionData session = new AuthSessionData("token-123", "staff@example.com", new Date(), new Date(System.currentTimeMillis() + 1000), null, null);
 
         when(sessionService.findAndRefreshSession(server, "token-123")).thenReturn(Optional.of(session));
@@ -79,7 +76,7 @@ class SessionAuthenticationFilterTest {
         CookieUtil cookieUtil = new CookieUtil(authConfiguration);
         SessionAuthenticationFilter filter = new SessionAuthenticationFilter(sessionService, authConfiguration, cookieUtil);
 
-        Server server = new Server("Custom", "custom", "server_custom", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("Custom", "custom", "server_custom", "admin@example.com", true, ServerPlan.PREMIUM);
         AuthSessionData session = new AuthSessionData("token-456", "staff@example.com", new Date(), new Date(System.currentTimeMillis() + 1000), null, null);
 
         when(sessionService.findAndRefreshSession(server, "token-456")).thenReturn(Optional.of(session));

@@ -1,14 +1,11 @@
 package gg.modl.backend.realtime.rate;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.realtime.state.RealtimeConnectionState;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class RealtimeMessageRateLimiterTest {
 

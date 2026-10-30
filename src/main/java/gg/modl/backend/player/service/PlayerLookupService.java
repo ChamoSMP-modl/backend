@@ -10,27 +10,16 @@ import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.UsernameEntry;
 import gg.modl.backend.player.data.punishment.EnforcementCategory;
 import gg.modl.backend.player.data.punishment.Punishment;
-import gg.modl.backend.player.dto.response.LinkedAccountsResult;
-import gg.modl.backend.player.dto.response.PlayerFetchResult;
-import gg.modl.backend.player.dto.response.PlayerLookupResult;
-import gg.modl.backend.player.dto.response.PlayerProfileResult;
-import gg.modl.backend.player.dto.response.PunishmentView;
+import gg.modl.backend.player.dto.response.*;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.settings.data.PunishmentType;
 import gg.modl.backend.settings.service.PunishmentTypeIndex;
 import gg.modl.backend.settings.service.PunishmentTypeService;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -94,13 +83,13 @@ public class PlayerLookupService {
     public PlayerLookupResult lookupPlayer(Server server, String query, boolean shouldQueryMojang) {
         boolean isUuid = looksLikeUuid(query);
         Player player = isUuid
-                        ? findPlayerByUuid(server, query).orElse(null)
-                        : findByUsername(server, query).orElse(null);
+                ? findPlayerByUuid(server, query).orElse(null)
+                : findByUsername(server, query).orElse(null);
 
         if (player == null && shouldQueryMojang) {
             Optional<MojangApiService.MojangProfile> profile = isUuid
-                                                               ? mojangApiService.lookupByUuid(query)
-                                                               : mojangApiService.lookupByUsername(query);
+                    ? mojangApiService.lookupByUuid(query)
+                    : mojangApiService.lookupByUsername(query);
             if (profile.isPresent()) {
                 MojangApiService.MojangProfile mojangProfile = profile.get();
                 Map<String, Object> lookupData = new LinkedHashMap<>();
@@ -111,12 +100,12 @@ public class PlayerLookupService {
                 lookupData.put("lastSeen", null);
                 lookupData.put("isOnline", false);
                 lookupData.put("punishmentStats", Map.of(
-                    "totalPunishments", 0,
-                    "activePunishments", 0,
-                    "bans", 0,
-                    "mutes", 0,
-                    "kicks", 0,
-                    "warnings", 0
+                        "totalPunishments", 0,
+                        "activePunishments", 0,
+                        "bans", 0,
+                        "mutes", 0,
+                        "kicks", 0,
+                        "warnings", 0
                 ));
                 lookupData.put("recentPunishments", List.of());
                 return new PlayerLookupResult.Found("Player found via Mojang", lookupData);
@@ -134,13 +123,13 @@ public class PlayerLookupService {
     public PlayerProfileResult lookupProfile(Server server, String query, boolean shouldQueryMojang, Integer punishmentLimit, Integer noteLimit) {
         boolean isUuid = looksLikeUuid(query);
         Player player = isUuid
-                        ? findPlayerByUuid(server, query).orElse(null)
-                        : findByUsername(server, query).orElse(null);
+                ? findPlayerByUuid(server, query).orElse(null)
+                : findByUsername(server, query).orElse(null);
 
         if (player == null && shouldQueryMojang) {
             Optional<MojangApiService.MojangProfile> mojangProfile = isUuid
-                                                                     ? mojangApiService.lookupByUuid(query)
-                                                                     : mojangApiService.lookupByUsername(query);
+                    ? mojangApiService.lookupByUuid(query)
+                    : mojangApiService.lookupByUsername(query);
             if (mojangProfile.isPresent()) {
                 Player mojangPlayer = findPlayerByUuid(server, mojangProfile.get().uuid().toString()).orElse(null);
                 if (mojangPlayer != null) {
@@ -163,54 +152,54 @@ public class PlayerLookupService {
 
     Map<String, Object> toPlayerProfile(Server server, Player player, List<PunishmentType> punishmentTypes, Integer punishmentLimit, Integer noteLimit) {
         return toPlayerProfile(server, player, punishmentTypes, punishmentLimit, noteLimit,
-            issuerNameResolver.resolveForPunishments(server, safePunishments(player)));
+                issuerNameResolver.resolveForPunishments(server, safePunishments(player)));
     }
 
     Map<String, Object> toPlayerProfile(Server server, Player player, List<PunishmentType> punishmentTypes, Integer punishmentLimit, Integer noteLimit, Map<String, String> resolvedIssuers) {
         List<Map<String, Object>> usernames = safeUsernames(player).stream()
-            .map(username -> {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("username", username.username());
-                entry.put("date", username.date());
-                return entry;
-            })
-            .toList();
+                .map(username -> {
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("username", username.username());
+                    entry.put("date", username.date());
+                    return entry;
+                })
+                .toList();
 
         List<NoteEntry> allNotes = safeNotes(player);
         List<NoteEntry> limitedNotes = limitNewestFirst(allNotes, noteLimit,
-            Comparator.comparing(NoteEntry::getDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+                Comparator.comparing(NoteEntry::getDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
         List<Map<String, Object>> notes = limitedNotes.stream()
-            .map(note -> {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("id", note.getId());
-                entry.put("text", note.getText());
-                entry.put("date", note.getDate());
-                entry.put("issuerName", note.getIssuerName());
-                entry.put("issuerId", note.getIssuerId());
-                return entry;
-            })
-            .toList();
+                .map(note -> {
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("id", note.getId());
+                    entry.put("text", note.getText());
+                    entry.put("date", note.getDate());
+                    entry.put("issuerName", note.getIssuerName());
+                    entry.put("issuerId", note.getIssuerId());
+                    return entry;
+                })
+                .toList();
 
         List<Map<String, Object>> ipAddresses = safeIpAddresses(player).stream()
-            .map(ip -> {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("country", ip.getCountry());
-                entry.put("region", ip.getRegion());
-                entry.put("asn", ip.getAsn());
-                entry.put("proxy", ip.isProxy());
-                entry.put("hosting", ip.isHosting());
-                entry.put("firstLogin", ip.getFirstLogin());
-                entry.put("logins", ip.getLogins());
-                return entry;
-            })
-            .toList();
+                .map(ip -> {
+                    Map<String, Object> entry = new LinkedHashMap<>();
+                    entry.put("country", ip.getCountry());
+                    entry.put("region", ip.getRegion());
+                    entry.put("asn", ip.getAsn());
+                    entry.put("proxy", ip.isProxy());
+                    entry.put("hosting", ip.isHosting());
+                    entry.put("firstLogin", ip.getFirstLogin());
+                    entry.put("logins", ip.getLogins());
+                    return entry;
+                })
+                .toList();
 
         List<Punishment> allPunishments = safePunishments(player);
         List<Punishment> limitedPunishments = limitNewestFirst(allPunishments, punishmentLimit,
-            Comparator.comparing(Punishment::getIssued, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
+                Comparator.comparing(Punishment::getIssued, Comparator.nullsLast(Comparator.naturalOrder())).reversed());
         List<PunishmentView> punishments = limitedPunishments.stream()
-            .map(punishment -> PunishmentMapper.toPunishmentView(punishment, punishmentTypes, resolvedIssuers))
-            .toList();
+                .map(punishment -> PunishmentMapper.toPunishmentView(punishment, punishmentTypes, resolvedIssuers))
+                .toList();
 
         List<Map<String, Object>> pendingNotifications = player.data().pendingNotifications();
 
@@ -235,19 +224,19 @@ public class PlayerLookupService {
     private Map<String, Object> buildLookupResponse(Server server, Player player, List<PunishmentType> types) {
         String currentUsername = PlayerDataUtils.extractLatestUsername(safeUsernames(player));
         List<String> previousUsernames = player.getUsernames()
-            .stream()
-            .map(UsernameEntry::username)
-            .skip(1)
-            .toList();
+                .stream()
+                .map(UsernameEntry::username)
+                .skip(1)
+                .toList();
 
         Date firstSeen = player.getUsernames().isEmpty() ? null : player.getUsernames().get(0).date();
         Date lastSeen = player.getUsernames().isEmpty() ? null : player.getUsernames().get(player.getUsernames().size() - 1).date();
 
         int totalPunishments = player.getPunishments().size();
         int activePunishments = (int) player.getPunishments()
-            .stream()
-            .filter(statusCalculator::isPunishmentActive)
-            .count();
+                .stream()
+                .filter(statusCalculator::isPunishmentActive)
+                .count();
 
         Map<Integer, PunishmentType> typesByOrdinal = PunishmentTypeIndex.byOrdinal(types);
 
@@ -272,23 +261,23 @@ public class PlayerLookupService {
         }
 
         List<Map<String, Object>> recentPunishments = player.getPunishments()
-            .stream()
-            .sorted(Comparator.comparing(Punishment::getIssued, Comparator.nullsLast(Comparator.reverseOrder())))
-            .limit(5)
-            .map(punishment -> {
-                PunishmentType matchedType = typesByOrdinal.get(punishment.getTypeOrdinal());
-                String typeName = matchedType != null ? matchedType.getName() : "Unknown";
+                .stream()
+                .sorted(Comparator.comparing(Punishment::getIssued, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(5)
+                .map(punishment -> {
+                    PunishmentType matchedType = typesByOrdinal.get(punishment.getTypeOrdinal());
+                    String typeName = matchedType != null ? matchedType.getName() : "Unknown";
 
-                Map<String, Object> response = new LinkedHashMap<>();
-                response.put("id", punishment.getId());
-                response.put("type", typeName);
-                response.put("issuer", punishment.getIssuerName());
-                response.put("issuedAt", punishment.getIssued());
-                response.put("expiresAt", statusCalculator.getEffectiveExpiry(punishment));
-                response.put("isActive", statusCalculator.isPunishmentActive(punishment));
-                return response;
-            })
-            .toList();
+                    Map<String, Object> response = new LinkedHashMap<>();
+                    response.put("id", punishment.getId());
+                    response.put("type", typeName);
+                    response.put("issuer", punishment.getIssuerName());
+                    response.put("issuedAt", punishment.getIssued());
+                    response.put("expiresAt", statusCalculator.getEffectiveExpiry(punishment));
+                    response.put("isActive", statusCalculator.isPunishmentActive(punishment));
+                    return response;
+                })
+                .toList();
 
         String baseUrl = "https://" + server.getCustomDomain();
 
@@ -300,12 +289,12 @@ public class PlayerLookupService {
         data.put("lastSeen", lastSeen);
         data.put("isOnline", player.data().isOnline());
         data.put("punishmentStats", Map.of(
-            "totalPunishments", totalPunishments,
-            "activePunishments", activePunishments,
-            "bans", bans,
-            "mutes", mutes,
-            "kicks", kicks,
-            "warnings", warnings
+                "totalPunishments", totalPunishments,
+                "activePunishments", activePunishments,
+                "bans", bans,
+                "mutes", mutes,
+                "kicks", kicks,
+                "warnings", warnings
         ));
         data.put("recentPunishments", recentPunishments);
         data.put("profileUrl", baseUrl + "/player/" + player.getMinecraftUuid());
@@ -315,13 +304,13 @@ public class PlayerLookupService {
 
     private Map<String, Object> toMojangProfile(MojangApiService.MojangProfile profile) {
         return Map.of(
-            "minecraftUuid", profile.uuid().toString(),
-            "usernames", List.of(Map.of("username", profile.name())),
-            "notes", List.of(),
-            "ipAddresses", List.of(),
-            "punishments", List.of(),
-            "pendingNotifications", List.of(),
-            "data", Map.of()
+                "minecraftUuid", profile.uuid().toString(),
+                "usernames", List.of(Map.of("username", profile.name())),
+                "notes", List.of(),
+                "ipAddresses", List.of(),
+                "punishments", List.of(),
+                "pendingNotifications", List.of(),
+                "data", Map.of()
         );
     }
 
@@ -358,9 +347,9 @@ public class PlayerLookupService {
             return values;
         }
         return values.stream()
-            .sorted(newestFirst)
-            .limit(Math.max(0, limit))
-            .toList();
+                .sorted(newestFirst)
+                .limit(Math.max(0, limit))
+                .toList();
     }
 
 
@@ -381,8 +370,8 @@ public class PlayerLookupService {
         }
 
         List<String> ips = safeIpAddresses(player).stream()
-            .map(IPEntry::getIpAddress)
-            .toList();
+                .map(IPEntry::getIpAddress)
+                .toList();
 
         List<PunishmentType> types = punishmentTypeService.getPunishmentTypes(server);
         Set<String> addedUuids = new HashSet<>();
@@ -397,16 +386,16 @@ public class PlayerLookupService {
 
         List<String> storedLinkedUuids = player.data().linkedAccountUuids();
         List<String> missingUuids = storedLinkedUuids.stream()
-            .filter(linkedUuid -> !addedUuids.contains(linkedUuid))
-            .toList();
+                .filter(linkedUuid -> !addedUuids.contains(linkedUuid))
+                .toList();
         if (!missingUuids.isEmpty()) {
             linkedPlayers.addAll(playerRepository.findByMinecraftUuids(server, missingUuids));
         }
 
         Map<String, String> resolvedIssuers = issuerNameResolver.resolveForPlayers(server, linkedPlayers);
         List<Map<String, Object>> linkedAccounts = linkedPlayers.stream()
-            .map(linked -> toPlayerProfile(server, linked, types, null, null, resolvedIssuers))
-            .toList();
+                .map(linked -> toPlayerProfile(server, linked, types, null, null, resolvedIssuers))
+                .toList();
 
         return new LinkedAccountsResult.Found(linkedAccounts, null, null, null);
     }

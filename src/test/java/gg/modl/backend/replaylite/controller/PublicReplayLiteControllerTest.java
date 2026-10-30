@@ -1,5 +1,21 @@
 package gg.modl.backend.replaylite.controller;
 
+import gg.modl.backend.infrastructure.exception.GlobalExceptionHandler;
+import gg.modl.backend.infrastructure.proto.ProtobufErrorResponseWriter;
+import gg.modl.backend.infrastructure.rest.RESTMappingV1;
+import gg.modl.backend.replaylite.service.ReplayLiteService;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -9,21 +25,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import gg.modl.backend.infrastructure.exception.GlobalExceptionHandler;
-import gg.modl.backend.infrastructure.proto.ProtobufErrorResponseWriter;
-import gg.modl.backend.infrastructure.rest.RESTMappingV1;
-import gg.modl.backend.replaylite.service.ReplayLiteService;
-import java.net.URI;
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
 class PublicReplayLiteControllerTest {
     private static final UUID REPLAY_ID = UUID.fromString("75f4b741-67df-414c-957b-a8a08222fc30");
 
@@ -32,10 +33,10 @@ class PublicReplayLiteControllerTest {
         ReplayLiteService service = Mockito.mock(ReplayLiteService.class);
         PublicReplayLiteController controller = new PublicReplayLiteController(service);
         when(service.getPublicReplayDownload(eq(REPLAY_ID.toString()), any()))
-            .thenReturn(Optional.of(new ReplayLiteService.ReplayLiteDownload(
-                "https://cdn.example/replay-lite/object.modlreplay",
-                Instant.parse("2026-04-25T12:00:00Z")
-            )));
+                .thenReturn(Optional.of(new ReplayLiteService.ReplayLiteDownload(
+                        "https://cdn.example/replay-lite/object.modlreplay",
+                        Instant.parse("2026-04-25T12:00:00Z")
+                )));
 
         ResponseEntity<?> response = controller.downloadReplay(REPLAY_ID, new org.springframework.mock.web.MockHttpServletRequest());
 
@@ -51,11 +52,11 @@ class PublicReplayLiteControllerTest {
     void malformedReplayIdReturnsBadRequestBeforeDownloadLookup() throws Exception {
         ReplayLiteService service = Mockito.mock(ReplayLiteService.class);
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new PublicReplayLiteController(service))
-            .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()))
-            .build();
+                .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()))
+                .build();
 
         mockMvc.perform(get(RESTMappingV1.PUBLIC_REPLAY_LITE_REPLAYS + "/not-a-uuid/download"))
-            .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest());
 
         verifyNoInteractions(service);
     }

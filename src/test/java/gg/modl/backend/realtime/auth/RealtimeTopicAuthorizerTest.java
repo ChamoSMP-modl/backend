@@ -1,22 +1,28 @@
 package gg.modl.backend.realtime.auth;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.role.service.PermissionService;
+import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.service.StaffLookupCache;
 import gg.modl.proto.modl.v1.Topic;
-import gg.modl.backend.role.service.RoleAuthorization;
-import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 class RealtimeTopicAuthorizerTest {
+
+    private static RoleAuthorization roleAuthorization(PermissionService permissionService,
+                                                       StaffLookupCache staffLookupCache) {
+        return new RoleAuthorization(permissionService, mock(StaffMongoRepository.class), staffLookupCache);
+    }
 
     @Test
     void panelTicketTopicsRequireReadPermission() {
@@ -26,15 +32,15 @@ class RealtimeTopicAuthorizerTest {
         Server server = server();
 
         Staff staff = Staff.builder()
-            .email("staff@example.com")
-            .roleId("support")
-            .build();
+                .email("staff@example.com")
+                .roleId("support")
+                .build();
         when(staffLookupCache.findByEmail(server, "staff@example.com")).thenReturn(Optional.of(staff));
         when(permissionService.hasPermission(server, "support", "ticket.view.all")).thenReturn(true);
 
         assertTrue(authorizer.canSubscribe(
-            RealtimePrincipal.panel(server, "staff@example.com"),
-            Topic.TOPIC_PANEL_TICKETS
+                RealtimePrincipal.panel(server, "staff@example.com"),
+                Topic.TOPIC_PANEL_TICKETS
         ));
     }
 
@@ -46,9 +52,9 @@ class RealtimeTopicAuthorizerTest {
         Server server = server();
 
         Staff staff = Staff.builder()
-            .email("staff@example.com")
-            .roleId("support")
-            .build();
+                .email("staff@example.com")
+                .roleId("support")
+                .build();
         when(staffLookupCache.findByEmail(server, "staff@example.com")).thenReturn(Optional.of(staff));
         when(permissionService.hasPermission(server, "support", "ticket.view.all")).thenReturn(true);
 
@@ -62,8 +68,8 @@ class RealtimeTopicAuthorizerTest {
         RealtimeTopicAuthorizer authorizer = new RealtimeTopicAuthorizer(mock(PermissionService.class), mock(RoleAuthorization.class));
 
         assertFalse(authorizer.canSubscribe(
-            RealtimePrincipal.panel(server(), "staff@example.com"),
-            Topic.TOPIC_MINECRAFT_PRESENCE
+                RealtimePrincipal.panel(server(), "staff@example.com"),
+                Topic.TOPIC_MINECRAFT_PRESENCE
         ));
     }
 
@@ -85,13 +91,8 @@ class RealtimeTopicAuthorizerTest {
     }
 
     private Server server() {
-        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.FREE);
+        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.PREMIUM);
         server.setId("server-id");
         return server;
-    }
-
-    private static RoleAuthorization roleAuthorization(PermissionService permissionService,
-                                                      StaffLookupCache staffLookupCache) {
-        return new RoleAuthorization(permissionService, mock(StaffMongoRepository.class), staffLookupCache);
     }
 }

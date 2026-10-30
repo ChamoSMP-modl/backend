@@ -5,45 +5,45 @@ import gg.modl.backend.infrastructure.rest.RESTMappingV2;
 import gg.modl.backend.infrastructure.rest.RESTMappingV3;
 import gg.modl.backend.infrastructure.rest.RouteGroups;
 import io.github.bucket4j.Bucket;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class RateLimitConfig {
 
-    private final BucketPool bucketPool;
-
     private static final Set<String> HEAVY_PANEL_WRITE_PATTERNS = Set.of(
-        "/staff/invite", "/settings", "/find-linked"
+            "/staff/invite", "/settings", "/find-linked"
     );
     private static final Set<String> HEAVY_PANEL_ANY_PATTERNS = Set.of(
-        "/dashboard/metrics", "/dashboard/activity",
-        "/dashboard/recent-punishments", "/dashboard/recent-tickets",
-        "/ticket-subscriptions/assigned-updates", "/ticket-subscriptions/updates"
+            "/dashboard/metrics", "/dashboard/activity",
+            "/dashboard/recent-punishments", "/dashboard/recent-tickets",
+            "/ticket-subscriptions/assigned-updates", "/ticket-subscriptions/updates"
     );
     private static final Set<String> HEAVY_PUBLIC_POST_PATTERNS = Set.of(
-        "/appeals", "/tickets"
+            "/appeals", "/tickets"
     );
     private static final List<PathRule> PREFIX_RULES = List.of(
-        new PathRule("/v1/webhooks/", RateLimitTier.WEBHOOK),
-        new PathRule(RESTMappingV1.PREFIX_REPLAY_LITE + "/", RateLimitTier.REPLAY_LITE_UPLOAD),
-        new PathRule(RESTMappingV1.PREFIX_MINECRAFT + "/", RateLimitTier.MINECRAFT_STANDARD),
-        new PathRule(RESTMappingV2.PREFIX_MINECRAFT + "/", RateLimitTier.MINECRAFT_STANDARD),
-        new PathRule(RESTMappingV3.PREFIX_MINECRAFT + "/", RateLimitTier.MINECRAFT_STANDARD),
-        new PathRule(RESTMappingV1.ADMIN_AUTH + "/session", RateLimitTier.ADMIN_SESSION),
-        new PathRule(RESTMappingV1.ADMIN_AUTH + "/", RateLimitTier.ADMIN_AUTH),
-        new PathRule(RESTMappingV1.ADMIN_BETA_TESTERS, RateLimitTier.ADMIN_BETA),
-        new PathRule(RESTMappingV1.PREFIX_ADMIN + "/", RateLimitTier.ADMIN_STANDARD)
+            new PathRule("/v1/webhooks/", RateLimitTier.WEBHOOK),
+            new PathRule(RESTMappingV1.PREFIX_REPLAY_LITE + "/", RateLimitTier.REPLAY_LITE_UPLOAD),
+            new PathRule(RESTMappingV1.PREFIX_MINECRAFT + "/", RateLimitTier.MINECRAFT_STANDARD),
+            new PathRule(RESTMappingV2.PREFIX_MINECRAFT + "/", RateLimitTier.MINECRAFT_STANDARD),
+            new PathRule(RESTMappingV3.PREFIX_MINECRAFT + "/", RateLimitTier.MINECRAFT_STANDARD),
+            new PathRule(RESTMappingV1.ADMIN_AUTH + "/session", RateLimitTier.ADMIN_SESSION),
+            new PathRule(RESTMappingV1.ADMIN_AUTH + "/", RateLimitTier.ADMIN_AUTH),
+            new PathRule(RESTMappingV1.ADMIN_BETA_TESTERS, RateLimitTier.ADMIN_BETA),
+            new PathRule(RESTMappingV1.PREFIX_ADMIN + "/", RateLimitTier.ADMIN_STANDARD)
     );
     private static final Map<String, RateLimitTier> EXACT_PATH_RULES = Map.of(
-        RESTMappingV1.MINECRAFT_PLAYERS + "/login", RateLimitTier.MINECRAFT_LOGIN,
-        RESTMappingV3.PREFIX_MINECRAFT + "/players/login", RateLimitTier.MINECRAFT_LOGIN
+            RESTMappingV1.MINECRAFT_PLAYERS + "/login", RateLimitTier.MINECRAFT_LOGIN,
+            RESTMappingV3.PREFIX_MINECRAFT + "/players/login", RateLimitTier.MINECRAFT_LOGIN
     );
+    private final BucketPool bucketPool;
 
     public Bucket resolveBucket(String clientKey, RateLimitTier tier) {
         return bucketPool.resolveBucket(tier.name(), clientKey, tier.getCapacity(), tier.getRefillDuration());
@@ -67,13 +67,13 @@ public class RateLimitConfig {
 
         if (path.startsWith(RESTMappingV1.PANEL_AUTH + "/")) {
             boolean sendCode = path.equals(RESTMappingV1.PANEL_AUTH + "/send-email-code")
-                               || path.equals(RESTMappingV1.PANEL_AUTH + "/email/send-code");
+                    || path.equals(RESTMappingV1.PANEL_AUTH + "/email/send-code");
             return sendCode ? RateLimitTier.AUTH_SEND_CODE : RateLimitTier.AUTH;
         }
 
         if (path.startsWith(RESTMappingV1.PANEL_MIGRATION + "/")) {
             return path.equals(RESTMappingV1.PANEL_MIGRATION + "/status") && "GET".equalsIgnoreCase(method)
-                   ? RateLimitTier.MIGRATION_STATUS : RateLimitTier.MIGRATION;
+                    ? RateLimitTier.MIGRATION_STATUS : RateLimitTier.MIGRATION;
         }
 
         if (RouteGroups.isPanelChild(path)) {
@@ -105,7 +105,7 @@ public class RateLimitConfig {
             return RateLimitTier.PUBLIC_MEDIA_UPLOAD;
         }
         if (path.startsWith(RESTMappingV1.PUBLIC_APPEALS) && isWriteMethod(method)
-            && (path.contains("/verify") || path.contains("/request-verification"))) {
+                && (path.contains("/verify") || path.contains("/request-verification"))) {
             return RateLimitTier.PUBLIC_TICKET_VERIFY;
         }
         if (path.startsWith(RESTMappingV1.PUBLIC_TICKETS) && isWriteMethod(method)) {
@@ -187,5 +187,6 @@ public class RateLimitConfig {
         }
     }
 
-    private record PathRule(String prefix, RateLimitTier tier) {}
+    private record PathRule(String prefix, RateLimitTier tier) {
+    }
 }

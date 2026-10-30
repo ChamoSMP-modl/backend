@@ -1,15 +1,5 @@
 package gg.modl.backend.realtime.schedule;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.realtime.auth.RealtimePrincipal;
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.realtime.lifecycle.RealtimeConnectionCleanup;
@@ -23,18 +13,20 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 /**
  * Guards the server -> client liveness contract. The Minecraft plugin force-reconnects when it sees
@@ -42,6 +34,26 @@ import org.springframework.web.socket.WebSocketSession;
  * without them a healthy, fully subscribed connection is torn down roughly every 100 seconds.
  */
 class RealtimeServerHeartbeatEmitterTest {
+
+    private static WebSocketSession openMockSession(String id) {
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn(id);
+        when(session.isOpen()).thenReturn(true);
+        when(session.getAttributes()).thenReturn(new ConcurrentHashMap<>());
+        return session;
+    }
+
+    private static byte[] payload(BinaryMessage message) {
+        byte[] payload = new byte[message.getPayloadLength()];
+        message.getPayload().get(payload);
+        return payload;
+    }
+
+    private static Server server(String id) {
+        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.PREMIUM);
+        server.setId(id);
+        return server;
+    }
 
     @Test
     void sendsHeartbeatToAuthenticatedSession() throws Exception {
@@ -210,19 +222,19 @@ class RealtimeServerHeartbeatEmitterTest {
         // Fixed sweep order: wedged connection first, so a sequential implementation cannot pass.
         RealtimeConnectionRegistry registry = mock(RealtimeConnectionRegistry.class);
         when(registry.snapshot()).thenReturn(List.of(
-            new RealtimeConnectionRegistry.RealtimeConnectionSnapshot("wedged", wedged, wedgedState),
-            new RealtimeConnectionRegistry.RealtimeConnectionSnapshot("healthy", healthy, healthyState)));
+                new RealtimeConnectionRegistry.RealtimeConnectionSnapshot("wedged", wedged, wedgedState),
+                new RealtimeConnectionRegistry.RealtimeConnectionSnapshot("healthy", healthy, healthyState)));
         when(registry.getSession(any(WebSocketSession.class)))
-            .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
+                .thenAnswer(invocation -> Optional.of(invocation.getArgument(0)));
         when(registry.isTerminal(any(WebSocketSession.class))).thenReturn(false);
 
         RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
         RealtimeConnectionCleanup cleanup =
-            new RealtimeConnectionCleanup(registry, new RealtimeMessageRateLimiter(properties), metrics);
+                new RealtimeConnectionCleanup(registry, new RealtimeMessageRateLimiter(properties), metrics);
         ExecutorService deliveryExecutor = Executors.newVirtualThreadPerTaskExecutor();
         RealtimeServerHeartbeatEmitter emitter = new RealtimeServerHeartbeatEmitter(
-            properties, registry, new RealtimeCodec(properties),
-            new RealtimeSessionOperations(registry, cleanup, metrics), deliveryExecutor);
+                properties, registry, new RealtimeCodec(properties),
+                new RealtimeSessionOperations(registry, cleanup, metrics), deliveryExecutor);
 
         Thread sweep = new Thread(emitter::emitHeartbeats, "heartbeat-sweep");
         sweep.setDaemon(true);
@@ -230,8 +242,8 @@ class RealtimeServerHeartbeatEmitterTest {
             sweep.start();
 
             assertTrue(
-                healthyReceived.await(5, TimeUnit.SECONDS),
-                "healthy connection must receive its heartbeat while another write is wedged");
+                    healthyReceived.await(5, TimeUnit.SECONDS),
+                    "healthy connection must receive its heartbeat while another write is wedged");
         } finally {
             releaseWedged.countDown();
             sweep.join(TimeUnit.SECONDS.toMillis(15));
@@ -254,38 +266,18 @@ class RealtimeServerHeartbeatEmitterTest {
             registry = new RealtimeConnectionRegistry(properties);
             RealtimeMetrics metrics = new RealtimeMetrics(new SimpleMeterRegistry());
             RealtimeConnectionCleanup cleanup =
-                new RealtimeConnectionCleanup(registry, new RealtimeMessageRateLimiter(properties), metrics);
+                    new RealtimeConnectionCleanup(registry, new RealtimeMessageRateLimiter(properties), metrics);
             emitter = new RealtimeServerHeartbeatEmitter(
-                properties,
-                registry,
-                new RealtimeCodec(properties),
-                new RealtimeSessionOperations(registry, cleanup, metrics),
-                runInline ? Runnable::run : deferred::add
+                    properties,
+                    registry,
+                    new RealtimeCodec(properties),
+                    new RealtimeSessionOperations(registry, cleanup, metrics),
+                    runInline ? Runnable::run : deferred::add
             );
         }
 
         private WebSocketSession openSession(String id) {
             return openMockSession(id);
         }
-    }
-
-    private static WebSocketSession openMockSession(String id) {
-        WebSocketSession session = mock(WebSocketSession.class);
-        when(session.getId()).thenReturn(id);
-        when(session.isOpen()).thenReturn(true);
-        when(session.getAttributes()).thenReturn(new ConcurrentHashMap<>());
-        return session;
-    }
-
-    private static byte[] payload(BinaryMessage message) {
-        byte[] payload = new byte[message.getPayloadLength()];
-        message.getPayload().get(payload);
-        return payload;
-    }
-
-    private static Server server(String id) {
-        Server server = new Server("server", "server", "server_db", "admin@example.com", true, ServerPlan.FREE);
-        server.setId(id);
-        return server;
     }
 }

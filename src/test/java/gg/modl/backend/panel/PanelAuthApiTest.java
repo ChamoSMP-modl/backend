@@ -1,16 +1,17 @@
 package gg.modl.backend.panel;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import gg.modl.backend.support.ApiClient;
 import gg.modl.backend.support.JsonHelper;
 import gg.modl.backend.support.StagingCredentials;
-import java.util.Map;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PanelAuthApiTest {
 
@@ -24,15 +25,18 @@ class PanelAuthApiTest {
 
     @Disabled("Skipped: would send a real email code to staging user")
     @Test
-    void sendEmailCode() throws Exception {}
+    void sendEmailCode() throws Exception {
+    }
 
     @Disabled("Skipped: requires valid email code")
     @Test
-    void verifyEmailCode() throws Exception {}
+    void verifyEmailCode() throws Exception {
+    }
 
     @Disabled("Skipped: would invalidate the test session token")
     @Test
-    void logout() throws Exception {}
+    void logout() throws Exception {
+    }
 
     @Test
     void getMe() throws Exception {
@@ -60,7 +64,7 @@ class PanelAuthApiTest {
 
         // Update with same values (idempotent)
         var response = api.panelPatch("/v1/panel/auth/profile", Map.of(
-            "username", currentUsername
+                "username", currentUsername
         ));
         JsonHelper.assertStatus(response, 200);
     }

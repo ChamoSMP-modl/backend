@@ -1,1 +1,7 @@
-{"id":"TICKET-NULL","assignedTo":[],"hasStaffResponse":false,"replyCount":0,"locked":false}
+{
+  "id": "TICKET-NULL",
+  "assignedTo": [],
+  "hasStaffResponse": false,
+  "replyCount": 0,
+  "locked": false
+}

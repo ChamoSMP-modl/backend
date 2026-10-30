@@ -8,12 +8,13 @@ import gg.modl.backend.server.data.Server;
 import gg.modl.backend.storage.service.S3StorageService;
 import gg.modl.backend.storage.service.StorageKeyUtils;
 import gg.modl.backend.storage.service.StorageMetadataService;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -72,10 +73,10 @@ public class ReplayDeletionService {
             long removedRecords = purgeReplayRecords(server, replayIds);
 
             log.info(
-                "Reconciled deleted replay storage server={} matchedKeys={} removedRecords={}",
-                server.getDatabaseName(),
-                replayKeys.size(),
-                removedRecords
+                    "Reconciled deleted replay storage server={} matchedKeys={} removedRecords={}",
+                    server.getDatabaseName(),
+                    replayKeys.size(),
+                    removedRecords
             );
             return (int) removedRecords;
         } catch (Exception e) {

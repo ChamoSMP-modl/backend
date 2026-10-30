@@ -2,25 +2,20 @@ package gg.modl.backend.database.mongo.repository;
 
 import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.AbstractServerMongoRepository;
-
 import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.PlayerFields;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.data.PlayerDataView;
 import gg.modl.backend.server.data.Server;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.regex.Pattern;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.query.Collation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Repository
 public class PlayerMongoRepository extends AbstractServerMongoRepository<Player> {
@@ -40,7 +35,7 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
 
     public Optional<Player> findByUsernameIgnoreCase(Server server, String username) {
         Query query = Query.query(Criteria.where(PlayerFields.USERNAME).is(username.trim()))
-            .collation(Collation.of("en").strength(2));
+                .collation(Collation.of("en").strength(2));
         return findOne(server, query);
     }
 
@@ -100,8 +95,8 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
         }
 
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(PlayerFields.IP_ADDRESS).in(ipAddresses),
-            Criteria.where(PlayerFields.MINECRAFT_UUID).ne(excludedUuid)
+                Criteria.where(PlayerFields.IP_ADDRESS).in(ipAddresses),
+                Criteria.where(PlayerFields.MINECRAFT_UUID).ne(excludedUuid)
         ));
         query.limit(limit);
         return find(server, query);
@@ -118,9 +113,9 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
 
     public void updateLoginState(Server server, Player player) {
         Update update = new Update()
-            .set(PlayerFields.USERNAMES, player.getUsernames())
-            .set(PlayerFields.IP_ADDRESSES, player.getIpAddresses())
-            .set(PlayerFields.DATA, player.data().asMap());
+                .set(PlayerFields.USERNAMES, player.getUsernames())
+                .set(PlayerFields.IP_ADDRESSES, player.getIpAddresses())
+                .set(PlayerFields.DATA, player.data().asMap());
         updateById(server, player.getId(), update);
     }
 
@@ -157,8 +152,8 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
         }
         Query query = Query.query(Criteria.where(PlayerFields.MINECRAFT_UUID).is(minecraftUuid));
         Update update = new Update()
-            .addToSet(PlayerFields.DATA_LINKED_ACCOUNTS).each(linkedUuids.toArray())
-            .set(PlayerFields.DATA_LAST_LINKED_UPDATE, when);
+                .addToSet(PlayerFields.DATA_LINKED_ACCOUNTS).each(linkedUuids.toArray())
+                .set(PlayerFields.DATA_LAST_LINKED_UPDATE, when);
         updateFirst(server, query, update);
     }
 
@@ -182,8 +177,8 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
     public boolean markDisconnected(Server server, String minecraftUuid, long sessionDurationMs) {
         Query query = Query.query(Criteria.where(PlayerFields.MINECRAFT_UUID).is(minecraftUuid));
         Update update = new Update()
-            .set(PlayerFields.DATA_IS_ONLINE, false)
-            .set(PlayerFields.DATA_LAST_LOGOUT, new Date());
+                .set(PlayerFields.DATA_IS_ONLINE, false)
+                .set(PlayerFields.DATA_LAST_LOGOUT, new Date());
 
         if (sessionDurationMs > 0) {
             update.inc(PlayerFields.DATA_TOTAL_PLAYTIME_SECONDS, sessionDurationMs / 1000);
@@ -201,21 +196,21 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
     public void markStalePlayersOffline(Server server, Collection<String> onlineUuids,
                                         String serverName, Date logoutTime) {
         Criteria criteria = Criteria.where(PlayerFields.DATA_IS_ONLINE).is(true)
-            .and(PlayerFields.MINECRAFT_UUID).nin(onlineUuids);
+                .and(PlayerFields.MINECRAFT_UUID).nin(onlineUuids);
         if (serverName != null && !serverName.isBlank()) {
             criteria = criteria.and(PlayerFields.DATA_LAST_SERVER).is(serverName);
         }
         Update update = new Update()
-            .set(PlayerFields.DATA_IS_ONLINE, false)
-            .set(PlayerFields.DATA_LAST_LOGOUT, logoutTime);
+                .set(PlayerFields.DATA_IS_ONLINE, false)
+                .set(PlayerFields.DATA_LAST_LOGOUT, logoutTime);
         updateMulti(server, Query.query(criteria), update);
     }
 
     private BulkOperations bulkOps(Server server) {
         return serverTemplate(server).bulkOps(
-            BulkOperations.BulkMode.UNORDERED,
-            Player.class,
-            CollectionName.PLAYERS
+                BulkOperations.BulkMode.UNORDERED,
+                Player.class,
+                CollectionName.PLAYERS
         );
     }
 
@@ -226,8 +221,8 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
         BulkOperations ops = bulkOps(server);
         for (Map.Entry<UUID, Update> entry : updatesByUuid.entrySet()) {
             ops.updateOne(
-                Query.query(Criteria.where(PlayerFields.MINECRAFT_UUID).is(entry.getKey())),
-                entry.getValue()
+                    Query.query(Criteria.where(PlayerFields.MINECRAFT_UUID).is(entry.getKey())),
+                    entry.getValue()
             );
         }
         ops.execute();
@@ -254,8 +249,8 @@ public class PlayerMongoRepository extends AbstractServerMongoRepository<Player>
             return 0;
         }
         Query query = Query.query(new Criteria().andOperator(
-            Criteria.where(PlayerFields.MINECRAFT_UUID).in(uuids),
-            Criteria.where(PlayerFields.DATA_IS_ONLINE).is(true)
+                Criteria.where(PlayerFields.MINECRAFT_UUID).in(uuids),
+                Criteria.where(PlayerFields.DATA_IS_ONLINE).is(true)
         ));
         return count(server, query);
     }

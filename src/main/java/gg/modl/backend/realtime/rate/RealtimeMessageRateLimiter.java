@@ -2,13 +2,14 @@ package gg.modl.backend.realtime.rate;
 
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.realtime.state.RealtimeConnectionState;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Component
 public class RealtimeMessageRateLimiter {

@@ -1,9 +1,5 @@
 package gg.modl.backend.rest;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import gg.modl.backend.infrastructure.exception.GlobalExceptionHandler;
 import gg.modl.backend.infrastructure.proto.ProtoBinaryHttpMessageConverter;
 import gg.modl.backend.infrastructure.proto.ProtoJsonHttpMessageConverter;
@@ -19,6 +15,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 class PublicServerValidationTest {
     private MockMvc mockMvc;
 
@@ -28,62 +28,62 @@ class PublicServerValidationTest {
         validator.afterPropertiesSet();
 
         mockMvc = MockMvcBuilders.standaloneSetup(new PublicServerController())
-            .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()), new ProtoValidationAdvice())
-            .setValidator(validator)
-            .setMessageConverters(new ProtoJsonHttpMessageConverter(), new ProtoBinaryHttpMessageConverter(), new JacksonJsonHttpMessageConverter())
-            .build();
+                .setControllerAdvice(new GlobalExceptionHandler(new ProtobufErrorResponseWriter()), new ProtoValidationAdvice())
+                .setValidator(validator)
+                .setMessageConverters(new ProtoJsonHttpMessageConverter(), new ProtoBinaryHttpMessageConverter(), new JacksonJsonHttpMessageConverter())
+                .build();
     }
 
     @Test
     void registerRejectsInvalidBodyWithCentralizedError() throws Exception {
         mockMvc.perform(post(RESTMappingV1.PUBLIC_SERVER + "/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.status").value(400))
-            .andExpect(jsonPath("$.error").value("Invalid data provided."))
-            .andExpect(jsonPath("$.errors").doesNotExist());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Invalid data provided."))
+                .andExpect(jsonPath("$.errors").doesNotExist());
     }
 
     @Test
     void registerRejectsMalformedJsonWithCentralizedError() throws Exception {
         mockMvc.perform(post(RESTMappingV1.PUBLIC_SERVER + "/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":"))
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.status").value(400))
-            .andExpect(jsonPath("$.error").value("Invalid data provided."))
-            .andExpect(jsonPath("$.errors").doesNotExist());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Invalid data provided."))
+                .andExpect(jsonPath("$.errors").doesNotExist());
     }
 
     @Test
     void legacyRegisterEndpointIsGoneForValidRequests() throws Exception {
         mockMvc.perform(post(RESTMappingV1.PUBLIC_SERVER + "/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                      "email": "admin@example.com",
-                      "serverName": "Example Server",
-                      "customDomain": "example",
-                      "turnstileToken": "token"
-                    }
-                    """))
-            .andExpect(status().isGone())
-            .andExpect(jsonPath("$.success").value(false));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "admin@example.com",
+                                  "serverName": "Example Server",
+                                  "customDomain": "example",
+                                  "turnstileToken": "token"
+                                }
+                                """))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
     void legacyAvailabilityEndpointIsGone() throws Exception {
         mockMvc.perform(post(RESTMappingV1.PUBLIC_SERVER + "/check-availability")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                      "email": "admin@example.com",
-                      "serverName": "Example Server",
-                      "customDomain": "example"
-                    }
-                    """))
-            .andExpect(status().isGone())
-            .andExpect(jsonPath("$.message").value("Use /v1/public/registration/check-availability instead."));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "admin@example.com",
+                                  "serverName": "Example Server",
+                                  "customDomain": "example"
+                                }
+                                """))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.message").value("Use /v1/public/registration/check-availability instead."));
     }
 }

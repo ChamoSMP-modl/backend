@@ -7,19 +7,15 @@ import gg.modl.backend.database.mongo.fields.ServerFields;
 import gg.modl.backend.server.data.ProvisioningStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Repository
 public class ServerAdminRepository extends AbstractGlobalMongoRepository<Server> {
@@ -33,15 +29,15 @@ public class ServerAdminRepository extends AbstractGlobalMongoRepository<Server>
     private static final String INVALID_PLAN_SENTINEL = "__invalid_plan__";
 
     private static final Set<String> ADMIN_SORT_FIELDS = Set.of(
-        ServerFields.SERVER_NAME,
-        ServerFields.CUSTOM_DOMAIN,
-        ServerFields.ADMIN_EMAIL,
-        ServerFields.PLAN,
-        ServerFields.CREATED_AT,
-        ServerFields.UPDATED_AT,
-        ServerFields.USER_COUNT,
-        ServerFields.PROVISIONING_STATUS,
-        ServerFields.LAST_ACTIVITY_AT
+            ServerFields.SERVER_NAME,
+            ServerFields.CUSTOM_DOMAIN,
+            ServerFields.ADMIN_EMAIL,
+            ServerFields.PLAN,
+            ServerFields.CREATED_AT,
+            ServerFields.UPDATED_AT,
+            ServerFields.USER_COUNT,
+            ServerFields.PROVISIONING_STATUS,
+            ServerFields.LAST_ACTIVITY_AT
     );
 
     public ServerAdminRepository(TenantMongoAccess tenantMongoAccess) {
@@ -53,17 +49,17 @@ public class ServerAdminRepository extends AbstractGlobalMongoRepository<Server>
         query.with(Sort.by(resolveSortDirection(sortOrder), resolveAdminSortField(sortField)));
         query.skip(skip).limit(limit);
         query.fields()
-            .include(ServerFields.SERVER_NAME)
-            .include(ServerFields.CUSTOM_DOMAIN)
-            .include(ServerFields.ADMIN_EMAIL)
-            .include(ServerFields.PLAN)
-            .include(ServerFields.EMAIL_VERIFIED)
-            .include(ServerFields.PROVISIONING_STATUS)
-            .include(ServerFields.CREATED_AT)
-            .include(ServerFields.UPDATED_AT)
-            .include(ServerFields.USER_COUNT)
-            .include(ServerFields.TICKET_COUNT)
-            .include(ServerFields.LAST_ACTIVITY_AT);
+                .include(ServerFields.SERVER_NAME)
+                .include(ServerFields.CUSTOM_DOMAIN)
+                .include(ServerFields.ADMIN_EMAIL)
+                .include(ServerFields.PLAN)
+                .include(ServerFields.EMAIL_VERIFIED)
+                .include(ServerFields.PROVISIONING_STATUS)
+                .include(ServerFields.CREATED_AT)
+                .include(ServerFields.UPDATED_AT)
+                .include(ServerFields.USER_COUNT)
+                .include(ServerFields.TICKET_COUNT)
+                .include(ServerFields.LAST_ACTIVITY_AT);
         return find(query);
     }
 
@@ -74,9 +70,9 @@ public class ServerAdminRepository extends AbstractGlobalMongoRepository<Server>
         if (search != null && !search.trim().isEmpty()) {
             String escapedSearch = Pattern.quote(search.trim());
             criteriaList.add(new Criteria().orOperator(
-                Criteria.where(ServerFields.SERVER_NAME).regex(escapedSearch, "i"),
-                Criteria.where(ServerFields.CUSTOM_DOMAIN).regex(escapedSearch, "i"),
-                Criteria.where(ServerFields.ADMIN_EMAIL).regex(escapedSearch, "i")
+                    Criteria.where(ServerFields.SERVER_NAME).regex(escapedSearch, "i"),
+                    Criteria.where(ServerFields.CUSTOM_DOMAIN).regex(escapedSearch, "i"),
+                    Criteria.where(ServerFields.ADMIN_EMAIL).regex(escapedSearch, "i")
             ));
         }
 
@@ -95,8 +91,9 @@ public class ServerAdminRepository extends AbstractGlobalMongoRepository<Server>
                     criteriaList.add(Criteria.where(ServerFields.EMAIL_VERIFIED).is(true));
                 }
                 case FILTER_PENDING -> criteriaList.add(Criteria.where(ServerFields.PROVISIONING_STATUS)
-                    .in(ProvisioningStatus.PENDING, ProvisioningStatus.IN_PROGRESS));
-                case FILTER_FAILED -> criteriaList.add(Criteria.where(ServerFields.PROVISIONING_STATUS).is(ProvisioningStatus.FAILED));
+                        .in(ProvisioningStatus.PENDING, ProvisioningStatus.IN_PROGRESS));
+                case FILTER_FAILED ->
+                        criteriaList.add(Criteria.where(ServerFields.PROVISIONING_STATUS).is(ProvisioningStatus.FAILED));
                 case FILTER_UNVERIFIED -> criteriaList.add(Criteria.where(ServerFields.EMAIL_VERIFIED).is(false));
                 default -> {
                 }
@@ -131,16 +128,16 @@ public class ServerAdminRepository extends AbstractGlobalMongoRepository<Server>
 
     public long bulkSuspend(List<String> serverIds, Date updatedAt) {
         Update update = new Update()
-            .set(ServerFields.PROVISIONING_STATUS, ProvisioningStatus.FAILED)
-            .set(ServerFields.UPDATED_AT, updatedAt);
+                .set(ServerFields.PROVISIONING_STATUS, ProvisioningStatus.FAILED)
+                .set(ServerFields.UPDATED_AT, updatedAt);
         return updateMulti(Query.query(Criteria.where(ServerFields.ID).in(serverIds)), update).getModifiedCount();
     }
 
     public long bulkActivate(List<String> serverIds, Date updatedAt) {
         Update update = new Update()
-            .set(ServerFields.PROVISIONING_STATUS, ProvisioningStatus.IN_PROGRESS)
-            .set(ServerFields.EMAIL_VERIFIED, true)
-            .set(ServerFields.UPDATED_AT, updatedAt);
+                .set(ServerFields.PROVISIONING_STATUS, ProvisioningStatus.IN_PROGRESS)
+                .set(ServerFields.EMAIL_VERIFIED, true)
+                .set(ServerFields.UPDATED_AT, updatedAt);
         return updateMulti(Query.query(Criteria.where(ServerFields.ID).in(serverIds)), update).getModifiedCount();
     }
 
@@ -149,16 +146,16 @@ public class ServerAdminRepository extends AbstractGlobalMongoRepository<Server>
             return findById(serverId);
         }
         return Optional.ofNullable(findAndModify(
-            Query.query(Criteria.where(ServerFields.ID).is(serverId)),
-            update,
-            FindAndModifyOptions.options().returnNew(true)
+                Query.query(Criteria.where(ServerFields.ID).is(serverId)),
+                update,
+                FindAndModifyOptions.options().returnNew(true)
         ));
     }
 
     public long bulkUpdatePlan(List<String> serverIds, ServerPlan plan, Date updatedAt) {
         Update update = new Update()
-            .set(ServerFields.PLAN, plan)
-            .set(ServerFields.UPDATED_AT, updatedAt);
+                .set(ServerFields.PLAN, plan)
+                .set(ServerFields.UPDATED_AT, updatedAt);
         return updateMulti(Query.query(Criteria.where(ServerFields.ID).in(serverIds)), update).getModifiedCount();
     }
 }

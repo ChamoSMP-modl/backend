@@ -2,20 +2,17 @@ package gg.modl.backend.cloudflare.external;
 
 import gg.modl.backend.cloudflare.config.CloudflareConfiguration;
 import gg.modl.backend.infrastructure.exception.ExternalServiceException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +22,8 @@ public class CloudflareClient {
     private static final int HOSTNAME_PAGE_SIZE = 50;
     private static final int MAX_HOSTNAME_PAGES = 200;
     private static final ParameterizedTypeReference<Map<String, Object>> MAP_RESPONSE =
-        new ParameterizedTypeReference<>() {};
+            new ParameterizedTypeReference<>() {
+            };
     private final CloudflareConfiguration config;
     private final RestTemplate restTemplate;
 
@@ -39,13 +37,13 @@ public class CloudflareClient {
             HttpHeaders headers = createHeaders();
 
             Map<String, Object> ssl = Map.of(
-                "method", "http",
-                "type", "dv"
+                    "method", "http",
+                    "type", "dv"
             );
 
             Map<String, Object> body = Map.of(
-                "hostname", hostname,
-                "ssl", ssl
+                    "hostname", hostname,
+                    "ssl", ssl
             );
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
@@ -85,9 +83,9 @@ public class CloudflareClient {
         Map<?, ?> ssl = (Map<?, ?>) result.get("ssl");
         if (ssl != null) {
             sslStatus = new CustomHostnameResult.SslStatus(
-                (String) ssl.get("status"),
-                (String) ssl.get("method"),
-                (String) ssl.get("type")
+                    (String) ssl.get("status"),
+                    (String) ssl.get("method"),
+                    (String) ssl.get("type")
             );
         }
 
@@ -100,12 +98,12 @@ public class CloudflareClient {
         }
 
         return new CustomHostnameResult(
-            id,
-            hostname,
-            status,
-            sslStatus,
-            ownershipHttpUrl,
-            ownershipHttpBody
+                id,
+                hostname,
+                status,
+                sslStatus,
+                ownershipHttpUrl,
+                ownershipHttpBody
         );
     }
 
@@ -188,11 +186,11 @@ public class CloudflareClient {
 
         while (page <= MAX_HOSTNAME_PAGES) {
             String url = CLOUDFLARE_API + "/zones/" + config.getZoneId()
-                + "/custom_hostnames?page=" + page + "&per_page=" + HOSTNAME_PAGE_SIZE;
+                    + "/custom_hostnames?page=" + page + "&per_page=" + HOSTNAME_PAGE_SIZE;
             try {
                 ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.GET, request, MAP_RESPONSE);
                 if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null
-                    || !Boolean.TRUE.equals(response.getBody().get("success"))) {
+                        || !Boolean.TRUE.equals(response.getBody().get("success"))) {
                     log.error("Cloudflare API returned non-success listing custom hostnames on page {}", page);
                     return List.of();
                 }
@@ -224,7 +222,7 @@ public class CloudflareClient {
 
     private int extractTotalPages(Map<String, Object> body) {
         if (body.get("result_info") instanceof Map<?, ?> resultInfo
-            && resultInfo.get("total_pages") instanceof Number totalPages) {
+                && resultInfo.get("total_pages") instanceof Number totalPages) {
             return totalPages.intValue();
         }
         return 1;
@@ -253,13 +251,14 @@ public class CloudflareClient {
     }
 
     public record CustomHostnameResult(
-        String id,
-        String hostname,
-        String status,
-        SslStatus ssl,
-        String ownershipVerificationHttpUrl,
-        String ownershipVerificationHttpBody
+            String id,
+            String hostname,
+            String status,
+            SslStatus ssl,
+            String ownershipVerificationHttpUrl,
+            String ownershipVerificationHttpBody
     ) {
-        public record SslStatus(String status, String method, String type) {}
+        public record SslStatus(String status, String method, String type) {
+        }
     }
 }

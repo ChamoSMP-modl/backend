@@ -22,23 +22,23 @@ public class AdminSecurityController {
 
     @GetMapping("/events")
     public ResponseEntity<?> getSecurityEvents(
-        @RequestParam(defaultValue = "1") @Min(RequestValidationLimits.PAGINATION_PAGE_MIN) int page,
-        @RequestParam(defaultValue = "50") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
-        @RequestParam(required = false) String type,
-        @RequestParam(required = false) String severity,
-        @RequestParam(required = false) String source,
-        @RequestParam(required = false) String search,
-        @RequestParam(required = false) String startDate,
-        @RequestParam(required = false) String endDate) {
+            @RequestParam(defaultValue = "1") @Min(RequestValidationLimits.PAGINATION_PAGE_MIN) int page,
+            @RequestParam(defaultValue = "50") @Min(RequestValidationLimits.PAGINATION_LIMIT_MIN) @Max(RequestValidationLimits.PAGINATION_LIMIT_MAX) int limit,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String severity,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         return ResponseEntity.ok(AdminSecurityProtoMapper.toEventsResponse(adminSecurityService.getSecurityEvents(
-            page,
-            limit,
-            type,
-            severity,
-            source,
-            search,
-            startDate,
-            endDate
+                page,
+                limit,
+                type,
+                severity,
+                source,
+                search,
+                startDate,
+                endDate
         )));
     }
 

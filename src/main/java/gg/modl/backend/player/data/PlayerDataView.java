@@ -1,17 +1,18 @@
 package gg.modl.backend.player.data;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import org.jetbrains.annotations.Nullable;
 
 public final class PlayerDataView {
     @Nullable
-    private Map<String, Object> data;
-    @Nullable
     private final Consumer<Map<String, Object>> installer;
+    @Nullable
+    private Map<String, Object> data;
 
     private PlayerDataView(@Nullable Map<String, Object> data, @Nullable Consumer<Map<String, Object>> installer) {
         this.data = data;
@@ -109,9 +110,9 @@ public final class PlayerDataView {
             return List.of();
         }
         return list.stream()
-            .filter(String.class::isInstance)
-            .map(String.class::cast)
-            .toList();
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .toList();
     }
 
     public List<Map<String, Object>> pendingNotifications() {
@@ -119,13 +120,13 @@ public final class PlayerDataView {
             return List.of();
         }
         return list.stream()
-            .filter(Map.class::isInstance)
-            .map(entry -> {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> notification = (Map<String, Object>) entry;
-                return notification;
-            })
-            .toList();
+                .filter(Map.class::isInstance)
+                .map(entry -> {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> notification = (Map<String, Object>) entry;
+                    return notification;
+                })
+                .toList();
     }
 
     public void setPendingNotifications(List<Map<String, Object>> pendingNotifications) {

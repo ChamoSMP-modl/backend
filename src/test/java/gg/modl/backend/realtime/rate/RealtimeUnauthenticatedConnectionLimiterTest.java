@@ -1,10 +1,10 @@
 package gg.modl.backend.realtime.rate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import gg.modl.backend.realtime.config.RealtimeProperties;
 import gg.modl.backend.realtime.rate.RealtimeUnauthenticatedConnectionLimiter.Admission;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RealtimeUnauthenticatedConnectionLimiterTest {
 

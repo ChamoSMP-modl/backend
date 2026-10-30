@@ -2,10 +2,11 @@ package gg.modl.backend.infrastructure.util;
 
 import gg.modl.backend.auth.AuthConfiguration;
 import jakarta.servlet.http.Cookie;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -15,9 +16,9 @@ public class CookieUtil {
 
     public Cookie createSessionCookie(String sessionId) {
         return createSessionCookie(
-            authConfiguration.getSessionCookieName(),
-            sessionId,
-            authConfiguration.getSessionDurationSeconds()
+                authConfiguration.getSessionCookieName(),
+                sessionId,
+                authConfiguration.getSessionDurationSeconds()
         );
     }
 

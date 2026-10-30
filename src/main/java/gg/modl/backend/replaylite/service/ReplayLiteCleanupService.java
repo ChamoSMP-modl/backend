@@ -6,15 +6,16 @@ import gg.modl.backend.replaylite.data.ReplayLiteDocument;
 import gg.modl.backend.replaylite.repository.ReplayLiteMongoRepository;
 import gg.modl.backend.replaylite.repository.ReplayLiteMongoRepository.ReplayLiteCursor;
 import gg.modl.backend.replaylite.storage.ReplayLiteStorageService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.function.Function;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -50,15 +51,15 @@ public class ReplayLiteCleanupService {
 
     private void drain(ReplayLitePageFinder finder, Function<ReplayLiteDocument, Instant> sortValue) {
         KeysetDrainer.<ReplayLiteDocument, ReplayLiteCursor>drain(MAX_BATCHES_PER_RUN, CLEANUP_BATCH_SIZE,
-            finder::find,
-            page -> {
-                ReplayLiteDocument last = page.get(page.size() - 1);
-                return new ReplayLiteCursor(sortValue.apply(last), last.getId());
-            },
-            page -> {
-                cleanup(page);
-                return 0L;
-            });
+                finder::find,
+                page -> {
+                    ReplayLiteDocument last = page.get(page.size() - 1);
+                    return new ReplayLiteCursor(sortValue.apply(last), last.getId());
+                },
+                page -> {
+                    cleanup(page);
+                    return 0L;
+                });
     }
 
     private void cleanup(Iterable<ReplayLiteDocument> documents) {

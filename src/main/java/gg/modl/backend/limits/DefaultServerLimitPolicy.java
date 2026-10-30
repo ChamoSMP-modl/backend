@@ -28,41 +28,34 @@ public class DefaultServerLimitPolicy implements ServerLimitPolicy {
 
     private ServerLimits betaLimits() {
         return ServerLimits.builder()
-            .maxStaffSeats(BetaLimits.MAX_STAFF_SEATS)
-            .maxStorageBytes(BetaLimits.MAX_STORAGE_BYTES)
-            .aiModerationEnabled(BetaLimits.AI_MODERATION_ENABLED)
-            .aiRequestLimit(BetaLimits.AI_REQUEST_LIMIT)
-            .customDomainAllowed(BetaLimits.CUSTOM_DOMAIN_ALLOWED)
-            .migrationFileSizeLimit(BetaLimits.MIGRATION_FILE_SIZE_LIMIT)
-            .maxUploadBytes(BetaLimits.MAX_UPLOAD_BYTES)
-            .build();
+                .maxStaffSeats(BetaLimits.MAX_STAFF_SEATS)
+                .maxStorageBytes(BetaLimits.MAX_STORAGE_BYTES)
+                .aiModerationEnabled(BetaLimits.AI_MODERATION_ENABLED)
+                .customDomainAllowed(BetaLimits.CUSTOM_DOMAIN_ALLOWED)
+                .migrationFileSizeLimit(BetaLimits.MIGRATION_FILE_SIZE_LIMIT)
+                .maxUploadBytes(BetaLimits.MAX_UPLOAD_BYTES)
+                .build();
     }
 
     private ServerLimits standardLimits(Server server) {
         boolean premium = server.getPlan() == ServerPlan.PREMIUM;
         long planBaseStorageBytes = premium ? StorageQuotaService.PREMIUM_BASE_BYTES : FREE_STORAGE_BYTES;
         long maxStorageBytes = premium && hasPositiveValue(server.getMaxStorageLimitBytes())
-            ? server.getMaxStorageLimitBytes()
-            : planBaseStorageBytes;
+                ? server.getMaxStorageLimitBytes()
+                : planBaseStorageBytes;
 
         return ServerLimits.builder()
-            .maxStaffSeats(premium ? PREMIUM_STAFF_SEATS : FREE_STAFF_SEATS)
-            .maxStorageBytes(maxStorageBytes)
-            .aiModerationEnabled(premium)
-            .aiRequestLimit(UsageTrackingService.AI_BASE_LIMIT_REQUESTS + aiOverageRequests(server))
-            .customDomainAllowed(premium || Boolean.TRUE.equals(server.getCustomDomainGrandfathered()))
-            .migrationFileSizeLimit(migrationFileSizeLimit(server))
-            .maxUploadBytes(Long.MAX_VALUE)
-            .build();
+                .maxStaffSeats(premium ? PREMIUM_STAFF_SEATS : FREE_STAFF_SEATS)
+                .maxStorageBytes(maxStorageBytes)
+                .aiModerationEnabled(premium)
+                .customDomainAllowed(premium || Boolean.TRUE.equals(server.getCustomDomainGrandfathered()))
+                .migrationFileSizeLimit(migrationFileSizeLimit(server))
+                .maxUploadBytes(Long.MAX_VALUE)
+                .build();
     }
 
     private boolean hasPositiveValue(Long value) {
         return value != null && value > 0;
-    }
-
-    private long aiOverageRequests(Server server) {
-        Long overage = server.getMaxAiOverageRequests();
-        return overage != null ? Math.max(0L, overage) : 0L;
     }
 
     private long migrationFileSizeLimit(Server server) {

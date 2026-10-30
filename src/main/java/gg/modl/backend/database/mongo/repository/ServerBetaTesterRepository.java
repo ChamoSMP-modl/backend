@@ -7,16 +7,17 @@ import gg.modl.backend.database.mongo.fields.ServerFields;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.server.data.SubscriptionStatus;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Repository
 public class ServerBetaTesterRepository extends AbstractGlobalMongoRepository<Server> {
@@ -47,25 +48,25 @@ public class ServerBetaTesterRepository extends AbstractGlobalMongoRepository<Se
         }
         String escapedSearch = Pattern.quote(search.trim());
         return new Query(new Criteria().andOperator(
-            betaCriteria,
-            new Criteria().orOperator(
-                Criteria.where(ServerFields.SERVER_NAME).regex(escapedSearch, "i"),
-                Criteria.where(ServerFields.CUSTOM_DOMAIN).regex(escapedSearch, "i"),
-                Criteria.where(ServerFields.ADMIN_EMAIL).regex(escapedSearch, "i")
-            )
+                betaCriteria,
+                new Criteria().orOperator(
+                        Criteria.where(ServerFields.SERVER_NAME).regex(escapedSearch, "i"),
+                        Criteria.where(ServerFields.CUSTOM_DOMAIN).regex(escapedSearch, "i"),
+                        Criteria.where(ServerFields.ADMIN_EMAIL).regex(escapedSearch, "i")
+                )
         ));
     }
 
     public Optional<Server> updateBetaState(String serverId, ServerPlan plan, SubscriptionStatus subscriptionStatus, boolean betaTester) {
         Update update = new Update()
-            .set(ServerFields.PLAN, plan)
-            .set(ServerFields.SUBSCRIPTION_STATUS, subscriptionStatus)
-            .set(ServerFields.BETA_TESTER, betaTester)
-            .set(ServerFields.UPDATED_AT, new Date());
+                .set(ServerFields.PLAN, plan)
+                .set(ServerFields.SUBSCRIPTION_STATUS, subscriptionStatus)
+                .set(ServerFields.BETA_TESTER, betaTester)
+                .set(ServerFields.UPDATED_AT, new Date());
         return Optional.ofNullable(findAndModify(
-            Query.query(Criteria.where(ServerFields.ID).is(serverId)),
-            update,
-            FindAndModifyOptions.options().returnNew(true)
+                Query.query(Criteria.where(ServerFields.ID).is(serverId)),
+                update,
+                FindAndModifyOptions.options().returnNew(true)
         ));
     }
 }

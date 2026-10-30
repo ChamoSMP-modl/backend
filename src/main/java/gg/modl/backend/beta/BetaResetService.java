@@ -1,35 +1,20 @@
 package gg.modl.backend.beta;
 
 import gg.modl.backend.database.CollectionName;
-import gg.modl.backend.database.mongo.repository.AuthCodeMongoRepository;
-import gg.modl.backend.database.mongo.repository.AuthSessionMongoRepository;
-import gg.modl.backend.database.mongo.repository.ChatLogMongoRepository;
-import gg.modl.backend.database.mongo.repository.CommandLogMongoRepository;
-import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
-import gg.modl.backend.database.mongo.repository.ReplayMongoRepository;
-import gg.modl.backend.database.mongo.repository.ServerLogMongoRepository;
-import gg.modl.backend.database.mongo.repository.ServerBetaTesterRepository;
-import gg.modl.backend.database.mongo.repository.ServerUsageRepository;
-import gg.modl.backend.database.mongo.repository.StorageFileMongoRepository;
-import gg.modl.backend.database.mongo.repository.TicketMongoRepository;
-import gg.modl.backend.database.mongo.repository.TicketVerificationMongoRepository;
-import gg.modl.backend.database.mongo.repository.WebAuthnChallengeMongoRepository;
+import gg.modl.backend.database.mongo.repository.*;
 import gg.modl.backend.server.ServerService;
 import gg.modl.backend.server.data.Server;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 @Service
 @RequiredArgsConstructor

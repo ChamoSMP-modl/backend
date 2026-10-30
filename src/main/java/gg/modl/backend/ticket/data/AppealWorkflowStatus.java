@@ -11,20 +11,20 @@ public enum AppealWorkflowStatus {
     APPROVED("approved", "Approved"),
     REJECTED("rejected", "Rejected");
 
+    private static final CanonicalAliasIndex<AppealWorkflowStatus> INDEX = CanonicalAliasIndex
+            .of("appeal workflow status", values(), AppealWorkflowStatus::getId)
+            .alias(UNDER_REVIEW, "underreview")
+            .alias(PENDING_PLAYER_RESPONSE, "pendingplayerresponse")
+            .alias(APPROVED, "approve")
+            .alias(APPROVED, "accepted")
+            .alias(APPROVED, "accept")
+            .alias(REJECTED, "reject")
+            .alias(REJECTED, "dismiss")
+            .alias(REJECTED, "dismissed")
+            .alias(REJECTED, "denied")
+            .alias(REJECTED, "deny");
     private final String id;
     private final String displayName;
-    private static final CanonicalAliasIndex<AppealWorkflowStatus> INDEX = CanonicalAliasIndex
-        .of("appeal workflow status", values(), AppealWorkflowStatus::getId)
-        .alias(UNDER_REVIEW, "underreview")
-        .alias(PENDING_PLAYER_RESPONSE, "pendingplayerresponse")
-        .alias(APPROVED, "approve")
-        .alias(APPROVED, "accepted")
-        .alias(APPROVED, "accept")
-        .alias(REJECTED, "reject")
-        .alias(REJECTED, "dismiss")
-        .alias(REJECTED, "dismissed")
-        .alias(REJECTED, "denied")
-        .alias(REJECTED, "deny");
 
     AppealWorkflowStatus(String id, String displayName) {
         this.id = id;

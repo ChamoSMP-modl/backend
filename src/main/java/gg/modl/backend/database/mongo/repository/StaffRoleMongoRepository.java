@@ -6,12 +6,6 @@ import gg.modl.backend.database.mongo.TenantMongoAccess;
 import gg.modl.backend.database.mongo.fields.StaffRoleFields;
 import gg.modl.backend.role.data.StaffRole;
 import gg.modl.backend.server.data.Server;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.BulkOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -19,6 +13,9 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Repository
 public class StaffRoleMongoRepository extends AbstractServerMongoRepository<StaffRole> {
@@ -28,9 +25,9 @@ public class StaffRoleMongoRepository extends AbstractServerMongoRepository<Staf
 
     public List<StaffRole> findAllOrdered(Server server) {
         Query query = new Query().with(Sort.by(
-            Sort.Direction.ASC,
-            StaffRoleFields.ORDER,
-            StaffRoleFields.CREATED_AT
+                Sort.Direction.ASC,
+                StaffRoleFields.ORDER,
+                StaffRoleFields.CREATED_AT
         ));
         return find(server, query);
     }
@@ -42,14 +39,14 @@ public class StaffRoleMongoRepository extends AbstractServerMongoRepository<Staf
 
     public boolean existsByNameIgnoreCase(Server server, String roleName) {
         return exists(server, Query.query(
-            Criteria.where(StaffRoleFields.NAME).regex("^" + Pattern.quote(roleName) + "$", "i")
+                Criteria.where(StaffRoleFields.NAME).regex("^" + Pattern.quote(roleName) + "$", "i")
         ));
     }
 
     public boolean existsByNameIgnoreCaseExcludingId(Server server, String roleName, String excludedRoleId) {
         Criteria criteria = Criteria.where(StaffRoleFields.NAME)
-            .regex("^" + Pattern.quote(roleName) + "$", "i")
-            .and(StaffRoleFields.ID).ne(excludedRoleId);
+                .regex("^" + Pattern.quote(roleName) + "$", "i")
+                .and(StaffRoleFields.ID).ne(excludedRoleId);
         return exists(server, Query.query(criteria));
     }
 
@@ -87,7 +84,7 @@ public class StaffRoleMongoRepository extends AbstractServerMongoRepository<Staf
 
     public List<StaffRole> findCustomRolesWithOrderZero(Server server) {
         Query query = Query.query(Criteria.where(StaffRoleFields.IS_DEFAULT).is(false)
-            .and(StaffRoleFields.ORDER).is(0));
+                .and(StaffRoleFields.ORDER).is(0));
         return find(server, query);
     }
 
@@ -112,7 +109,7 @@ public class StaffRoleMongoRepository extends AbstractServerMongoRepository<Staf
 
     public void bulkUpdateOrder(Server server, Map<String, Integer> orderById) {
         bulkUpdateByIds(server, new ArrayList<>(orderById.keySet()),
-            (id, index) -> new Update().set(StaffRoleFields.ORDER, orderById.get(id)));
+                (id, index) -> new Update().set(StaffRoleFields.ORDER, orderById.get(id)));
     }
 
     public void bulkRepairOrderFromZero(Server server, Map<String, Integer> orderById) {
@@ -124,8 +121,8 @@ public class StaffRoleMongoRepository extends AbstractServerMongoRepository<Staf
         BulkOperations bulk = template.bulkOps(BulkOperations.BulkMode.UNORDERED, collectionName());
         for (Map.Entry<String, Integer> entry : orderById.entrySet()) {
             Query query = Query.query(Criteria.where(StaffRoleFields.ID).is(entry.getKey())
-                .and(StaffRoleFields.ORDER).is(0)
-                .and(StaffRoleFields.IS_DEFAULT).is(false));
+                    .and(StaffRoleFields.ORDER).is(0)
+                    .and(StaffRoleFields.IS_DEFAULT).is(false));
             Update update = new Update().set(StaffRoleFields.ORDER, entry.getValue());
             bulk.updateOne(query, update);
         }

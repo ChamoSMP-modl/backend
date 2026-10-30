@@ -11,10 +11,9 @@ public enum CustomDomainStatus {
 
     private final String value;
 
-    CustomDomainStatus(String value) { this.value = value; }
-
-    @JsonValue
-    public String getValue() { return value; }
+    CustomDomainStatus(String value) {
+        this.value = value;
+    }
 
     @JsonCreator
     public static CustomDomainStatus fromValue(String value) {
@@ -22,5 +21,10 @@ public enum CustomDomainStatus {
             if (v.value.equalsIgnoreCase(value)) return v;
         }
         throw new IllegalArgumentException("Unknown CustomDomainStatus: " + value);
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
     }
 }

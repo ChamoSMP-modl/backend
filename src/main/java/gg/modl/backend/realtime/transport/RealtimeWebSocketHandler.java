@@ -16,8 +16,6 @@ import gg.modl.proto.modl.v1.ClientHello;
 import gg.modl.proto.modl.v1.ErrorCode;
 import gg.modl.proto.modl.v1.RealtimeEnvelope;
 import gg.modl.proto.modl.v1.Topic;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -25,6 +23,9 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
+
+import java.util.List;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -133,8 +134,8 @@ public class RealtimeWebSocketHandler extends BinaryWebSocketHandler {
 
         ClientHello hello = envelope.getClientHello();
         int requestedProtocolVersion = hello.getProtocolVersion() != 0
-            ? hello.getProtocolVersion()
-            : envelope.getProtocolVersion();
+                ? hello.getProtocolVersion()
+                : envelope.getProtocolVersion();
         if (requestedProtocolVersion != properties.getProtocolVersion()) {
             metrics.recordReject(state, "unsupported_protocol");
             closeWithError(session, state, ErrorCode.ERROR_CODE_UNSUPPORTED_PROTOCOL, "Unsupported realtime protocol version", POLICY_VIOLATION);

@@ -1,13 +1,13 @@
 package gg.modl.backend.public_api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import gg.modl.backend.support.ApiClient;
 import gg.modl.backend.support.JsonHelper;
 import gg.modl.backend.support.StagingCredentials;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PublicKnowledgebaseApiTest {
 
@@ -36,7 +36,7 @@ class PublicKnowledgebaseApiTest {
 
         var cat = arr.get(0).getAsJsonObject();
         String categoryId = cat.has("id") ? cat.get("id").getAsString() :
-                            cat.has("_id") ? cat.get("_id").getAsString() : null;
+                cat.has("_id") ? cat.get("_id").getAsString() : null;
         if (categoryId == null) {
             return;
         }

@@ -24,10 +24,10 @@ public class FilterConfig {
     public FilterRegistrationBean<ServerHeaderFilter> serverDomainFilter() {
         final FilterRegistrationBean<ServerHeaderFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(new ServerHeaderFilter(
-            serverService,
-            modlProperties.isDevelopmentMode(),
-            devProperties.getServerDomain(),
-            originPolicyFactory.systemOriginsOnly()
+                serverService,
+                modlProperties.isDevelopmentMode(),
+                devProperties.getServerDomain(),
+                originPolicyFactory.systemOriginsOnly()
         ));
         registrationBean.addUrlPatterns(RESTMappingV1.PREFIX_PANEL + "/*", RESTMappingV1.PREFIX_PUBLIC + "/*");
         registrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE + 2);

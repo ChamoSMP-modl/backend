@@ -1,18 +1,10 @@
 package gg.modl.backend.database.mongo;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import gg.modl.backend.database.mongo.fields.AdminUserFields;
-import gg.modl.backend.database.mongo.fields.ChatLogFields;
-import gg.modl.backend.database.mongo.fields.CommandLogFields;
-import gg.modl.backend.database.mongo.fields.PlayerFields;
-import gg.modl.backend.database.mongo.fields.PunishmentFields;
-import gg.modl.backend.database.mongo.fields.SecurityEventFields;
-import gg.modl.backend.database.mongo.fields.ServerFields;
-import gg.modl.backend.database.mongo.fields.SystemLogFields;
-import gg.modl.backend.database.mongo.fields.TicketFields;
+import gg.modl.backend.database.mongo.fields.*;
 import gg.modl.backend.server.ServerField;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class GeneratedMongoFieldsTest {
 

@@ -1,136 +1,116 @@
 package gg.modl.backend.infrastructure.filter;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import gg.modl.backend.auth.session.AuthSessionData;
+import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import gg.modl.backend.infrastructure.authorization.PanelAccessPolicyResolver;
 import gg.modl.backend.infrastructure.authorization.PanelHandlerMappingTestSupport;
 import gg.modl.backend.infrastructure.rest.RequestAttribute;
 import gg.modl.backend.role.service.PermissionService;
+import gg.modl.backend.role.service.RoleAuthorization;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.staff.data.Staff;
 import gg.modl.backend.staff.service.StaffLookupCache;
-import gg.modl.backend.role.service.RoleAuthorization;
-import gg.modl.backend.database.mongo.repository.StaffMongoRepository;
 import jakarta.servlet.FilterChain;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 class PanelAuthorizationMatrixTest {
 
-    private static final Server SERVER = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
+    private static final Server SERVER = new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     private static final String STAFF_EMAIL = "staff@example.com";
     private static final String SUPER_ADMIN_EMAIL = "admin@example.com";
     private static final String ROLE = "helper";
     private static final String DENY_BODY =
-        "{\"success\":false,\"status\":403,\"error\":\"Insufficient permissions\",\"message\":\"Insufficient permissions\"}";
-
-    private enum Kind { PERMISSION, PERMIT, PLAYER_READ, APPEAL_REPLY, SUPER_ADMIN }
-
-    private record Row(String method, String path, Kind kind, String permission) {
-        static Row permission(String method, String path, String permission) {
-            return new Row(method, path, Kind.PERMISSION, permission);
-        }
-
-        static Row permit(String method, String path) {
-            return new Row(method, path, Kind.PERMIT, null);
-        }
-
-        static Row playerRead(String path) {
-            return new Row("GET", path, Kind.PLAYER_READ, null);
-        }
-
-        static Row appealReply(String path) {
-            return new Row("POST", path, Kind.APPEAL_REPLY, null);
-        }
-
-        static Row superAdminOnly(String method, String path) {
-            return new Row(method, path, Kind.SUPER_ADMIN, null);
-        }
-    }
-
+            "{\"success\":false,\"status\":403,\"error\":\"Insufficient permissions\",\"message\":\"Insufficient permissions\"}";
     private static final List<Row> MATRIX = List.of(
-        Row.permission("GET", "/v1/panel/staff", "admin.staff.manage.members"),
-        Row.permission("POST", "/v1/panel/staff", "admin.staff.manage.members"),
-        Row.permission("GET", "/v1/panel/roles", "admin.staff.manage.roles"),
-        Row.permission("POST", "/v1/panel/roles", "admin.staff.manage.roles"),
-        Row.permission("GET", "/v1/panel/dashboard/metrics", "admin.audit.view.dashboard"),
-        Row.permission("GET", "/v1/panel/analytics/overview", "admin.audit.view.analytics"),
-        Row.permission("GET", "/v1/panel/audit/staff-performance", "admin.audit.view.logs"),
-        Row.superAdminOnly("POST", "/v1/panel/audit/punishments/p1/rollback"),
-        Row.superAdminOnly("POST", "/v1/panel/audit/staff/staff1/rollback-all"),
-        Row.superAdminOnly("POST", "/v1/panel/audit/staff/staff1/rollback-date-range"),
-        Row.superAdminOnly("POST", "/v1/panel/audit/punishments/bulk-pardon"),
-        Row.superAdminOnly("POST", "/v1/panel/audit/punishments/bulk-set-expiration"),
-        Row.permission("GET", "/v1/panel/logs", "admin.audit.view.logs"),
-        Row.permission("POST", "/v1/panel/replays/r1/label", "punishment.modify"),
-        Row.permission("POST", "/v1/panel/players/uuid1/notes", "punishment.modify"),
-        Row.permission("POST", "/v1/panel/players/uuid1/punishments/p1/notes", "punishment.modify"),
-        Row.permission("GET", "/v1/panel/tickets", "ticket.view.all"),
-        Row.permission("POST", "/v1/panel/tickets", "ticket.reply.all"),
-        Row.permission("POST", "/v1/panel/tickets/bulk", "ticket.close.all"),
-        Row.permission("GET", "/v1/panel/ticket-subscriptions", "ticket.view.all"),
-        Row.permission("POST", "/v1/panel/ticket-subscriptions/updates/u1/read", "ticket.reply.all"),
-        Row.permission("GET", "/v1/panel/appeals/a1", "ticket.view.all"),
-        Row.permission("PATCH", "/v1/panel/appeals/a1/status", "appeal.modify"),
-        Row.superAdminOnly("GET", "/v1/panel/billing/status"),
-        Row.superAdminOnly("POST", "/v1/panel/billing/checkout-session"),
-        Row.permission("GET", "/v1/panel/homepage-cards", "admin.settings.view.content"),
-        Row.permission("POST", "/v1/panel/homepage-cards", "admin.settings.modify.content"),
-        Row.permission("GET", "/v1/panel/knowledgebase/categories", "admin.settings.view.content"),
-        Row.permission("POST", "/v1/panel/knowledgebase/categories", "admin.settings.modify.content"),
-        Row.permission("GET", "/v1/panel/media/config", "admin.settings.view.content"),
-        Row.permission("POST", "/v1/panel/media/presign", "admin.settings.modify.content"),
-        Row.permission("GET", "/v1/panel/storage/quota", "admin.settings.view.storage"),
-        Row.permission("POST", "/v1/panel/storage/bulk-delete", "admin.settings.modify.storage"),
-        Row.permission("GET", "/v1/panel/migration/status", "admin.settings.view.migration"),
-        Row.permission("POST", "/v1/panel/migration/start", "admin.settings.modify.migration"),
-        Row.permission("GET", "/v1/panel/settings/general", "admin.settings.view"),
-        Row.permission("PATCH", "/v1/panel/settings/general", "admin.settings.modify"),
-        Row.permission("GET", "/v1/panel/settings/status-thresholds", "admin.settings.view.punishments"),
-        Row.permission("PATCH", "/v1/panel/settings/status-thresholds", "admin.settings.modify.punishments"),
-        Row.permission("GET", "/v1/panel/settings/ai-moderation", "admin.settings.view.punishments"),
-        Row.permission("PATCH", "/v1/panel/settings/ai-moderation", "admin.settings.modify.punishments"),
-        Row.permission("POST", "/v1/panel/settings/ai-dismiss-suggestion/t1", "admin.settings.modify.punishments"),
-        Row.permission("GET", "/v1/panel/settings/punishment-types", "admin.settings.view.punishments"),
-        Row.permission("POST", "/v1/panel/settings/punishment-types", "admin.settings.modify.punishments"),
-        Row.playerRead("/v1/panel/settings/punishment-types"),
-        Row.permission("GET", "/v1/panel/settings/domain", "admin.settings.view.domain"),
-        Row.permission("POST", "/v1/panel/settings/domain", "admin.settings.modify.domain"),
-        Row.superAdminOnly("POST", "/v1/panel/settings/api-keys/minecraft/generate"),
-        Row.superAdminOnly("GET", "/v1/panel/settings/api-keys/minecraft/exists"),
-        Row.permit("GET", "/v1/panel/dashboard/alerts"),
-        Row.permit("POST", "/v1/panel/players/uuid1/punishments"),
-        Row.permit("POST", "/v1/panel/settings/ai-apply-punishment/t1"),
-        Row.playerRead("/v1/panel/players"),
-        Row.playerRead("/v1/panel/players/uuid1"),
-        Row.playerRead("/v1/panel/players/uuid1/punishments/active"),
-        Row.playerRead("/v1/panel/players/punishments/search"),
-        Row.superAdminOnly("GET", "/v1/panel/audit/database/players"),
-        Row.superAdminOnly("POST", "/v1/panel/billing/portal-session"),
-        Row.superAdminOnly("POST", "/v1/panel/billing/cancel"),
-        Row.superAdminOnly("POST", "/v1/panel/billing/resubscribe"),
-        Row.superAdminOnly("POST", "/v1/panel/billing/usage-settings"),
-        Row.superAdminOnly("POST", "/v1/panel/billing/storage-limit"),
-        Row.superAdminOnly("POST", "/v1/panel/billing/overage-limits"),
-        Row.superAdminOnly("GET", "/v1/panel/billing/usage"),
-        Row.superAdminOnly("GET", "/v1/panel/settings/api-keys/minecraft/reveal"),
-        Row.superAdminOnly("DELETE", "/v1/panel/settings/api-keys/minecraft"),
-        Row.superAdminOnly("POST", "/v1/panel/storage/sync"),
-        Row.appealReply("/v1/panel/appeals/a1/replies")
+            Row.permission("GET", "/v1/panel/staff", "admin.staff.manage.members"),
+            Row.permission("POST", "/v1/panel/staff", "admin.staff.manage.members"),
+            Row.permission("GET", "/v1/panel/roles", "admin.staff.manage.roles"),
+            Row.permission("POST", "/v1/panel/roles", "admin.staff.manage.roles"),
+            Row.permission("GET", "/v1/panel/dashboard/metrics", "admin.audit.view.dashboard"),
+            Row.permission("GET", "/v1/panel/analytics/overview", "admin.audit.view.analytics"),
+            Row.permission("GET", "/v1/panel/audit/staff-performance", "admin.audit.view.logs"),
+            Row.superAdminOnly("POST", "/v1/panel/audit/punishments/p1/rollback"),
+            Row.superAdminOnly("POST", "/v1/panel/audit/staff/staff1/rollback-all"),
+            Row.superAdminOnly("POST", "/v1/panel/audit/staff/staff1/rollback-date-range"),
+            Row.superAdminOnly("POST", "/v1/panel/audit/punishments/bulk-pardon"),
+            Row.superAdminOnly("POST", "/v1/panel/audit/punishments/bulk-set-expiration"),
+            Row.permission("GET", "/v1/panel/logs", "admin.audit.view.logs"),
+            Row.permission("POST", "/v1/panel/replays/r1/label", "punishment.modify"),
+            Row.permission("POST", "/v1/panel/players/uuid1/notes", "punishment.modify"),
+            Row.permission("POST", "/v1/panel/players/uuid1/punishments/p1/notes", "punishment.modify"),
+            Row.permission("GET", "/v1/panel/tickets", "ticket.view.all"),
+            Row.permission("POST", "/v1/panel/tickets", "ticket.reply.all"),
+            Row.permission("POST", "/v1/panel/tickets/bulk", "ticket.close.all"),
+            Row.permission("GET", "/v1/panel/ticket-subscriptions", "ticket.view.all"),
+            Row.permission("POST", "/v1/panel/ticket-subscriptions/updates/u1/read", "ticket.reply.all"),
+            Row.permission("GET", "/v1/panel/appeals/a1", "ticket.view.all"),
+            Row.permission("PATCH", "/v1/panel/appeals/a1/status", "appeal.modify"),
+            Row.superAdminOnly("GET", "/v1/panel/billing/status"),
+            Row.superAdminOnly("POST", "/v1/panel/billing/checkout-session"),
+            Row.permission("GET", "/v1/panel/homepage-cards", "admin.settings.view.content"),
+            Row.permission("POST", "/v1/panel/homepage-cards", "admin.settings.modify.content"),
+            Row.permission("GET", "/v1/panel/knowledgebase/categories", "admin.settings.view.content"),
+            Row.permission("POST", "/v1/panel/knowledgebase/categories", "admin.settings.modify.content"),
+            Row.permission("GET", "/v1/panel/media/config", "admin.settings.view.content"),
+            Row.permission("POST", "/v1/panel/media/presign", "admin.settings.modify.content"),
+            Row.permission("GET", "/v1/panel/storage/quota", "admin.settings.view.storage"),
+            Row.permission("POST", "/v1/panel/storage/bulk-delete", "admin.settings.modify.storage"),
+            Row.permission("GET", "/v1/panel/migration/status", "admin.settings.view.migration"),
+            Row.permission("POST", "/v1/panel/migration/start", "admin.settings.modify.migration"),
+            Row.permission("GET", "/v1/panel/settings/general", "admin.settings.view"),
+            Row.permission("PATCH", "/v1/panel/settings/general", "admin.settings.modify"),
+            Row.permission("GET", "/v1/panel/settings/status-thresholds", "admin.settings.view.punishments"),
+            Row.permission("PATCH", "/v1/panel/settings/status-thresholds", "admin.settings.modify.punishments"),
+            Row.permission("GET", "/v1/panel/settings/ai-moderation", "admin.settings.view.punishments"),
+            Row.permission("PATCH", "/v1/panel/settings/ai-moderation", "admin.settings.modify.punishments"),
+            Row.permission("POST", "/v1/panel/settings/ai-dismiss-suggestion/t1", "admin.settings.modify.punishments"),
+            Row.permission("GET", "/v1/panel/settings/punishment-types", "admin.settings.view.punishments"),
+            Row.permission("POST", "/v1/panel/settings/punishment-types", "admin.settings.modify.punishments"),
+            Row.playerRead("/v1/panel/settings/punishment-types"),
+            Row.permission("GET", "/v1/panel/settings/domain", "admin.settings.view.domain"),
+            Row.permission("POST", "/v1/panel/settings/domain", "admin.settings.modify.domain"),
+            Row.superAdminOnly("POST", "/v1/panel/settings/api-keys/minecraft/generate"),
+            Row.superAdminOnly("GET", "/v1/panel/settings/api-keys/minecraft/exists"),
+            Row.permit("GET", "/v1/panel/dashboard/alerts"),
+            Row.permit("POST", "/v1/panel/players/uuid1/punishments"),
+            Row.permit("POST", "/v1/panel/settings/ai-apply-punishment/t1"),
+            Row.playerRead("/v1/panel/players"),
+            Row.playerRead("/v1/panel/players/uuid1"),
+            Row.playerRead("/v1/panel/players/uuid1/punishments/active"),
+            Row.playerRead("/v1/panel/players/punishments/search"),
+            Row.superAdminOnly("GET", "/v1/panel/audit/database/players"),
+            Row.superAdminOnly("POST", "/v1/panel/billing/portal-session"),
+            Row.superAdminOnly("POST", "/v1/panel/billing/cancel"),
+            Row.superAdminOnly("POST", "/v1/panel/billing/resubscribe"),
+            Row.superAdminOnly("POST", "/v1/panel/billing/usage-settings"),
+            Row.superAdminOnly("POST", "/v1/panel/billing/storage-limit"),
+            Row.superAdminOnly("POST", "/v1/panel/billing/overage-limits"),
+            Row.superAdminOnly("GET", "/v1/panel/billing/usage"),
+            Row.superAdminOnly("GET", "/v1/panel/settings/api-keys/minecraft/reveal"),
+            Row.superAdminOnly("DELETE", "/v1/panel/settings/api-keys/minecraft"),
+            Row.superAdminOnly("POST", "/v1/panel/storage/sync"),
+            Row.appealReply("/v1/panel/appeals/a1/replies")
     );
+    private static final PanelAccessPolicyResolver POLICY_RESOLVER = PanelHandlerMappingTestSupport.buildResolver();
+
+    private static RoleAuthorization roleAuthorization(PermissionService permissionService,
+                                                       StaffLookupCache staffLookupCache) {
+        return new RoleAuthorization(permissionService, mock(StaffMongoRepository.class), staffLookupCache);
+    }
 
     @Test
     void authorizationMatrixIsPreservedForEveryMappedRoute() {
@@ -150,7 +130,7 @@ class PanelAuthorizationMatrixTest {
         }
 
         assertDenied(Row.permission("GET", "/v1/panel/does-not-exist", "admin.settings.view"),
-            "unmapped-panel-route", staffWith(Row.permission("GET", "/v1/panel/does-not-exist", "admin.settings.view")), failures);
+                "unmapped-panel-route", staffWith(Row.permission("GET", "/v1/panel/does-not-exist", "admin.settings.view")), failures);
 
         if (!failures.isEmpty()) {
             Assertions.fail("Authorization matrix mismatches:\n" + String.join("\n", failures));
@@ -244,7 +224,8 @@ class PanelAuthorizationMatrixTest {
     }
 
     private Consumer<Mocks> unauthenticated() {
-        return mocks -> { };
+        return mocks -> {
+        };
     }
 
     private void authenticateStaff(Mocks mocks) {
@@ -256,12 +237,16 @@ class PanelAuthorizationMatrixTest {
     private void grantPermissions(Mocks mocks, Row row) {
         PermissionService permissionService = mocks.permissionService();
         switch (row.kind()) {
-            case PERMISSION -> lenient().when(permissionService.hasPermission(mocks.server(), ROLE, row.permission())).thenReturn(true);
-            case PERMIT -> { }
-            case PLAYER_READ -> lenient().when(permissionService.hasPermission(mocks.server(), ROLE, "punishment.view")).thenReturn(true);
-            case APPEAL_REPLY -> lenient().when(permissionService.hasPermission(mocks.server(), ROLE, "appeal.modify")).thenReturn(true);
+            case PERMISSION ->
+                    lenient().when(permissionService.hasPermission(mocks.server(), ROLE, row.permission())).thenReturn(true);
+            case PERMIT -> {
+            }
+            case PLAYER_READ ->
+                    lenient().when(permissionService.hasPermission(mocks.server(), ROLE, "punishment.view")).thenReturn(true);
+            case APPEAL_REPLY ->
+                    lenient().when(permissionService.hasPermission(mocks.server(), ROLE, "appeal.modify")).thenReturn(true);
             case SUPER_ADMIN -> lenient()
-                .when(permissionService.hasPermission(eq(mocks.server()), eq(ROLE), anyString())).thenReturn(true);
+                    .when(permissionService.hasPermission(eq(mocks.server()), eq(ROLE), anyString())).thenReturn(true);
         }
     }
 
@@ -292,10 +277,32 @@ class PanelAuthorizationMatrixTest {
         }
     }
 
-    private static final PanelAccessPolicyResolver POLICY_RESOLVER = PanelHandlerMappingTestSupport.buildResolver();
-
     private PanelPermissionFilter newFilter(PermissionService permissionService, StaffLookupCache staffLookupCache) {
         return new PanelPermissionFilter(permissionService, roleAuthorization(permissionService, staffLookupCache), POLICY_RESOLVER);
+    }
+
+    private enum Kind {PERMISSION, PERMIT, PLAYER_READ, APPEAL_REPLY, SUPER_ADMIN}
+
+    private record Row(String method, String path, Kind kind, String permission) {
+        static Row permission(String method, String path, String permission) {
+            return new Row(method, path, Kind.PERMISSION, permission);
+        }
+
+        static Row permit(String method, String path) {
+            return new Row(method, path, Kind.PERMIT, null);
+        }
+
+        static Row playerRead(String path) {
+            return new Row("GET", path, Kind.PLAYER_READ, null);
+        }
+
+        static Row appealReply(String path) {
+            return new Row("POST", path, Kind.APPEAL_REPLY, null);
+        }
+
+        static Row superAdminOnly(String method, String path) {
+            return new Row(method, path, Kind.SUPER_ADMIN, null);
+        }
     }
 
     private record Mocks(PermissionService permissionService, StaffLookupCache staffLookupCache,
@@ -303,10 +310,5 @@ class PanelAuthorizationMatrixTest {
     }
 
     private record Outcome(boolean granted, int status, String body, String contentType) {
-    }
-
-    private static RoleAuthorization roleAuthorization(PermissionService permissionService,
-                                                      StaffLookupCache staffLookupCache) {
-        return new RoleAuthorization(permissionService, mock(StaffMongoRepository.class), staffLookupCache);
     }
 }

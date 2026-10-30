@@ -1,7 +1,8 @@
 package gg.modl.backend.infrastructure.util;
 
-import java.util.List;
 import lombok.experimental.UtilityClass;
+
+import java.util.List;
 
 @UtilityClass
 public class PaginationHelper {
@@ -34,5 +35,6 @@ public class PaginationHelper {
         return (int) Math.ceil((double) total / limit);
     }
 
-    public record PageResult<T>(List<T> items, int totalCount, int page, boolean hasMore) {}
+    public record PageResult<T>(List<T> items, int totalCount, int page, boolean hasMore) {
+    }
 }

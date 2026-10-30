@@ -1,15 +1,5 @@
 package gg.modl.backend.database.mongo.repository;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.mongodb.client.result.DeleteResult;
 import gg.modl.backend.database.CollectionName;
 import gg.modl.backend.database.mongo.TenantMongoAccess;
@@ -17,22 +7,42 @@ import gg.modl.backend.database.mongo.repository.ReplayMongoRepository.ReplayCur
 import gg.modl.backend.replay.data.ReplayDocument;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 
+import java.time.Instant;
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 class ReplayMongoRepositoryTest {
     private static final Date CUTOFF = Date.from(Instant.parse("2026-05-18T12:00:00Z"));
     private static final Date CURSOR_CREATED_AT = Date.from(Instant.parse("2026-05-10T00:00:00Z"));
     private static final String CURSOR_ID = "cursor-id";
+
+    private static Map<String, Object> flattenAnd(Document query) {
+        Map<String, Object> flattened = new LinkedHashMap<>();
+        collectAnd(query, flattened);
+        return flattened;
+    }
+
+    private static void collectAnd(Document node, Map<String, Object> flattened) {
+        for (Map.Entry<String, Object> entry : node.entrySet()) {
+            if ("$and".equals(entry.getKey())) {
+                for (Object child : (List<?>) entry.getValue()) {
+                    collectAnd((Document) child, flattened);
+                }
+            } else {
+                flattened.put(entry.getKey(), entry.getValue());
+            }
+        }
+    }
 
     @Test
     void findExpiredWithStorageKeyMatchesCompletedOrFailedWithStorageKeySortedAndCapped() {
@@ -46,8 +56,8 @@ class ReplayMongoRepositoryTest {
         Map<String, Object> clauses = flattenAnd(query.getQueryObject());
 
         assertEquals(
-            List.of(ReplayDocument.STATUS_COMPLETE, ReplayDocument.STATUS_FAILED),
-            ((Document) clauses.get("status")).get("$in")
+                List.of(ReplayDocument.STATUS_COMPLETE, ReplayDocument.STATUS_FAILED),
+                ((Document) clauses.get("status")).get("$in")
         );
         assertFalse(((List<?>) ((Document) clauses.get("status")).get("$in")).contains(ReplayDocument.STATUS_PENDING));
         assertEquals(CUTOFF, ((Document) clauses.get("createdAt")).get("$lt"));
@@ -119,7 +129,7 @@ class ReplayMongoRepositoryTest {
         Server server = server();
         ReplayMongoRepository repository = repository(template, server);
         when(template.remove(any(Query.class), eq(ReplayDocument.class), eq(CollectionName.REPLAYS)))
-            .thenReturn(DeleteResult.acknowledged(2L));
+                .thenReturn(DeleteResult.acknowledged(2L));
 
         assertEquals(2L, repository.deleteByReplayIds(server, List.of("a", "b")));
     }
@@ -149,24 +159,6 @@ class ReplayMongoRepositoryTest {
     }
 
     private Server server() {
-        return new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.FREE);
-    }
-
-    private static Map<String, Object> flattenAnd(Document query) {
-        Map<String, Object> flattened = new LinkedHashMap<>();
-        collectAnd(query, flattened);
-        return flattened;
-    }
-
-    private static void collectAnd(Document node, Map<String, Object> flattened) {
-        for (Map.Entry<String, Object> entry : node.entrySet()) {
-            if ("$and".equals(entry.getKey())) {
-                for (Object child : (List<?>) entry.getValue()) {
-                    collectAnd((Document) child, flattened);
-                }
-            } else {
-                flattened.put(entry.getKey(), entry.getValue());
-            }
-        }
+        return new Server("server", "domain", "db", "admin@example.com", true, ServerPlan.PREMIUM);
     }
 }

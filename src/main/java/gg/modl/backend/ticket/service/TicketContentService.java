@@ -1,24 +1,17 @@
 package gg.modl.backend.ticket.service;
 
 import gg.modl.backend.email.EmailAddressUtil;
+import gg.modl.backend.infrastructure.util.MongoKeyUtils;
 import gg.modl.backend.ticket.data.Ticket;
 import gg.modl.backend.ticket.dto.request.CreateTicketRequest;
 import gg.modl.backend.ticket.dto.request.SubmitTicketFormRequest;
-import gg.modl.backend.infrastructure.util.MongoKeyUtils;
-import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -195,8 +188,8 @@ public class TicketContentService {
         }
 
         Object legacyEmail = request.formData().containsKey("contact_email")
-                             ? request.formData().get("contact_email")
-                             : request.formData().get("email");
+                ? request.formData().get("contact_email")
+                : request.formData().get("email");
         if (legacyEmail == null) {
             return null;
         }
@@ -206,25 +199,25 @@ public class TicketContentService {
 
     public List<Ticket.ChatMessage> sanitizeChatMessages(List<Map<String, Object>> rawMessages) {
         List<Map<String, Object>> trimmed = rawMessages.size() > MAX_CHAT_MESSAGES
-                                            ? rawMessages.subList(rawMessages.size() - MAX_CHAT_MESSAGES, rawMessages.size())
-                                            : rawMessages;
+                ? rawMessages.subList(rawMessages.size() - MAX_CHAT_MESSAGES, rawMessages.size())
+                : rawMessages;
 
         return trimmed.stream()
-            .map(x -> {
-                Object rawContent = x.get("content");
-                String content = rawContent instanceof String s ? s : (rawContent != null ? rawContent.toString() : null);
-                if (content != null && content.length() > MAX_CHAT_MESSAGE_LENGTH) {
-                    content = content.substring(0, MAX_CHAT_MESSAGE_LENGTH);
-                }
-                Object rawSender = x.get("sender");
-                String sender = rawSender instanceof String s ? s : null;
-                return Ticket.ChatMessage.builder()
-                    .content(content)
-                    .timestamp(parseTimestamp(x.get("timestamp")))
-                    .sender(sender)
-                    .build();
-            })
-            .toList();
+                .map(x -> {
+                    Object rawContent = x.get("content");
+                    String content = rawContent instanceof String s ? s : (rawContent != null ? rawContent.toString() : null);
+                    if (content != null && content.length() > MAX_CHAT_MESSAGE_LENGTH) {
+                        content = content.substring(0, MAX_CHAT_MESSAGE_LENGTH);
+                    }
+                    Object rawSender = x.get("sender");
+                    String sender = rawSender instanceof String s ? s : null;
+                    return Ticket.ChatMessage.builder()
+                            .content(content)
+                            .timestamp(parseTimestamp(x.get("timestamp")))
+                            .sender(sender)
+                            .build();
+                })
+                .toList();
     }
 
     private List<Object> dedupeAttachments(List<Object> attachments) {
@@ -262,15 +255,15 @@ public class TicketContentService {
         }
 
         String normalizedKey = key
-            .replaceAll("([a-z])([A-Z])", "$1 $2")
-            .replace('_', ' ')
-            .replace('-', ' ')
-            .toLowerCase(Locale.ROOT);
+                .replaceAll("([a-z])([A-Z])", "$1 $2")
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .toLowerCase(Locale.ROOT);
 
         for (String token : normalizedKey.split("\\s+")) {
             if (token.equals("attachment") || token.equals("attachments")
-                || token.equals("upload") || token.equals("uploads")
-                || token.equals("file") || token.equals("files")) {
+                    || token.equals("upload") || token.equals("uploads")
+                    || token.equals("file") || token.equals("files")) {
                 return true;
             }
         }
@@ -279,7 +272,7 @@ public class TicketContentService {
 
     private boolean isHttpUrl(String value) {
         return value != null
-            && (value.regionMatches(true, 0, "https://", 0, 8)
+                && (value.regionMatches(true, 0, "https://", 0, 8)
                 || value.regionMatches(true, 0, "http://", 0, 7));
     }
 
@@ -327,5 +320,6 @@ public class TicketContentService {
         };
     }
 
-    public record FormDataProcessingResult(Map<String, Object> formData, List<Object> attachments) {}
+    public record FormDataProcessingResult(Map<String, Object> formData, List<Object> attachments) {
+    }
 }

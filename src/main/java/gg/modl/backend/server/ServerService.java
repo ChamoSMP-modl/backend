@@ -2,72 +2,61 @@ package gg.modl.backend.server;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import gg.modl.backend.email.EmailAddressUtil;
-import gg.modl.backend.infrastructure.config.ModlCorsProperties;
-import gg.modl.backend.infrastructure.util.DigestUtils;
 import gg.modl.backend.database.mongo.repository.ServerCredentialRepository;
 import gg.modl.backend.database.mongo.repository.ServerLookupRepository;
 import gg.modl.backend.database.mongo.repository.ServerProvisioningRepository;
+import gg.modl.backend.email.EmailAddressUtil;
+import gg.modl.backend.infrastructure.config.ModlCorsProperties;
+import gg.modl.backend.infrastructure.util.DigestUtils;
 import gg.modl.backend.server.data.ProvisioningStatus;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.server.data.SubscriptionStatus;
 import gg.modl.backend.server.service.ServerProvisioningService;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.stereotype.Service;
+
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
 
 @Service
 public class ServerService {
+    public static final String SERVER_DATABASE_PREFIX = "server_";
     private final ServerLookupRepository serverLookupRepository;
     private final ServerProvisioningRepository serverProvisioningRepository;
     private final ServerCredentialRepository serverCredentialRepository;
     private final ServerProvisioningService provisioningService;
     private final Set<String> appDomains;
-    public static final String SERVER_DATABASE_PREFIX = "server_";
-
     private final Cache<String, Optional<Server>> serverCache = Caffeine.newBuilder()
-        .maximumSize(500)
-        .expireAfterWrite(Duration.ofMinutes(5))
-        .build();
+            .maximumSize(500)
+            .expireAfterWrite(Duration.ofMinutes(5))
+            .build();
 
     private final Cache<String, Server> apiKeyCache = Caffeine.newBuilder()
-        .maximumSize(10_000)
-        .expireAfterWrite(Duration.ofSeconds(60))
-        .build();
+            .maximumSize(10_000)
+            .expireAfterWrite(Duration.ofSeconds(60))
+            .build();
 
     public ServerService(
-        ServerLookupRepository serverLookupRepository,
-        ServerProvisioningRepository serverProvisioningRepository,
-        ServerCredentialRepository serverCredentialRepository,
-        ServerProvisioningService provisioningService,
-        ModlCorsProperties corsProperties
+            ServerLookupRepository serverLookupRepository,
+            ServerProvisioningRepository serverProvisioningRepository,
+            ServerCredentialRepository serverCredentialRepository,
+            ServerProvisioningService provisioningService,
+            ModlCorsProperties corsProperties
     ) {
         this.serverLookupRepository = serverLookupRepository;
         this.serverProvisioningRepository = serverProvisioningRepository;
         this.serverCredentialRepository = serverCredentialRepository;
         this.provisioningService = provisioningService;
         this.appDomains = Arrays.stream(corsProperties.getAppDomains().split(","))
-            .map(String::trim)
-            .filter(s -> !s.isBlank())
-            .collect(Collectors.toSet());
-    }
-
-    @Async
-    public void createServer(@NotNull Server server) {
-        serverLookupRepository.saveEntity(server);
-        evictAllServerCaches();
-    }
-
-    public void createServer(@NotNull String serverName, @NotNull String customDomain, @NotNull String adminEmail) {
-        createServer(serverName, customDomain, adminEmail, null, ServerPlan.FREE);
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toSet());
     }
 
     public Server createServer(@NotNull String serverName, @NotNull String customDomain, @NotNull String adminEmail,
@@ -82,7 +71,7 @@ public class ServerService {
 
         Server server = new Server(serverName, customDomain, databaseName, normalizedEmail, false, plan);
         server.setProvisioningStatus(ProvisioningStatus.PENDING);
-        server.setSubscriptionStatus(SubscriptionStatus.INACTIVE);
+        server.setSubscriptionStatus(SubscriptionStatus.ACTIVE);
         server.setCreatedAt(now);
         server.setUpdatedAt(now);
 
@@ -161,8 +150,6 @@ public class ServerService {
         }
         return null;
     }
-
-    private record AppDomainMatch(String appDomain, String subdomain) {}
 
     public ServerExistResult doesServerExist(@NotNull String email, @NotNull String serverName, @NotNull String subdomain) {
         String normalizedEmail = EmailAddressUtil.normalize(email);
@@ -298,5 +285,9 @@ public class ServerService {
         return saved;
     }
 
-    public record ServerExistResult(boolean emailMatch, boolean nameMatch, boolean domainMatch) {}
+    private record AppDomainMatch(String appDomain, String subdomain) {
+    }
+
+    public record ServerExistResult(boolean emailMatch, boolean nameMatch, boolean domainMatch) {
+    }
 }

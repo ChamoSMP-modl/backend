@@ -2,8 +2,6 @@ package gg.modl.backend.player.external;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import java.net.URI;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -14,23 +12,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+import java.time.Duration;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CrafatarProxyService {
 
-    private final RestTemplate restTemplate;
     private static final int MIN_AVATAR_SIZE = 8;
     private static final int MAX_AVATAR_SIZE = 512;
     private static final int MAX_AVATAR_BYTES = 1024 * 1024;
-
     private static final long MAX_AVATAR_CACHE_BYTES = 64L * 1024 * 1024;
-
+    private final RestTemplate restTemplate;
     private final Cache<String, byte[]> avatarCache = Caffeine.newBuilder()
-        .maximumWeight(MAX_AVATAR_CACHE_BYTES)
-        .weigher((String key, byte[] body) -> body.length)
-        .expireAfterWrite(Duration.ofMinutes(10))
-        .build();
+            .maximumWeight(MAX_AVATAR_CACHE_BYTES)
+            .weigher((String key, byte[] body) -> body.length)
+            .expireAfterWrite(Duration.ofMinutes(10))
+            .build();
 
     public byte[] getAvatar(String uuid, int size, boolean overlay) {
         int clampedSize = Math.max(MIN_AVATAR_SIZE, Math.min(size, MAX_AVATAR_SIZE));
@@ -41,12 +40,12 @@ public class CrafatarProxyService {
     private byte[] fetchAvatar(String uuid, int clampedSize, boolean overlay) {
         try {
             URI url = UriComponentsBuilder.fromUriString("https://crafatar.com")
-                .pathSegment("avatars", uuid)
-                .queryParam("size", clampedSize)
-                .queryParam("overlay", overlay)
-                .build()
-                .encode()
-                .toUri();
+                    .pathSegment("avatars", uuid)
+                    .queryParam("size", clampedSize)
+                    .queryParam("overlay", overlay)
+                    .build()
+                    .encode()
+                    .toUri();
             byte[] body = fetch(url);
             if (body != null) {
                 return body;
@@ -57,10 +56,10 @@ public class CrafatarProxyService {
 
         try {
             URI fallbackUrl = UriComponentsBuilder.fromUriString("https://minotar.net")
-                .pathSegment("avatar", uuid, String.valueOf(clampedSize))
-                .build()
-                .encode()
-                .toUri();
+                    .pathSegment("avatar", uuid, String.valueOf(clampedSize))
+                    .build()
+                    .encode()
+                    .toUri();
             return fetch(fallbackUrl);
         } catch (Exception e) {
             log.error("Both Crafatar and Minotar failed for UUID {}", uuid, e);

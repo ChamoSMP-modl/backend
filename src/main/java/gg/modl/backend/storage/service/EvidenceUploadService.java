@@ -1,29 +1,30 @@
 package gg.modl.backend.storage.service;
 
 import gg.modl.backend.database.mongo.repository.PlayerMongoRepository;
+import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.player.data.Player;
 import gg.modl.backend.player.service.PlayerDataUtils;
 import gg.modl.backend.player.service.PunishmentEvidenceService;
 import gg.modl.backend.player.service.PunishmentQueryService.PunishmentOperationResult;
 import gg.modl.backend.player.service.PunishmentQueryService.PunishmentOperationStatus;
 import gg.modl.backend.player.service.PunishmentQueryService.UploadedEvidenceItem;
-import gg.modl.backend.infrastructure.util.UuidUtils;
 import gg.modl.backend.server.ServerService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
+import gg.modl.backend.storage.data.StorageFileDocument;
 import gg.modl.backend.storage.dto.request.EvidenceConfirmUploadRequest;
 import gg.modl.backend.storage.dto.request.EvidenceItemRequest;
 import gg.modl.backend.storage.dto.request.EvidencePresignUploadRequest;
 import gg.modl.backend.storage.dto.request.SubmitEvidenceRequest;
-import gg.modl.backend.storage.data.StorageFileDocument;
 import gg.modl.backend.storage.dto.response.UploadResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -46,14 +47,14 @@ public class EvidenceUploadService {
 
         Server server = serverService.getServerByDatabaseName(uploadToken.serverDatabaseName());
         Player player = server == null
-            ? null
-            : playerRepository.findByMinecraftUuid(server, UuidUtils.normalize(uploadToken.playerUuid())).orElse(null);
+                ? null
+                : playerRepository.findByMinecraftUuid(server, UuidUtils.normalize(uploadToken.playerUuid())).orElse(null);
         String playerName = player != null ? PlayerDataUtils.extractLatestUsername(player.getUsernames()) : "Unknown";
 
         return TokenValidationResult.valid(new TokenInfo(
-            uploadToken.punishmentId(),
-            playerName,
-            uploadToken.issuerName()
+                uploadToken.punishmentId(),
+                playerName,
+                uploadToken.issuerName()
         ));
     }
 
@@ -73,15 +74,15 @@ public class EvidenceUploadService {
         }
 
         UploadOrchestrationService.PresignOutcome outcome = uploadOrchestrationService.presign(server,
-            new UploadOrchestrationService.UploadPresignRequest(
-                "evidence",
-                request.fileName(),
-                request.contentType(),
-                request.fileSize(),
-                uploadToken.punishmentId(),
-                server.getPlan() == ServerPlan.PREMIUM,
-                false
-            ));
+                new UploadOrchestrationService.UploadPresignRequest(
+                        "evidence",
+                        request.fileName(),
+                        request.contentType(),
+                        request.fileSize(),
+                        uploadToken.punishmentId(),
+                        server.getPlan() == ServerPlan.PREMIUM,
+                        false
+                ));
 
         return new PresignUploadResult.Orchestrated(outcome);
     }
@@ -106,14 +107,14 @@ public class EvidenceUploadService {
             UploadResponse uploadDetails = s3StorageService.getUploadDetails(request.key());
             if (uploadDetails == null) {
                 return new ConfirmUploadResult.Orchestrated(
-                    UploadOrchestrationService.ConfirmOutcome.status(UploadOrchestrationService.ConfirmStatus.UPLOAD_NOT_FOUND));
+                        UploadOrchestrationService.ConfirmOutcome.status(UploadOrchestrationService.ConfirmStatus.UPLOAD_NOT_FOUND));
             }
             log.warn("Could not record storage metadata: server not found for database {}", uploadToken.serverDatabaseName());
             return new ConfirmUploadResult.Orchestrated(UploadOrchestrationService.ConfirmOutcome.success(uploadDetails));
         }
 
         UploadOrchestrationService.ConfirmOutcome outcome =
-            uploadOrchestrationService.confirm(server, request.key(), false);
+                uploadOrchestrationService.confirm(server, request.key(), false);
         return new ConfirmUploadResult.Orchestrated(outcome);
     }
 
@@ -153,19 +154,19 @@ public class EvidenceUploadService {
             }
 
             evidenceItems.add(new UploadedEvidenceItem(
-                item.url(),
-                item.fileName(),
-                doc.getContentType(),
-                doc.getSize()
+                    item.url(),
+                    item.fileName(),
+                    doc.getContentType(),
+                    doc.getSize()
             ));
         }
 
         PunishmentOperationResult result = punishmentEvidenceService.addUploadedEvidence(
-            server,
-            uploadToken.punishmentId(),
-            uploadToken.issuerName(),
-            null,
-            evidenceItems
+                server,
+                uploadToken.punishmentId(),
+                uploadToken.issuerName(),
+                null,
+                evidenceItems
         );
         if (result.status() == PunishmentOperationStatus.NOT_FOUND) {
             return new SubmitEvidenceResult.PunishmentNotFound(result.message());
@@ -212,6 +213,48 @@ public class EvidenceUploadService {
         }
     }
 
+    public sealed interface PresignUploadResult {
+        record InvalidToken() implements PresignUploadResult {
+        }
+
+        record StorageNotConfigured() implements PresignUploadResult {
+        }
+
+        record ServerNotFound() implements PresignUploadResult {
+        }
+
+        record Orchestrated(UploadOrchestrationService.PresignOutcome outcome) implements PresignUploadResult {
+        }
+    }
+
+    public sealed interface ConfirmUploadResult {
+        record InvalidToken() implements ConfirmUploadResult {
+        }
+
+        record InvalidKey() implements ConfirmUploadResult {
+        }
+
+        record Orchestrated(UploadOrchestrationService.ConfirmOutcome outcome) implements ConfirmUploadResult {
+        }
+    }
+
+    public sealed interface SubmitEvidenceResult {
+        record InvalidToken() implements SubmitEvidenceResult {
+        }
+
+        record ServerNotFound() implements SubmitEvidenceResult {
+        }
+
+        record InvalidUrl() implements SubmitEvidenceResult {
+        }
+
+        record PunishmentNotFound(String message) implements SubmitEvidenceResult {
+        }
+
+        record Success() implements SubmitEvidenceResult {
+        }
+    }
+
     public record TokenValidationResult(boolean valid, TokenInfo info) {
         private static TokenValidationResult invalid() {
             return new TokenValidationResult(false, null);
@@ -223,35 +266,5 @@ public class EvidenceUploadService {
     }
 
     public record TokenInfo(String punishmentId, String playerName, String issuerName) {
-    }
-
-    public sealed interface PresignUploadResult {
-        record InvalidToken() implements PresignUploadResult {}
-
-        record StorageNotConfigured() implements PresignUploadResult {}
-
-        record ServerNotFound() implements PresignUploadResult {}
-
-        record Orchestrated(UploadOrchestrationService.PresignOutcome outcome) implements PresignUploadResult {}
-    }
-
-    public sealed interface ConfirmUploadResult {
-        record InvalidToken() implements ConfirmUploadResult {}
-
-        record InvalidKey() implements ConfirmUploadResult {}
-
-        record Orchestrated(UploadOrchestrationService.ConfirmOutcome outcome) implements ConfirmUploadResult {}
-    }
-
-    public sealed interface SubmitEvidenceResult {
-        record InvalidToken() implements SubmitEvidenceResult {}
-
-        record ServerNotFound() implements SubmitEvidenceResult {}
-
-        record InvalidUrl() implements SubmitEvidenceResult {}
-
-        record PunishmentNotFound(String message) implements SubmitEvidenceResult {}
-
-        record Success() implements SubmitEvidenceResult {}
     }
 }
