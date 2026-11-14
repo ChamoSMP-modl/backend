@@ -67,6 +67,11 @@ public final class RequestUtil {
     }
 
     @Nullable
+    public static Server getRequestServerMayNull(HttpServletRequest request) {
+        return (Server) request.getAttribute(RequestAttribute.SERVER);
+    }
+
+    @Nullable
     public static String getSessionEmail(HttpServletRequest request) {
         AuthSessionData session = getSession(request);
         return session != null ? session.getEmail() : null;
