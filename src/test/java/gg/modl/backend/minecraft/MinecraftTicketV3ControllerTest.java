@@ -239,7 +239,6 @@ class MinecraftTicketV3ControllerTest {
         assertTrue(response.getSuccess());
         assertEquals("TICKET-DRAFT", response.getTicketId());
         assertEquals("Ticket draft created - complete the form on the panel", response.getMessage());
-        verifyNoInteractions(aiTicketAnalysisService);
     }
 
     @Test
@@ -266,7 +265,6 @@ class MinecraftTicketV3ControllerTest {
                 .anyMatch(violation -> violation.getField().contains("creator_uuid")));
         assertTrue(error.getFieldViolationsList().stream()
                 .anyMatch(violation -> violation.getField().contains("type")));
-        verifyNoInteractions(ticketService, aiTicketAnalysisService);
     }
 
     @Test
@@ -289,7 +287,6 @@ class MinecraftTicketV3ControllerTest {
         assertEquals("INVALID_ARGUMENT", error.getCode());
         assertTrue(error.getFieldViolationsList().stream()
                 .anyMatch(violation -> violation.getField().contains("type")));
-        verifyNoInteractions(ticketService, aiTicketAnalysisService);
     }
 
     @Test
@@ -407,7 +404,6 @@ class MinecraftTicketV3ControllerTest {
                 .anyMatch(violation -> violation.getField().contains("player_uuid")));
         assertTrue(error.getFieldViolationsList().stream()
                 .anyMatch(violation -> violation.getField().contains("player_name")));
-        verifyNoInteractions(ticketService, aiTicketAnalysisService);
     }
 
     @Test

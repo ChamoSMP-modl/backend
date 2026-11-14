@@ -1,6 +1,5 @@
 package gg.modl.backend.limits;
 
-import gg.modl.backend.billing.service.UsageTrackingService;
 import gg.modl.backend.server.data.Server;
 import gg.modl.backend.server.data.ServerPlan;
 import gg.modl.backend.storage.service.StorageQuotaService;

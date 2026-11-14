@@ -1,7 +1,18 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
+allprojects {
+    apply(plugin = "java-library")
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+}
+
+
 plugins {
-    id("java")
+    id("java-library")
     id("org.springframework.boot") version "4.1.2"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -20,21 +31,6 @@ repositories {
     maven("https://nexus.modl.gg/repository/maven-releases/")
 }
 
-subprojects {
-    apply(plugin = "java-library")
-
-    repositories {
-        mavenCentral()
-    }
-
-
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-    }
-}
-
 dependencies {
     // Spring Boot Starters
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
@@ -51,7 +47,14 @@ dependencies {
 
     // External Services
     implementation("io.github.cdimascio:dotenv-java:3.2.0")
-    implementation("com.google.genai:google-genai:1.80.0")
+
+    implementation("com.google.api:api-common:2.73.0")
+
+    implementation("jakarta.annotation:jakarta.annotation-api:3.0.0")
+    api("org.jspecify:jspecify:1.0.1")
+
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     // AWS S3 (Backblaze B2)
     implementation(platform("software.amazon.awssdk:bom:2.29.0"))
@@ -65,8 +68,6 @@ dependencies {
 
     // Shared protobuf types
     implementation("gg.modl:proto:1.6.1")
-    // proto"s gencode is stamped at protobuf-java 4.35.1 by the buf generator; pin the runtime to 4.35.1
-    // so a future proto POM declaring an older protobuf-java cannot downgrade the runtime below the gencode.
     implementation("com.google.protobuf:protobuf-java:4.35.1")
     implementation("com.google.protobuf:protobuf-java-util:4.35.1")
 
@@ -99,7 +100,6 @@ tasks.withType<JavaCompile> {
 
 tasks.test {
     useJUnitPlatform()
-    binaryResultsDirectory = file("$buildDir/test-results/test/binary-${System.currentTimeMillis()}")
 
     testLogging {
         events("failed", "skipped")

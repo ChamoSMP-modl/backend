@@ -31,7 +31,7 @@ public class AdminAuthController {
     private final CookieUtil cookieUtil;
 
     @PostMapping("/request-code")
-    public ResponseEntity<?> requestCode(@RequestBody AdminRequestCodeRequest request) throws Exception {
+    public ResponseEntity<?> requestCode(@RequestBody AdminRequestCodeRequest request) {
 
         Optional<AdminUser> adminOpt = adminAuthService.findByEmail(request.getEmail());
         if (adminOpt.isPresent()) {

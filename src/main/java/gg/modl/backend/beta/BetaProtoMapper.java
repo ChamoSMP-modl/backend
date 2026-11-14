@@ -89,7 +89,6 @@ final class BetaProtoMapper {
         return BetaTesterLimits.newBuilder()
                 .setMaxStaffSeats(limits.getMaxStaffSeats())
                 .setMaxStorageBytes(limits.getMaxStorageBytes())
-                .setAiRequestLimit(limits.getAiRequestLimit())
                 .setCustomDomainAllowed(limits.isCustomDomainAllowed())
                 .setMaxUploadBytes(limits.getMaxUploadBytes())
                 .build();

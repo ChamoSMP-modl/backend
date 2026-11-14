@@ -1,7 +1,9 @@
 package gg.modl.backend.realtime.auth;
 
 import gg.modl.proto.modl.v1.ErrorCode;
+import lombok.Getter;
 
+@Getter
 public class RealtimeAuthenticationException extends Exception {
     private final ErrorCode errorCode;
 
@@ -10,7 +12,4 @@ public class RealtimeAuthenticationException extends Exception {
         this.errorCode = errorCode;
     }
 
-    public ErrorCode getErrorCode() {
-        return errorCode;
-    }
 }

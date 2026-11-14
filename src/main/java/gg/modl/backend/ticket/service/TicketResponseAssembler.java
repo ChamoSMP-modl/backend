@@ -45,7 +45,6 @@ public class TicketResponseAssembler {
                 ticket.getFormData(),
                 ticket.getData(),
                 ticket.getChatMessages(),
-                ticket.getAiAnalysis(),
                 ticket.isEmailAuthEnabled(),
                 ticket.isHidden(),
                 ticket.getReplayUrl(),

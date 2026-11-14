@@ -32,9 +32,12 @@ public class PublicSettingsController {
     public PublicSettingsResponse getPublicSettings(HttpServletRequest request) {
         Server server = RequestUtil.getRequestServer(request);
 
+        /* TODO
         if (server == null) {
             return getNotFoundSettings();
         }
+
+         */
 
         GeneralSettings generalSettings = generalSettingsService.getGeneralSettings(server);
         TicketFormSettings ticketForms = ticketFormSettingsService.getTicketFormSettings(server);
