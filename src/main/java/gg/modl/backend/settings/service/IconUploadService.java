@@ -5,6 +5,7 @@ import gg.modl.backend.storage.service.S3StorageService;
 import gg.modl.backend.storage.service.StorageMetadataService;
 import gg.modl.backend.storage.service.StorageQuotaService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class IconUploadService {
@@ -54,6 +56,7 @@ public class IconUploadService {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to read file"));
         } catch (RuntimeException e) {
+            log.error("Icon upload failed for server {} (iconType={})", server.getId(), iconType, e);
             return ResponseEntity.internalServerError().body(Map.of("error", "Failed to upload file"));
         }
     }

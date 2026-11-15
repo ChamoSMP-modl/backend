@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -55,14 +56,19 @@ public class ServerHeaderFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain chain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NotNull HttpServletResponse response, @NotNull FilterChain chain)
             throws ServletException, IOException {
         String requestHost = resolveRequestHost(request);
-        String legacyServerDomainHeader = HostExtractionUtil.normalizeServerDomain(request.getHeader(RequestHeader.SERVER_DOMAIN));
+        String headerDomain = HostExtractionUtil.normalizeServerDomain(request.getHeader(RequestHeader.SERVER_DOMAIN));
 
-        String serverDomain = requestHost != null ? requestHost : legacyServerDomainHeader;
+        boolean viaBackendHost = requestHost != null && requestHost.equalsIgnoreCase("modl.backend.chamosmp.net");
+        String serverDomain = viaBackendHost
+                ? headerDomain
+                : (requestHost != null ? requestHost : headerDomain);
+
 
         boolean devHostOverrideApplied = false;
+
         if (developmentMode && devServerDomain != null && !devServerDomain.isBlank()) {
             if (serverDomain == null || serverDomain.isBlank() || originPolicy.isDevLocalhost(serverDomain)) {
                 serverDomain = devServerDomain;
@@ -81,9 +87,9 @@ public class ServerHeaderFilter extends OncePerRequestFilter {
             return;
         }
 
-        if (!devHostOverrideApplied
-                && requestHost != null && legacyServerDomainHeader != null
-                && !requestHost.equalsIgnoreCase(legacyServerDomainHeader)) {
+        if (!devHostOverrideApplied && !viaBackendHost
+                && requestHost != null && headerDomain != null
+                && !requestHost.equalsIgnoreCase(headerDomain)) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Mismatched server domain headers");
             return;
         }

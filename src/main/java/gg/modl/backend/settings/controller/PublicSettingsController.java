@@ -13,6 +13,7 @@ import gg.modl.backend.settings.service.TicketFormSettingsService;
 import gg.modl.proto.modl.v1.PublicSettingsResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
