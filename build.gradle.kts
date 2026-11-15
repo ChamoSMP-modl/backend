@@ -61,7 +61,7 @@ dependencies {
     implementation("software.amazon.awssdk:s3")
 
     // WebAuthn / Passkeys
-    implementation("com.yubico:webauthn-server-core:2.5.4")
+    implementation("com.yubico:webauthn-server-core:2.10.1")
 
     // Replay format
     implementation("gg.modl.minecraft.replay:replay-format:1.1.0")
