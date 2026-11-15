@@ -75,7 +75,7 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine:3.3.1")
 
     // Utilities
-    implementation("com.github.slugify:slugify:3.0.7")
+    implementation("com.github.slugify:slugify:4.0.1")
 
     // Compile-only / APs
     compileOnly("org.jetbrains:annotations:26.0.2")
