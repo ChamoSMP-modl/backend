@@ -68,7 +68,7 @@ dependencies {
 
     // Shared protobuf types
     implementation("gg.modl:proto:1.6.1")
-    implementation("com.google.protobuf:protobuf-java:4.35.1")
+    implementation("com.google.protobuf:protobuf-java:4.36.2")
     implementation("com.google.protobuf:protobuf-java-util:4.35.1")
 
     // Caching
