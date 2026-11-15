@@ -78,7 +78,7 @@ dependencies {
     implementation("com.github.slugify:slugify:4.0.1")
 
     // Compile-only / APs
-    compileOnly("org.jetbrains:annotations:26.0.2")
+    compileOnly("org.jetbrains:annotations:26.1.0")
     compileOnly("org.projectlombok:lombok")
     compileOnly(project(":mongo-fields-annotations"))
     annotationProcessor("org.projectlombok:lombok")
