@@ -72,7 +72,7 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java-util:4.35.1")
 
     // Caching
-    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.3.1")
 
     // Utilities
     implementation("com.github.slugify:slugify:3.0.7")
