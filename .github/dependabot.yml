@@ -3,7 +3,7 @@ version: 2
 registries:
   modl-nexus:
     type: maven-repository
-    url: https://nexus.modl.gg/repository/maven-release
+    url: https://nexus.modl.gg/repository/maven-releases/
 
 updates:
   - package-ecosystem: "gradle"
