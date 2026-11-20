@@ -57,7 +57,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     // AWS S3 (Backblaze B2)
-    implementation(platform("software.amazon.awssdk:bom:2.58.0"))
+    implementation(platform("software.amazon.awssdk:bom:2.59.2"))
     implementation("software.amazon.awssdk:s3")
 
     // WebAuthn / Passkeys
