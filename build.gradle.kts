@@ -48,7 +48,7 @@ dependencies {
     // External Services
     implementation("io.github.cdimascio:dotenv-java:3.2.0")
 
-    implementation("com.google.api:api-common:2.73.0")
+    implementation("com.google.api:api-common:2.74.0")
 
     implementation("jakarta.annotation:jakarta.annotation-api:3.0.0")
     api("org.jspecify:jspecify:1.0.1")
