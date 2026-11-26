@@ -43,7 +43,7 @@ dependencies {
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     // Rate limiting
-    implementation("com.bucket4j:bucket4j_jdk17-core:8.22.0")
+    implementation("com.bucket4j:bucket4j_jdk17-core:8.23.0")
 
     // External Services
     implementation("io.github.cdimascio:dotenv-java:3.2.0")
